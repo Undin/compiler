@@ -9,14 +9,14 @@ functionDefinition
     ;
 
 prototype
-    :   Identifier LPAREN arguments? RPAREN COLON type
+    :   Identifier LPAREN typedArguments? RPAREN COLON type
     ;
 
-arguments
-    :   argument (COMMA argument)*
+typedArguments
+    :   typedArgument (COMMA typedArgument)*
     ;
 
-argument
+typedArgument
     :   Identifier COLON type
     ;
 
@@ -40,7 +40,16 @@ primary
     :   LPAREN expression RPAREN
     |   intLiteral
     |   boolLiteral
+    |   functionCall
     |   Identifier
+    ;
+
+functionCall
+    : Identifier LPAREN arguments? RPAREN
+    ;
+
+arguments
+    :   expression (COMMA expression)*
     ;
 
 intLiteral

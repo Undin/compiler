@@ -1,4 +1,4 @@
-// Generated from /Users/warrior/Programming/Compiler/src/main/java/com/warrior/compiler/lexer/Grammar.g4 by ANTLR 4.5.1
+// Generated from /Users/warrior/Programming/Compiler/src/main/java/com/warrior/compiler/Grammar.g4 by ANTLR 4.5.1
 package com.warrior.compiler;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -29,17 +29,17 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrototype(GrammarParser.PrototypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GrammarParser#arguments}.
+	 * Visit a parse tree produced by {@link GrammarParser#typedArguments}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArguments(GrammarParser.ArgumentsContext ctx);
+	T visitTypedArguments(GrammarParser.TypedArgumentsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GrammarParser#argument}.
+	 * Visit a parse tree produced by {@link GrammarParser#typedArgument}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArgument(GrammarParser.ArgumentContext ctx);
+	T visitTypedArgument(GrammarParser.TypedArgumentContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarParser#type}.
 	 * @param ctx the parse tree
@@ -58,6 +58,18 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPrimary(GrammarParser.PrimaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#functionCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionCall(GrammarParser.FunctionCallContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#arguments}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArguments(GrammarParser.ArgumentsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarParser#intLiteral}.
 	 * @param ctx the parse tree

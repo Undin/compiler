@@ -1,14 +1,22 @@
 package com.warrior.compiler
 
-import com.warrior.compiler.GrammarBaseVisitor
 import com.warrior.compiler.GrammarLexer.*
-import com.warrior.compiler.GrammarParser
 import java.util.*
 
 /**
  * Created by warrior on 08.03.16.
  */
 class ASTVisitor : GrammarBaseVisitor<Expr>() {
+
+    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Expr {
+        val name = ctx.Identifier().text
+        val args = ctx.arguments()
+                ?.expression()
+                ?.map { visitExpression(it) }
+                ?.toList()
+                ?: Collections.emptyList()
+        return CallExpr(name, args)
+    }
 
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Expr {
         val prototype = visitPrototype(ctx.prototype())
@@ -18,19 +26,15 @@ class ASTVisitor : GrammarBaseVisitor<Expr>() {
 
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): PrototypeExpr {
         val name = ctx.Identifier().text
-        val args = createArgs(ctx.arguments())
+        val args = ctx.typedArguments()
+                ?.typedArgument()
+                ?.map { PrototypeExpr.Arg(it.Identifier().text, it.type().text.toType()) }
+                ?.toList()
+                ?: Collections.emptyList()
         val type = ctx.type().text.toType();
         return PrototypeExpr(name, args, type)
     }
 
-    private fun createArgs(ctx: GrammarParser.ArgumentsContext?): List<PrototypeExpr.Arg> {
-        if (ctx != null && ctx.argument() != null) {
-            return ctx.argument()
-                    .map { PrototypeExpr.Arg(it.Identifier().text, it.type().text.toType()) }
-                    .toList()
-        }
-        return Collections.emptyList();
-    }
 
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
         if (ctx.expression() != null) {
