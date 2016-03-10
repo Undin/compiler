@@ -1,0 +1,30 @@
+group 'com.warrior'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.0"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: "**/*.jar")
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.0"
+    compile 'org.antlr:antlr4-runtime:4.5.2-1'
+    compile 'org.bytedeco:javacpp:1.1'
+    compile 'org.bytedeco.javacpp-presets:llvm:3.7.0-1.1'
+
+    testCompile 'junit:junit:4.12'
+}
