@@ -16,5 +16,3 @@ interface BoolExpr : Expr {
 interface IntExpr : Expr {
     override fun getType(): Type = Type.I32
 }
-
-

@@ -6,9 +6,9 @@ import org.bytedeco.javacpp.LLVM
  * Created by warrior on 07.03.16.
  */
 abstract class BinaryExpr(val opcode: Int, val name: String, val lhs: Expr, val rhs: Expr) : Expr {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef): LLVM.LLVMValueRef {
-        val left = lhs.generateCode(module, builder)
-        val right = rhs.generateCode(module, builder)
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
+        val left = lhs.generateCode(module, builder, symbolTable)
+        val right = rhs.generateCode(module, builder, symbolTable)
         return LLVM.LLVMBuildBinOp(builder, opcode, left, right, name)
     }
 }

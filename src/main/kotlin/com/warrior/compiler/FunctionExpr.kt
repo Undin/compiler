@@ -10,13 +10,13 @@ class FunctionExpr(val prototype: PrototypeExpr, val expr: Expr) : Expr {
         throw UnsupportedOperationException()
     }
 
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef): LLVM.LLVMValueRef {
-        val fn = prototype.generateCode(module, builder)
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
+        val fn = prototype.generateCode(module, builder, symbolTable)
         // create basic block
         val entry = LLVM.LLVMAppendBasicBlock(fn, "entry")
         LLVM.LLVMPositionBuilderAtEnd(builder, entry)
         // create return expression
-        val retValue = expr.generateCode(module, builder)
+        val retValue = expr.generateCode(module, builder, symbolTable)
         LLVM.LLVMBuildRet(builder, retValue)
         // verify function
         LLVM.LLVMVerifyFunction(fn, LLVM.LLVMAbortProcessAction)

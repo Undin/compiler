@@ -8,6 +8,10 @@ import java.util.*
  */
 class ASTVisitor : GrammarBaseVisitor<Expr>() {
 
+    override fun visitVariable(ctx: GrammarParser.VariableContext): Expr {
+        return VariableExpr(ctx.text)
+    }
+
     override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Expr {
         val name = ctx.Identifier().text
         val args = ctx.arguments()
@@ -34,7 +38,6 @@ class ASTVisitor : GrammarBaseVisitor<Expr>() {
         val type = ctx.type().text.toType();
         return PrototypeExpr(name, args, type)
     }
-
 
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
         if (ctx.expression() != null) {

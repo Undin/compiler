@@ -11,9 +11,9 @@ class CallExpr(val fnName: String, val args: List<Expr>) : Expr {
         throw UnsupportedOperationException()
     }
 
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
         val fn = LLVM.LLVMGetNamedFunction(module, fnName) ?: throw IllegalStateException("function must be declared")
-        val argsValues = args.map { it.generateCode(module, builder) }.toTypedArray()
+        val argsValues = args.map { it.generateCode(module, builder, symbolTable) }.toTypedArray()
         return LLVM.LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "functionCall")
     }
 }

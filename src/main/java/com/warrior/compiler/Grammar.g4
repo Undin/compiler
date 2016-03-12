@@ -41,11 +41,15 @@ primary
     |   intLiteral
     |   boolLiteral
     |   functionCall
-    |   Identifier
+    |   variable
     ;
 
 functionCall
-    : Identifier LPAREN arguments? RPAREN
+    :   Identifier LPAREN arguments? RPAREN
+    ;
+
+variable
+    :   Identifier
     ;
 
 arguments
