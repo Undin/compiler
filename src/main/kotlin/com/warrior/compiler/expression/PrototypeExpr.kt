@@ -1,5 +1,8 @@
-package com.warrior.compiler
+package com.warrior.compiler.expression
 
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
+import com.warrior.compiler.VariableAttrs
 import org.bytedeco.javacpp.LLVM
 import org.bytedeco.javacpp.PointerPointer
 

@@ -1,5 +1,7 @@
-package com.warrior.compiler
+package com.warrior.compiler.expression
 
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
 import org.bytedeco.javacpp.LLVM
 
 /**
