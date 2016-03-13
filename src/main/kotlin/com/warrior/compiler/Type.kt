@@ -7,13 +7,13 @@ import org.bytedeco.javacpp.LLVM
  */
 enum class Type {
     BOOL {
-        override fun getLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt1Type()
+        override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt1Type()
     },
     I32 {
-        override fun getLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt32Type();
+        override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt32Type();
     };
 
-    abstract fun getLLVMType(): LLVM.LLVMTypeRef
+    abstract fun toLLVMType(): LLVM.LLVMTypeRef
 }
 
 fun String.toType(): Type {

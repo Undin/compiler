@@ -47,6 +47,30 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(GrammarParser.TypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatement(GrammarParser.StatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#exprStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExprStatement(GrammarParser.ExprStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#assign}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssign(GrammarParser.AssignContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#assignDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssignDeclaration(GrammarParser.AssignDeclarationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

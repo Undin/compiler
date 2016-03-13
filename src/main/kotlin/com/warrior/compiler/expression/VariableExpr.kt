@@ -13,6 +13,7 @@ class VariableExpr(val name: String): Expr {
     }
 
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
-        return symbolTable.variables[name]?.value ?: throw IllegalStateException("undeclared variable")
+        val ref = symbolTable.variables[name]?.ref ?: throw IllegalStateException("undeclared variable")
+        return LLVM.LLVMBuildLoad(builder, ref, name)
     }
 }

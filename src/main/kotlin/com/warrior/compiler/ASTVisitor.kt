@@ -2,12 +2,37 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
+import com.warrior.compiler.statement.Assign
+import com.warrior.compiler.statement.AssignDecl
+import com.warrior.compiler.statement.ExpressionStatement
+import com.warrior.compiler.statement.Statement
 import java.util.*
 
 /**
  * Created by warrior on 08.03.16.
  */
-class ASTVisitor : GrammarBaseVisitor<Expr>() {
+class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
+
+    override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): Statement {
+        return ExpressionStatement(visitExpression(ctx.expression()))
+    }
+
+    override fun visitAssign(ctx: GrammarParser.AssignContext): Statement {
+        val name = ctx.Identifier().text
+        val expr = visitExpression(ctx.expression())
+        return Assign(name, expr)
+    }
+
+    override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): Statement {
+        val name = ctx.Identifier().text
+        val type = ctx.type().text.toType()
+        val expr = if (ctx.expression() != null) {
+            visitExpression(ctx.expression())
+        } else {
+            null
+        }
+        return AssignDecl(name, type, expr)
+    }
 
     override fun visitVariable(ctx: GrammarParser.VariableContext): Expr {
         return VariableExpr(ctx.text)
@@ -25,8 +50,9 @@ class ASTVisitor : GrammarBaseVisitor<Expr>() {
 
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Expr {
         val prototype = visitPrototype(ctx.prototype())
+        val statements = ctx.statement().map { visitStatement(it) as Statement }.toList()
         val expr = visitExpression(ctx.expression())
-        return FunctionExpr(prototype, expr)
+        return FunctionExpr(prototype, statements, expr)
     }
 
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): PrototypeExpr {
@@ -44,18 +70,18 @@ class ASTVisitor : GrammarBaseVisitor<Expr>() {
         if (ctx.expression() != null) {
             return visitExpression(ctx.expression())
         }
-        return super.visitPrimary(ctx)
+        return super.visitPrimary(ctx) as Expr
     }
 
     override fun visitExpression(ctx: GrammarParser.ExpressionContext): Expr {
         if (ctx.primary() != null) {
-            return super.visitExpression(ctx)
+            return visitPrimary(ctx.primary())
         }
-        val leftExpr = visit(ctx.left)
+        val leftExpr = visitExpression(ctx.left)
         if (ctx.unaryOp != null) {
             return unaryExpr(ctx.unaryOp.type, leftExpr)
         }
-        val rightExpr = visit(ctx.right)
+        val rightExpr = visitExpression(ctx.right)
         if (ctx.op != null) {
             return arithmeticExpr(ctx.op.type, leftExpr, rightExpr)
         }

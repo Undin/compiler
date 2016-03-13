@@ -10,4 +10,4 @@ class SymbolTable() {
     val variables: MutableMap<String, VariableAttrs> = HashMap()
 }
 
-data class VariableAttrs(val name: String, val type: Type, val value: LLVM.LLVMValueRef)
+data class VariableAttrs(val name: String, val type: Type, val ref: LLVM.LLVMValueRef)

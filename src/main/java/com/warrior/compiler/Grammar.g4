@@ -5,7 +5,7 @@ root
     ;
 
 functionDefinition
-    : 'fn' prototype LBRACE expression RBRACE
+    : 'fn' prototype LBRACE statement* expression RBRACE
     ;
 
 prototype
@@ -22,6 +22,24 @@ typedArgument
 
 type
     :   Identifier
+    ;
+
+statement
+    :   exprStatement
+    |   assign
+    |   assignDeclaration
+    ;
+
+exprStatement
+    :   expression SEMICOLON
+    ;
+
+assign
+    :   Identifier ASSIGN expression SEMICOLON
+    ;
+
+assignDeclaration
+    :   Identifier COLON type (ASSIGN expression)? SEMICOLON
     ;
 
 expression
@@ -127,6 +145,7 @@ SUB             : '-';
 MUL             : '*';
 DIV             : '/';
 MOD             : '%';
+ASSIGN          : '=';
 
 //
 //  Whitespace and comments
