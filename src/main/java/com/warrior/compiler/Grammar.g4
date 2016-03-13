@@ -9,7 +9,7 @@ functionDefinition
     ;
 
 prototype
-    :   Identifier LPAREN typedArguments? RPAREN COLON type
+    :   Identifier LPAREN typedArguments? RPAREN ARROW type
     ;
 
 typedArguments
@@ -127,6 +127,7 @@ COLON           : ':';
 SEMICOLON       : ';';
 COMMA           : ',';
 DOT             : '.';
+ARROW           : '->';
 
 //
 //  Operators

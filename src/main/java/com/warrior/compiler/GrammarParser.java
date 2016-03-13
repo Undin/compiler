@@ -19,9 +19,9 @@ public class GrammarParser extends Parser {
 	public static final int
 		T__0=1, Identifier=2, IntLiteral=3, BoolLiteral=4, LPAREN=5, RPAREN=6, 
 		LBRACE=7, RBRACE=8, LBRACK=9, RBRACK=10, COLON=11, SEMICOLON=12, COMMA=13, 
-		DOT=14, GT=15, LT=16, BANG=17, EQUAL=18, LE=19, GE=20, NOTEQUAL=21, AND=22, 
-		OR=23, ADD=24, SUB=25, MUL=26, DIV=27, MOD=28, ASSIGN=29, WS=30, COMMENT=31, 
-		LINE_COMMENT=32;
+		DOT=14, ARROW=15, GT=16, LT=17, BANG=18, EQUAL=19, LE=20, GE=21, NOTEQUAL=22, 
+		AND=23, OR=24, ADD=25, SUB=26, MUL=27, DIV=28, MOD=29, ASSIGN=30, WS=31, 
+		COMMENT=32, LINE_COMMENT=33;
 	public static final int
 		RULE_root = 0, RULE_functionDefinition = 1, RULE_prototype = 2, RULE_typedArguments = 3, 
 		RULE_typedArgument = 4, RULE_type = 5, RULE_statement = 6, RULE_exprStatement = 7, 
@@ -36,14 +36,14 @@ public class GrammarParser extends Parser {
 
 	private static final String[] _LITERAL_NAMES = {
 		null, "'fn'", null, null, null, "'('", "')'", "'{'", "'}'", "'['", "']'", 
-		"':'", "';'", "','", "'.'", "'>'", "'<'", "'!'", "'=='", "'<='", "'>='", 
-		"'!='", "'&&'", "'||'", "'+'", "'-'", "'*'", "'/'", "'%'", "'='"
+		"':'", "';'", "','", "'.'", "'->'", "'>'", "'<'", "'!'", "'=='", "'<='", 
+		"'>='", "'!='", "'&&'", "'||'", "'+'", "'-'", "'*'", "'/'", "'%'", "'='"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
 		null, null, "Identifier", "IntLiteral", "BoolLiteral", "LPAREN", "RPAREN", 
 		"LBRACE", "RBRACE", "LBRACK", "RBRACK", "COLON", "SEMICOLON", "COMMA", 
-		"DOT", "GT", "LT", "BANG", "EQUAL", "LE", "GE", "NOTEQUAL", "AND", "OR", 
-		"ADD", "SUB", "MUL", "DIV", "MOD", "ASSIGN", "WS", "COMMENT", "LINE_COMMENT"
+		"DOT", "ARROW", "GT", "LT", "BANG", "EQUAL", "LE", "GE", "NOTEQUAL", "AND", 
+		"OR", "ADD", "SUB", "MUL", "DIV", "MOD", "ASSIGN", "WS", "COMMENT", "LINE_COMMENT"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -206,7 +206,7 @@ public class GrammarParser extends Parser {
 		public TerminalNode Identifier() { return getToken(GrammarParser.Identifier, 0); }
 		public TerminalNode LPAREN() { return getToken(GrammarParser.LPAREN, 0); }
 		public TerminalNode RPAREN() { return getToken(GrammarParser.RPAREN, 0); }
-		public TerminalNode COLON() { return getToken(GrammarParser.COLON, 0); }
+		public TerminalNode ARROW() { return getToken(GrammarParser.ARROW, 0); }
 		public TypeContext type() {
 			return getRuleContext(TypeContext.class,0);
 		}
@@ -247,7 +247,7 @@ public class GrammarParser extends Parser {
 			setState(53);
 			match(RPAREN);
 			setState(54);
-			match(COLON);
+			match(ARROW);
 			setState(55);
 			type();
 			}
@@ -1166,7 +1166,7 @@ public class GrammarParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\"\u009e\4\2\t\2\4"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3#\u009e\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\3\2\3\2\3\3\3\3\3\3\3\3\7\3+\n\3\f\3\16\3.\13\3\3\3\3\3\3\3\3\4\3\4\3"+
@@ -1178,25 +1178,25 @@ public class GrammarParser extends Parser {
 		"\3\r\5\r\u0087\n\r\3\16\3\16\3\16\5\16\u008c\n\16\3\16\3\16\3\17\3\17"+
 		"\3\20\3\20\3\20\7\20\u0095\n\20\f\20\16\20\u0098\13\20\3\21\3\21\3\22"+
 		"\3\22\3\22\2\3\26\23\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"\2\6\3\2"+
-		"\32\33\3\2\34\36\4\2\21\22\25\26\4\2\24\24\27\27\u00a0\2$\3\2\2\2\4&\3"+
+		"\33\34\3\2\35\37\4\2\22\23\26\27\4\2\25\25\30\30\u00a0\2$\3\2\2\2\4&\3"+
 		"\2\2\2\6\62\3\2\2\2\b;\3\2\2\2\nC\3\2\2\2\fG\3\2\2\2\16L\3\2\2\2\20N\3"+
 		"\2\2\2\22Q\3\2\2\2\24V\3\2\2\2\26e\3\2\2\2\30\u0086\3\2\2\2\32\u0088\3"+
 		"\2\2\2\34\u008f\3\2\2\2\36\u0091\3\2\2\2 \u0099\3\2\2\2\"\u009b\3\2\2"+
 		"\2$%\5\4\3\2%\3\3\2\2\2&\'\7\3\2\2\'(\5\6\4\2(,\7\t\2\2)+\5\16\b\2*)\3"+
 		"\2\2\2+.\3\2\2\2,*\3\2\2\2,-\3\2\2\2-/\3\2\2\2.,\3\2\2\2/\60\5\26\f\2"+
 		"\60\61\7\n\2\2\61\5\3\2\2\2\62\63\7\4\2\2\63\65\7\7\2\2\64\66\5\b\5\2"+
-		"\65\64\3\2\2\2\65\66\3\2\2\2\66\67\3\2\2\2\678\7\b\2\289\7\r\2\29:\5\f"+
-		"\7\2:\7\3\2\2\2;@\5\n\6\2<=\7\17\2\2=?\5\n\6\2><\3\2\2\2?B\3\2\2\2@>\3"+
-		"\2\2\2@A\3\2\2\2A\t\3\2\2\2B@\3\2\2\2CD\7\4\2\2DE\7\r\2\2EF\5\f\7\2F\13"+
-		"\3\2\2\2GH\7\4\2\2H\r\3\2\2\2IM\5\20\t\2JM\5\22\n\2KM\5\24\13\2LI\3\2"+
-		"\2\2LJ\3\2\2\2LK\3\2\2\2M\17\3\2\2\2NO\5\26\f\2OP\7\16\2\2P\21\3\2\2\2"+
-		"QR\7\4\2\2RS\7\37\2\2ST\5\26\f\2TU\7\16\2\2U\23\3\2\2\2VW\7\4\2\2WX\7"+
-		"\r\2\2X[\5\f\7\2YZ\7\37\2\2Z\\\5\26\f\2[Y\3\2\2\2[\\\3\2\2\2\\]\3\2\2"+
-		"\2]^\7\16\2\2^\25\3\2\2\2_`\b\f\1\2`a\t\2\2\2af\5\26\f\nbc\7\23\2\2cf"+
+		"\65\64\3\2\2\2\65\66\3\2\2\2\66\67\3\2\2\2\678\7\b\2\289\7\21\2\29:\5"+
+		"\f\7\2:\7\3\2\2\2;@\5\n\6\2<=\7\17\2\2=?\5\n\6\2><\3\2\2\2?B\3\2\2\2@"+
+		">\3\2\2\2@A\3\2\2\2A\t\3\2\2\2B@\3\2\2\2CD\7\4\2\2DE\7\r\2\2EF\5\f\7\2"+
+		"F\13\3\2\2\2GH\7\4\2\2H\r\3\2\2\2IM\5\20\t\2JM\5\22\n\2KM\5\24\13\2LI"+
+		"\3\2\2\2LJ\3\2\2\2LK\3\2\2\2M\17\3\2\2\2NO\5\26\f\2OP\7\16\2\2P\21\3\2"+
+		"\2\2QR\7\4\2\2RS\7 \2\2ST\5\26\f\2TU\7\16\2\2U\23\3\2\2\2VW\7\4\2\2WX"+
+		"\7\r\2\2X[\5\f\7\2YZ\7 \2\2Z\\\5\26\f\2[Y\3\2\2\2[\\\3\2\2\2\\]\3\2\2"+
+		"\2]^\7\16\2\2^\25\3\2\2\2_`\b\f\1\2`a\t\2\2\2af\5\26\f\nbc\7\24\2\2cf"+
 		"\5\26\f\tdf\5\30\r\2e_\3\2\2\2eb\3\2\2\2ed\3\2\2\2f{\3\2\2\2gh\f\b\2\2"+
 		"hi\t\3\2\2iz\5\26\f\tjk\f\7\2\2kl\t\2\2\2lz\5\26\f\bmn\f\6\2\2no\t\4\2"+
-		"\2oz\5\26\f\7pq\f\5\2\2qr\t\5\2\2rz\5\26\f\6st\f\4\2\2tu\7\30\2\2uz\5"+
-		"\26\f\5vw\f\3\2\2wx\7\31\2\2xz\5\26\f\4yg\3\2\2\2yj\3\2\2\2ym\3\2\2\2"+
+		"\2oz\5\26\f\7pq\f\5\2\2qr\t\5\2\2rz\5\26\f\6st\f\4\2\2tu\7\31\2\2uz\5"+
+		"\26\f\5vw\f\3\2\2wx\7\32\2\2xz\5\26\f\4yg\3\2\2\2yj\3\2\2\2ym\3\2\2\2"+
 		"yp\3\2\2\2ys\3\2\2\2yv\3\2\2\2z}\3\2\2\2{y\3\2\2\2{|\3\2\2\2|\27\3\2\2"+
 		"\2}{\3\2\2\2~\177\7\7\2\2\177\u0080\5\26\f\2\u0080\u0081\7\b\2\2\u0081"+
 		"\u0087\3\2\2\2\u0082\u0087\5 \21\2\u0083\u0087\5\"\22\2\u0084\u0087\5"+
