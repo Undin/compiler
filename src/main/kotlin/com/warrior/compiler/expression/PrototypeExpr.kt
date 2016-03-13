@@ -9,11 +9,9 @@ import org.bytedeco.javacpp.PointerPointer
  * Created by warrior on 09.03.16.
  */
 class PrototypeExpr(val name: String, val args: List<Arg>, val returnType: Type) : Expr {
-    data class Arg(val name: String, val type: Type)
+    private val type: Type = Type.Fn(args.map { it.type }.toList(), returnType)
 
-    override fun getType(): Type {
-        throw UnsupportedOperationException()
-    }
+    override fun getType(): Type = type
 
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
         val argsTypes = args.map { it.type.toLLVMType() }.toTypedArray()
@@ -22,4 +20,6 @@ class PrototypeExpr(val name: String, val args: List<Arg>, val returnType: Type)
         LLVM.LLVMSetFunctionCallConv(fn, LLVM.LLVMCCallConv)
         return fn
     }
+
+    data class Arg(val name: String, val type: Type)
 }

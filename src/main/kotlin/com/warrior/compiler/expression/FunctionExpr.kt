@@ -10,9 +10,7 @@ import org.bytedeco.javacpp.LLVM
  * Created by warrior on 10.03.16.
  */
 class FunctionExpr(val prototype: PrototypeExpr, val statements: List<Statement>, val expr: Expr) : Expr {
-    override fun getType(): Type {
-        throw UnsupportedOperationException()
-    }
+    override fun getType(): Type = prototype.getType()
 
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
         val fn = prototype.generateCode(module, builder, symbolTable)
