@@ -32,6 +32,12 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return If(condExpr, thenBlock)
     }
 
+    override fun visitWhileStatement(ctx: GrammarParser.WhileStatementContext): While {
+        val condExpr = visitExpression(ctx.expression())
+        val bodyBlock = visitBlock(ctx.block())
+        return While(condExpr, bodyBlock)
+    }
+
     override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): ExpressionStatement {
         return ExpressionStatement(visitExpression(ctx.expression()))
     }

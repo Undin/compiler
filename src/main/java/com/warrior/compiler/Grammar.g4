@@ -31,6 +31,7 @@ statement
     |   assignDeclaration
     |   ifStatement
     |   ifElseStatement
+    |   whileStatement
     ;
 
 block
@@ -56,6 +57,10 @@ ifStatement
 ifElseStatement
     :   'if' '(' expression ')' thenBlock=block 'else' elseBlock=block
     ;
+
+whileStatement
+	:	'while' '(' expression ')' block
+	;
 
 expression
     :   primary

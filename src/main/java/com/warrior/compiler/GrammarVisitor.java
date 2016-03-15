@@ -89,6 +89,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIfElseStatement(GrammarParser.IfElseStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#whileStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhileStatement(GrammarParser.WhileStatementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

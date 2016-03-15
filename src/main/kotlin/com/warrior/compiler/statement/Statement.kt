@@ -100,6 +100,34 @@ class IfElse(val condition: Expr, val thenBlock: Block, val elseBlock: Block) : 
     }
 }
 
+class While(val condition: Expr, val bodyBlock: Block) : Statement {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable) {
+        val fn = getCurrentFunction(builder)
+
+        val condBasicBlock = LLVMAppendBasicBlock(fn, "while_cond")
+        val bodyBasicBlock = LLVMAppendBasicBlock(fn, "while_body")
+        val nextBasicBlock = LLVMAppendBasicBlock(fn, "while_next")
+
+        // create unconditional jump to 'condition' block
+        LLVMBuildBr(builder, condBasicBlock)
+
+        // generate code for 'condition' block
+        LLVMPositionBuilderAtEnd(builder, condBasicBlock)
+        val value = condition.generateCode(module, builder, symbolTable)
+        // create conditional jump
+        LLVMBuildCondBr(builder, value, bodyBasicBlock, nextBasicBlock)
+
+        // generate code for 'body' block
+        LLVMPositionBuilderAtEnd(builder, bodyBasicBlock)
+        bodyBlock.generateCode(module, builder, symbolTable)
+        // create unconditional jump to 'condition' block
+        LLVMBuildBr(builder, condBasicBlock)
+
+        // move builder position to 'next' block
+        LLVMPositionBuilderAtEnd(builder, nextBasicBlock)
+    }
+}
+
 private fun getCurrentFunction(builder: LLVMBuilderRef): LLVMValueRef {
     val currentBlock = LLVMGetInsertBlock(builder)
     return LLVMGetBasicBlockParent(currentBlock)
