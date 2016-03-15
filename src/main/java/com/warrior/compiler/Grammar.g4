@@ -5,19 +5,19 @@ root
     ;
 
 functionDefinition
-    : 'fn' prototype LBRACE statement* expression RBRACE
+    : 'fn' prototype '{' statement* expression '}'
     ;
 
 prototype
-    :   Identifier LPAREN typedArguments? RPAREN ARROW type
+    :   Identifier '(' typedArguments? ')' '->' type
     ;
 
 typedArguments
-    :   typedArgument (COMMA typedArgument)*
+    :   typedArgument (',' typedArgument)*
     ;
 
 typedArgument
-    :   Identifier COLON type
+    :   Identifier ':' type
     ;
 
 type
@@ -28,34 +28,39 @@ statement
     :   exprStatement
     |   assign
     |   assignDeclaration
+    |   ifStatement
     ;
 
 exprStatement
-    :   expression SEMICOLON
+    :   expression ';'
     ;
 
 assign
-    :   Identifier ASSIGN expression SEMICOLON
+    :   Identifier '=' expression ';'
     ;
 
 assignDeclaration
-    :   Identifier COLON type (ASSIGN expression)? SEMICOLON
+    :   Identifier ':' type ('=' expression)? ';'
+    ;
+
+ifStatement
+    : 'if' '(' expression ')' '{' statement* '}'
     ;
 
 expression
     :   primary
-    |   unaryOp=(ADD | SUB) left=expression
-    |   unaryOp=BANG left=expression
-    |   left=expression op=(MUL | DIV | MOD) right=expression
-    |   left=expression op=(ADD | SUB) right=expression
-    |   left=expression cmpOp=(LE | GE | LT | GT) right=expression
-    |   left=expression cmpOp=(EQUAL | NOTEQUAL) right=expression
-    |   left=expression boolOp=AND right=expression
-    |   left=expression boolOp=OR right=expression
+    |   unaryOp=('+' | '-') left=expression
+    |   unaryOp='!' left=expression
+    |   left=expression op=('*' | '/' | '%') right=expression
+    |   left=expression op=('+' | '-') right=expression
+    |   left=expression cmpOp=('<=' | '>=' | '<' | '>') right=expression
+    |   left=expression cmpOp=('==' | '!=') right=expression
+    |   left=expression boolOp='&&' right=expression
+    |   left=expression boolOp='||' right=expression
     ;
 
 primary
-    :   LPAREN expression RPAREN
+    :   '(' expression ')'
     |   intLiteral
     |   boolLiteral
     |   functionCall
@@ -63,7 +68,7 @@ primary
     ;
 
 functionCall
-    :   Identifier LPAREN arguments? RPAREN
+    :   Identifier '(' arguments? ')'
     ;
 
 variable
@@ -71,7 +76,7 @@ variable
     ;
 
 arguments
-    :   expression (COMMA expression)*
+    :   expression (',' expression)*
     ;
 
 intLiteral

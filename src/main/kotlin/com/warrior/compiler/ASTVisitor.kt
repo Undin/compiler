@@ -2,10 +2,7 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
-import com.warrior.compiler.statement.Assign
-import com.warrior.compiler.statement.AssignDecl
-import com.warrior.compiler.statement.ExpressionStatement
-import com.warrior.compiler.statement.Statement
+import com.warrior.compiler.statement.*
 import java.util.*
 
 /**
@@ -13,17 +10,27 @@ import java.util.*
  */
 class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
-    override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): Statement {
+    override fun visitStatement(ctx: GrammarParser.StatementContext): Statement {
+        return super.visitStatement(ctx) as Statement
+    }
+
+    override fun visitIfStatement(ctx: GrammarParser.IfStatementContext): If {
+        val condExpr = visitExpression(ctx.expression())
+        val statements = ctx.statement().map { visitStatement(it) }.toList()
+        return If(condExpr, statements)
+    }
+
+    override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): ExpressionStatement {
         return ExpressionStatement(visitExpression(ctx.expression()))
     }
 
-    override fun visitAssign(ctx: GrammarParser.AssignContext): Statement {
+    override fun visitAssign(ctx: GrammarParser.AssignContext): Assign {
         val name = ctx.Identifier().text
         val expr = visitExpression(ctx.expression())
         return Assign(name, expr)
     }
 
-    override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): Statement {
+    override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): AssignDecl {
         val name = ctx.Identifier().text
         val type = ctx.type().text.toType()
         val expr = if (ctx.expression() != null) {
@@ -34,11 +41,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return AssignDecl(name, type, expr)
     }
 
-    override fun visitVariable(ctx: GrammarParser.VariableContext): Expr {
+    override fun visitVariable(ctx: GrammarParser.VariableContext): VariableExpr {
         return VariableExpr(ctx.text)
     }
 
-    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Expr {
+    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): CallExpr {
         val name = ctx.Identifier().text
         val args = ctx.arguments()
                 ?.expression()
@@ -48,9 +55,9 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return CallExpr(name, args)
     }
 
-    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Expr {
+    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): FunctionExpr {
         val prototype = visitPrototype(ctx.prototype())
-        val statements = ctx.statement().map { visitStatement(it) as Statement }.toList()
+        val statements = ctx.statement().map { visitStatement(it) }.toList()
         val expr = visitExpression(ctx.expression())
         return FunctionExpr(prototype, statements, expr)
     }
@@ -137,11 +144,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         }
     }
 
-    override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): Expr {
+    override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): I32 {
         return I32(ctx.text.toInt())
     }
 
-    override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Expr {
+    override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Bool {
         return Bool(ctx.text.toBoolean())
     }
 }
