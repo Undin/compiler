@@ -53,6 +53,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(GrammarParser.StatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#block}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlock(GrammarParser.BlockContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#exprStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -76,6 +82,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfStatement(GrammarParser.IfStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#ifElseStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfElseStatement(GrammarParser.IfElseStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarParser#expression}.
 	 * @param ctx the parse tree

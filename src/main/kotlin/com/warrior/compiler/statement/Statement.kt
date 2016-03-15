@@ -15,6 +15,12 @@ interface Statement : ASTNode {
     fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): Unit
 }
 
+class Block(val statements: List<Statement>) : Statement {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable) {
+        statements.forEach { it.generateCode(module, builder, symbolTable) }
+    }
+}
+
 class ExpressionStatement(val expr: Expr) : Statement {
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable) {
         expr.generateCode(module, builder, symbolTable)
@@ -43,20 +49,58 @@ class AssignDecl(val name: String, val type: Type, val expr: Expr?) : Statement 
     }
 }
 
-class If(val condition: Expr, val statements: List<Statement>) : Statement {
+class If(val condition: Expr, val thenBlock: Block) : Statement {
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable) {
         val value = condition.generateCode(module, builder, symbolTable)
+        val fn = getCurrentFunction(builder)
 
-        val currentBlock = LLVMGetInsertBlock(builder)
-        val fn = LLVMGetBasicBlockParent(currentBlock)
+        val thenBasicBlock = LLVMAppendBasicBlock(fn, "if_true")
+        val mergeBasicBlock = LLVMAppendBasicBlock(fn, "if_merge")
 
-        val thenBlock = LLVMAppendBasicBlock(fn, "if_true")
-        val mergeBlock = LLVMAppendBasicBlock(fn, "if_merge")
+        // create conditional jump
+        LLVMBuildCondBr(builder, value, thenBasicBlock, mergeBasicBlock)
 
-        LLVMBuildCondBr(builder, value, thenBlock, mergeBlock)
-        LLVMPositionBuilderAtEnd(builder, thenBlock)
-        statements.forEach { it.generateCode(module, builder, symbolTable) }
-        LLVMBuildBr(builder, mergeBlock)
-        LLVMPositionBuilderAtEnd(builder, mergeBlock)
+        // generate code for 'then' block
+        LLVMPositionBuilderAtEnd(builder, thenBasicBlock)
+        thenBlock.generateCode(module, builder, symbolTable)
+        // create unconditional jump to 'merge' block
+        LLVMBuildBr(builder, mergeBasicBlock)
+
+        // move builder position to 'merge' block
+        LLVMPositionBuilderAtEnd(builder, mergeBasicBlock)
     }
+}
+
+class IfElse(val condition: Expr, val thenBlock: Block, val elseBlock: Block) : Statement {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable) {
+        val value = condition.generateCode(module, builder, symbolTable)
+        val fn = getCurrentFunction(builder)
+
+        val thenBasicBlock = LLVMAppendBasicBlock(fn, "if_true")
+        val elseBasicBlock = LLVMAppendBasicBlock(fn, "if_false")
+        val mergeBasicBlock = LLVMAppendBasicBlock(fn, "if_merge")
+
+        // create conditional jump
+        LLVMBuildCondBr(builder, value, thenBasicBlock, elseBasicBlock)
+
+        // generate code for 'then' block
+        LLVMPositionBuilderAtEnd(builder, thenBasicBlock)
+        thenBlock.generateCode(module, builder, symbolTable)
+        // create unconditional jump to 'merge' block
+        LLVMBuildBr(builder, mergeBasicBlock)
+
+        // generate code for 'else' block
+        LLVMPositionBuilderAtEnd(builder, elseBasicBlock)
+        elseBlock.generateCode(module, builder, symbolTable)
+        // create unconditional jump to 'merge' block
+        LLVMBuildBr(builder, mergeBasicBlock)
+
+        // move builder position to 'merge' block
+        LLVMPositionBuilderAtEnd(builder, mergeBasicBlock)
+    }
+}
+
+private fun getCurrentFunction(builder: LLVMBuilderRef): LLVMValueRef {
+    val currentBlock = LLVMGetInsertBlock(builder)
+    return LLVMGetBasicBlockParent(currentBlock)
 }

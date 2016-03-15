@@ -14,10 +14,22 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return super.visitStatement(ctx) as Statement
     }
 
+    override fun visitBlock(ctx: GrammarParser.BlockContext): Block {
+        val statements = ctx.statement().map { visitStatement(it) }.toList()
+        return Block(statements)
+    }
+
+    override fun visitIfElseStatement(ctx: GrammarParser.IfElseStatementContext): IfElse {
+        val condExpr = visitExpression(ctx.expression())
+        val thenBlock = visitBlock(ctx.thenBlock)
+        val elseBlock = visitBlock(ctx.elseBlock)
+        return IfElse(condExpr, thenBlock, elseBlock)
+    }
+
     override fun visitIfStatement(ctx: GrammarParser.IfStatementContext): If {
         val condExpr = visitExpression(ctx.expression())
-        val statements = ctx.statement().map { visitStatement(it) }.toList()
-        return If(condExpr, statements)
+        val thenBlock = visitBlock(ctx.block())
+        return If(condExpr, thenBlock)
     }
 
     override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): ExpressionStatement {

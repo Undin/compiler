@@ -25,10 +25,16 @@ type
     ;
 
 statement
-    :   exprStatement
+    :   block
+    |   exprStatement
     |   assign
     |   assignDeclaration
     |   ifStatement
+    |   ifElseStatement
+    ;
+
+block
+    :   '{' statement* '}'
     ;
 
 exprStatement
@@ -44,7 +50,11 @@ assignDeclaration
     ;
 
 ifStatement
-    : 'if' '(' expression ')' '{' statement* '}'
+    :   'if' '(' expression ')' block
+    ;
+
+ifElseStatement
+    :   'if' '(' expression ')' thenBlock=block 'else' elseBlock=block
     ;
 
 expression
