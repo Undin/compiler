@@ -3,13 +3,15 @@ package com.warrior.compiler.expression
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.VariableAttrs
-import com.warrior.compiler.statement.Statement
+import com.warrior.compiler.statement.Block
+import com.warrior.compiler.statement.Return
+import com.warrior.compiler.statement.ReturnBlock
 import org.bytedeco.javacpp.LLVM
 
 /**
  * Created by warrior on 10.03.16.
  */
-class FunctionExpr(val prototype: PrototypeExpr, val statements: List<Statement>, val expr: Expr) : Expr {
+class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
     override fun getType(): Type = prototype.getType()
 
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
@@ -19,6 +21,16 @@ class FunctionExpr(val prototype: PrototypeExpr, val statements: List<Statement>
         val entry = LLVM.LLVMAppendBasicBlock(fn, "entry")
         LLVM.LLVMPositionBuilderAtEnd(builder, entry)
 
+        if (!body.isTerminalStatement()) {
+            throw IllegalStateException("Function ${prototype.name} may not call 'return'")
+        }
+        var returnBlock: ReturnBlock? = null
+        if (body.statements.last() !is Return || body.statements.count { it.hasReturnStatement() } > 1) {
+            val returnBasicBlock = LLVM.LLVMAppendBasicBlock(fn, "return")
+            val returnValueRef = LLVM.LLVMBuildAlloca(builder, prototype.returnType.toLLVMType(), "_return")
+            returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
+        }
+
         // allocate variables for arguments
         for ((i, arg) in prototype.args.withIndex()) {
             val value = LLVM.LLVMGetParam(fn, i)
@@ -27,12 +39,17 @@ class FunctionExpr(val prototype: PrototypeExpr, val statements: List<Statement>
             symbolTable.variables[arg.name] = VariableAttrs(arg.name, arg.type, ref)
         }
 
-        // generate code for all statements
-        statements.forEach { it.generateCode(module, builder, symbolTable) }
+        // generate code for 'body' block
+        body.generateCode(module, builder, symbolTable, returnBlock)
 
-        // create return expression
-        val retValue = expr.generateCode(module, builder, symbolTable)
-        LLVM.LLVMBuildRet(builder, retValue)
+        if (returnBlock != null) {
+            val lastBlock = LLVM.LLVMGetLastBasicBlock(fn)
+            LLVM.LLVMMoveBasicBlockAfter(returnBlock.block, lastBlock)
+
+            LLVM.LLVMPositionBuilderAtEnd(builder, returnBlock.block)
+            val returnValue = LLVM.LLVMBuildLoad(builder, returnBlock.retValueRef, "_return")
+            LLVM.LLVMBuildRet(builder, returnValue)
+        }
 
         // verify function
         LLVM.LLVMVerifyFunction(fn, LLVM.LLVMAbortProcessAction)

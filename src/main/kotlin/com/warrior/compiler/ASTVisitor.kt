@@ -14,6 +14,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return super.visitStatement(ctx) as Statement
     }
 
+    override fun visitReturnStatement(ctx: GrammarParser.ReturnStatementContext): Return {
+        val expr = visitExpression(ctx.expression())
+        return Return(expr)
+    }
+
     override fun visitBlock(ctx: GrammarParser.BlockContext): Block {
         val statements = ctx.statement().map { visitStatement(it) }.toList()
         return Block(statements)
@@ -75,9 +80,8 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): FunctionExpr {
         val prototype = visitPrototype(ctx.prototype())
-        val statements = ctx.statement().map { visitStatement(it) }.toList()
-        val expr = visitExpression(ctx.expression())
-        return FunctionExpr(prototype, statements, expr)
+        val body = visitBlock(ctx.block())
+        return FunctionExpr(prototype, body)
     }
 
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): PrototypeExpr {

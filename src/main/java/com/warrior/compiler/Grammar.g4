@@ -5,7 +5,7 @@ root
     ;
 
 functionDefinition
-    : 'fn' prototype '{' statement* expression '}'
+    : 'fn' prototype block
     ;
 
 prototype
@@ -32,6 +32,7 @@ statement
     |   ifStatement
     |   ifElseStatement
     |   whileStatement
+    |   returnStatement
     ;
 
 block
@@ -61,6 +62,10 @@ ifElseStatement
 whileStatement
 	:	'while' '(' expression ')' block
 	;
+
+returnStatement
+    :   'return' expression ';'
+    ;
 
 expression
     :   primary
