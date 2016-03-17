@@ -22,8 +22,10 @@ data class ReturnBlock(val block: LLVMBasicBlockRef, val retValueRef: LLVMValueR
 class Block(val statements: List<Statement>) : Statement {
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+        val localSymbolTable = SymbolTable(symbolTable)
+
         for (st in statements) {
-            st.generateCode(module, builder, symbolTable, returnBlock)
+            st.generateCode(module, builder, localSymbolTable, returnBlock)
             if (st.isTerminalStatement()) {
                 break;
             }
@@ -44,7 +46,7 @@ class ExpressionStatement(val expr: Expr) : Statement {
 class Assign(val name: String, val expr: Expr) : Statement {
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
-        val v = symbolTable.variables[name] ?: throw IllegalStateException("variable name is not declared");
+        val v = symbolTable.variables[name] ?: throw IllegalStateException("variable '$name' is not declared");
         val value = expr.generateCode(module, builder, symbolTable)
         LLVMBuildStore(builder, value, v.ref)
     }
