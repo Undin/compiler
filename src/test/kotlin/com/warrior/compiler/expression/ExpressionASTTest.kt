@@ -1,10 +1,5 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.ASTVisitor
-import com.warrior.compiler.GrammarLexer
-import com.warrior.compiler.GrammarParser
-import org.antlr.v4.runtime.ANTLRInputStream
-import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.Assert
 import org.junit.Test
 
@@ -204,15 +199,5 @@ class ExpressionASTTest {
                         eq(mod(Call("f", listOf(mul(I32(5), Variable("x")))), I32(2)), I32(0))),
                 parseExpr("x <= g(y, true) || f(5 * x) % 2 == 0")
         )
-    }
-
-    private fun parseExpr(expr: String): Expr {
-        val stream = ANTLRInputStream(expr);
-        val lexer = GrammarLexer(stream);
-        val tokens = CommonTokenStream(lexer);
-        val parser = GrammarParser(tokens);
-        val tree = parser.expression();
-        val visitor = ASTVisitor()
-        return visitor.visitExpression(tree)
     }
 }
