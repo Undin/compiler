@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.TypedValue
@@ -20,8 +21,10 @@ class Call(val fnName: String, val args: List<Expr>) : Expr {
         throw UnsupportedOperationException()
     }
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue {
-        throw UnsupportedOperationException()
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
+        val fn = functions[fnName]!!
+        val arguments = args.map { it.calculate(env, functions) }.toList()
+        return fn(arguments)
     }
 
     override fun equals(other: Any?): Boolean {

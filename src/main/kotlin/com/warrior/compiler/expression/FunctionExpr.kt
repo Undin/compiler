@@ -1,9 +1,6 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.SymbolTable
-import com.warrior.compiler.Type
-import com.warrior.compiler.TypedValue
-import com.warrior.compiler.VariableAttrs
+import com.warrior.compiler.*
 import com.warrior.compiler.statement.Block
 import com.warrior.compiler.statement.Return
 import com.warrior.compiler.statement.ReturnBlock
@@ -57,7 +54,7 @@ class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
 
     override fun getType(): Type = prototype.getType()
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue {
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
         throw UnsupportedOperationException()
     }
 }

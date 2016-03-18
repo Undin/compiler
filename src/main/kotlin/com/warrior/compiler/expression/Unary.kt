@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.TypedValue
 import org.bytedeco.javacpp.LLVM
@@ -14,8 +15,8 @@ class Not(val expr: Expr) : BoolExpr {
         return LLVM.LLVMBuildNot(builder, exprValue, "not")
     }
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue.BoolValue {
-        val exprValue = expr.calculate(env)
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
+        val exprValue = expr.calculate(env, functions)
         if (exprValue is TypedValue.BoolValue) {
             return TypedValue.BoolValue(!exprValue.value)
         } else {
@@ -40,8 +41,8 @@ class UnaryMinus(val expr: Expr) : IntExpr {
         return LLVM.LLVMBuildNeg(builder, exprValue, "unaryMinus")
     }
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue.IntValue {
-        val exprValue = expr.calculate(env)
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.IntValue {
+        val exprValue = expr.calculate(env, functions)
         if (exprValue is TypedValue.IntValue) {
             return TypedValue.IntValue(-exprValue.value)
         } else {

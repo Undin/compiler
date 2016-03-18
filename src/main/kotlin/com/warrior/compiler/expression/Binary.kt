@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.TypedValue
 import com.warrior.compiler.expression.Binary.*
@@ -22,9 +23,9 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             }
         }
 
-        override fun calculate(env: Map<String, TypedValue>): TypedValue.BoolValue {
-            val left = lhs.calculate(env)
-            val right = rhs.calculate(env)
+        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
+            val left = lhs.calculate(env, functions)
+            val right = rhs.calculate(env, functions)
             if (left is TypedValue.BoolValue && right is TypedValue.BoolValue) {
                 return when (op) {
                     Operation.AND -> TypedValue.BoolValue(left.value && right.value)
@@ -55,9 +56,9 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             }
         }
 
-        override fun calculate(env: Map<String, TypedValue>): TypedValue.IntValue {
-            val left = lhs.calculate(env)
-            val right = rhs.calculate(env)
+        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.IntValue {
+            val left = lhs.calculate(env, functions)
+            val right = rhs.calculate(env, functions)
             if (left is TypedValue.IntValue && right is TypedValue.IntValue) {
                 return when (op) {
                     Operation.ADD -> left + right
@@ -97,9 +98,9 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             return LLVM.LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun calculate(env: Map<String, TypedValue>): TypedValue.BoolValue {
-            val left = lhs.calculate(env)
-            val right = rhs.calculate(env)
+        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
+            val left = lhs.calculate(env, functions)
+            val right = rhs.calculate(env, functions)
 
             if (left is TypedValue.IntValue && right is TypedValue.IntValue) {
                 val result = when (op) {

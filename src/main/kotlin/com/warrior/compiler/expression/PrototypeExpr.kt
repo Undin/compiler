@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.TypedValue
@@ -23,7 +24,7 @@ class PrototypeExpr(val name: String, val args: List<Arg>, val returnType: Type)
 
     override fun getType(): Type = type
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue {
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
         throw UnsupportedOperationException()
     }
 

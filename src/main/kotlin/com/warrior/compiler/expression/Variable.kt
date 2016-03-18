@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.TypedValue
@@ -18,7 +19,7 @@ class Variable(val name: String): Expr {
         throw UnsupportedOperationException()
     }
 
-    override fun calculate(env: Map<String, TypedValue>): TypedValue {
+    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
         return env[name] ?: throw IllegalStateException("variable '$name' isn't declared")
     }
 

@@ -65,3 +65,7 @@ sealed class TypedValue {
         is IntValue -> value.toString()
     }
 }
+
+class Fn(val body: (List<TypedValue>) -> TypedValue) {
+    operator fun invoke(args: List<TypedValue> = emptyList()): TypedValue = body(args)
+}
