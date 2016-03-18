@@ -1,11 +1,11 @@
 grammar Grammar;
 
-root
-    : functionDefinition
+module
+    :   functionDefinition+
     ;
 
 functionDefinition
-    : 'fn' prototype block
+    :   'fn' prototype block
     ;
 
 prototype

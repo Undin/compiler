@@ -1,6 +1,8 @@
-package com.warrior.compiler.expression
+package com.warrior.compiler.module
 
-import com.warrior.compiler.*
+import com.warrior.compiler.ASTNode
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.statement.Block
 import com.warrior.compiler.statement.Return
 import com.warrior.compiler.statement.ReturnBlock
@@ -9,9 +11,9 @@ import org.bytedeco.javacpp.LLVM
 /**
  * Created by warrior on 10.03.16.
  */
-class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
-        val fn = prototype.generateCode(module, builder, symbolTable)
+class Function(val prototype: Prototype, val body: Block) : ASTNode {
+    fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef) {
+        val fn = LLVM.LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
         // create basic block
         val entry = LLVM.LLVMAppendBasicBlock(fn, "entry")
@@ -27,6 +29,7 @@ class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
             returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
         }
 
+        val symbolTable = SymbolTable()
         // allocate variables for arguments
         for ((i, arg) in prototype.args.withIndex()) {
             val value = LLVM.LLVMGetParam(fn, i)
@@ -49,12 +52,5 @@ class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
 
         // verify function
         LLVM.LLVMVerifyFunction(fn, LLVM.LLVMAbortProcessAction)
-        return fn
-    }
-
-    override fun getType(): Type = prototype.getType()
-
-    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
-        throw UnsupportedOperationException()
     }
 }

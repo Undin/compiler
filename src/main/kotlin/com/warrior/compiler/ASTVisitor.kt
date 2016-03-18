@@ -4,12 +4,22 @@ import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
+import com.warrior.compiler.module.Function
+import com.warrior.compiler.module.Prototype
+import com.warrior.compiler.module.Module
 import java.util.*
 
 /**
  * Created by warrior on 08.03.16.
  */
 class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
+
+    override fun visitModule(ctx: GrammarParser.ModuleContext): Module {
+        val functions = ctx.functionDefinition()
+                .map { visitFunctionDefinition(it) }
+                .toList()
+        return Module(functions)
+    }
 
     override fun visitStatement(ctx: GrammarParser.StatementContext): Statement {
         return super.visitStatement(ctx) as Statement
@@ -79,21 +89,21 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Call(name, args)
     }
 
-    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): FunctionExpr {
+    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
         val prototype = visitPrototype(ctx.prototype())
         val body = visitBlock(ctx.block())
-        return FunctionExpr(prototype, body)
+        return Function(prototype, body)
     }
 
-    override fun visitPrototype(ctx: GrammarParser.PrototypeContext): PrototypeExpr {
+    override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
         val name = ctx.Identifier().text
         val args = ctx.typedArguments()
                 ?.typedArgument()
-                ?.map { PrototypeExpr.Arg(it.Identifier().text, it.type().text.toType()) }
+                ?.map { Prototype.Arg(it.Identifier().text, it.type().text.toType()) }
                 ?.toList()
                 ?: Collections.emptyList()
         val type = ctx.type().text.toType();
-        return PrototypeExpr(name, args, type)
+        return Prototype(name, args, type)
     }
 
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
