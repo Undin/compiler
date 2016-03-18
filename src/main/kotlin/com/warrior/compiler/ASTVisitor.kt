@@ -2,6 +2,7 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
+import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
 import java.util.*
 
@@ -64,18 +65,18 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return AssignDecl(name, type, expr)
     }
 
-    override fun visitVariable(ctx: GrammarParser.VariableContext): VariableExpr {
-        return VariableExpr(ctx.text)
+    override fun visitVariable(ctx: GrammarParser.VariableContext): Variable {
+        return Variable(ctx.text)
     }
 
-    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): CallExpr {
+    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Call {
         val name = ctx.Identifier().text
         val args = ctx.arguments()
                 ?.expression()
                 ?.map { visitExpression(it) }
                 ?.toList()
                 ?: Collections.emptyList()
-        return CallExpr(name, args)
+        return Call(name, args)
     }
 
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): FunctionExpr {
@@ -123,38 +124,35 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         throw IllegalStateException("unreachable state")
     }
 
-    private fun cmpExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): CmpExpr {
-        val op = when (opType) {
-            EQUAL -> CmpExpr.Operation.EQUAL
-            NOTEQUAL -> CmpExpr.Operation.NOT_EQUAL
-            LT -> CmpExpr.Operation.LESS
-            LE -> CmpExpr.Operation.LESS_OR_EQUAL
-            GT -> CmpExpr.Operation.GREATER
-            GE -> CmpExpr.Operation.GREATER_OR_EQUAL
+    private fun cmpExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): Cmp {
+        return when (opType) {
+            EQUAL -> eq(leftExpr, rightExpr)
+            NOTEQUAL -> ne(leftExpr, rightExpr)
+            LT -> lt(leftExpr, rightExpr)
+            LE -> le(leftExpr, rightExpr)
+            GT -> gt(leftExpr, rightExpr)
+            GE -> ge(leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
-        return CmpExpr(op, leftExpr, rightExpr)
     }
 
-    private fun boolExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): BinaryBoolExpr {
-        val op = when (opType) {
-            AND -> BinaryBoolExpr.Operation.AND
-            OR -> BinaryBoolExpr.Operation.OR
+    private fun boolExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): BinaryBool {
+        return when (opType) {
+            AND -> and(leftExpr, rightExpr)
+            OR -> or(leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
-        return BinaryBoolExpr(op, leftExpr, rightExpr)
     }
 
-    private fun arithmeticExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): ArithmeticExpr {
-        val op = when (opType) {
-            ADD -> ArithmeticExpr.Operation.ADD
-            SUB -> ArithmeticExpr.Operation.SUB
-            MUL -> ArithmeticExpr.Operation.MUL
-            DIV -> ArithmeticExpr.Operation.DIV
-            MOD -> ArithmeticExpr.Operation.MOD
+    private fun arithmeticExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): Arithmetic {
+        return when (opType) {
+            ADD -> add(leftExpr, rightExpr)
+            SUB -> sub(leftExpr, rightExpr)
+            MUL -> mul(leftExpr, rightExpr)
+            DIV -> div(leftExpr, rightExpr)
+            MOD -> mod(leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
-        return ArithmeticExpr(op, leftExpr, rightExpr)
     }
 
     private fun unaryExpr(opType: Int, expr: Expr): Expr {

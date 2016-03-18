@@ -2,6 +2,7 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
+import com.warrior.compiler.TypedValue
 import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.statement.Block
 import com.warrior.compiler.statement.Return
@@ -12,8 +13,6 @@ import org.bytedeco.javacpp.LLVM
  * Created by warrior on 10.03.16.
  */
 class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
-    override fun getType(): Type = prototype.getType()
-
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
         val fn = prototype.generateCode(module, builder, symbolTable)
 
@@ -54,5 +53,11 @@ class FunctionExpr(val prototype: PrototypeExpr, val body: Block) : Expr {
         // verify function
         LLVM.LLVMVerifyFunction(fn, LLVM.LLVMAbortProcessAction)
         return fn
+    }
+
+    override fun getType(): Type = prototype.getType()
+
+    override fun calculate(env: Map<String, TypedValue>): TypedValue {
+        throw UnsupportedOperationException()
     }
 }
