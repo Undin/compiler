@@ -110,9 +110,6 @@ boolLiteral
 //
 //  Lexer
 //
-Identifier
-    :   Letter (Letter | Digit)*
-    ;
 
 IntLiteral
     :   '0'
@@ -122,6 +119,10 @@ IntLiteral
 BoolLiteral
     :   'true'
     |   'false'
+    ;
+
+Identifier
+    :   Letter (Letter | Digit)*
     ;
 
 fragment

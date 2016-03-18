@@ -1,4 +1,4 @@
-// Generated from /Users/warrior/Programming/Compiler/src/main/java/com/warrior/compiler/Grammar.g4 by ANTLR 4.5.1
+// Generated from /Users/warrior/Programming/compiler/src/main/java/com/warrior/compiler/Grammar.g4 by ANTLR 4.5.1
 package com.warrior.compiler;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -17,7 +17,7 @@ public class GrammarParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, Identifier=6, IntLiteral=7, BoolLiteral=8, 
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, IntLiteral=6, BoolLiteral=7, Identifier=8, 
 		LPAREN=9, RPAREN=10, LBRACE=11, RBRACE=12, LBRACK=13, RBRACK=14, COLON=15, 
 		SEMICOLON=16, COMMA=17, DOT=18, ARROW=19, GT=20, LT=21, BANG=22, EQUAL=23, 
 		LE=24, GE=25, NOTEQUAL=26, AND=27, OR=28, ADD=29, SUB=30, MUL=31, DIV=32, 
@@ -44,7 +44,7 @@ public class GrammarParser extends Parser {
 		"'+'", "'-'", "'*'", "'/'", "'%'", "'='"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, null, null, null, null, null, "Identifier", "IntLiteral", "BoolLiteral", 
+		null, null, null, null, null, null, "IntLiteral", "BoolLiteral", "Identifier", 
 		"LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", "COLON", "SEMICOLON", 
 		"COMMA", "DOT", "ARROW", "GT", "LT", "BANG", "EQUAL", "LE", "GE", "NOTEQUAL", 
 		"AND", "OR", "ADD", "SUB", "MUL", "DIV", "MOD", "ASSIGN", "WS", "COMMENT", 
@@ -508,7 +508,7 @@ public class GrammarParser extends Parser {
 			setState(87);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__3) | (1L << T__4) | (1L << Identifier) | (1L << IntLiteral) | (1L << BoolLiteral) | (1L << LPAREN) | (1L << LBRACE) | (1L << BANG) | (1L << ADD) | (1L << SUB))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__3) | (1L << T__4) | (1L << IntLiteral) | (1L << BoolLiteral) | (1L << Identifier) | (1L << LPAREN) | (1L << LBRACE) | (1L << BANG) | (1L << ADD) | (1L << SUB))) != 0)) {
 				{
 				{
 				setState(84);
@@ -931,9 +931,9 @@ public class GrammarParser extends Parser {
 				((ExpressionContext)_localctx).left = expression(7);
 				}
 				break;
-			case Identifier:
 			case IntLiteral:
 			case BoolLiteral:
+			case Identifier:
 			case LPAREN:
 				{
 				setState(138);
@@ -1196,7 +1196,7 @@ public class GrammarParser extends Parser {
 			match(LPAREN);
 			setState(177);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << Identifier) | (1L << IntLiteral) | (1L << BoolLiteral) | (1L << LPAREN) | (1L << BANG) | (1L << ADD) | (1L << SUB))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << IntLiteral) | (1L << BoolLiteral) | (1L << Identifier) | (1L << LPAREN) | (1L << BANG) | (1L << ADD) | (1L << SUB))) != 0)) {
 				{
 				setState(176);
 				arguments();
@@ -1423,16 +1423,16 @@ public class GrammarParser extends Parser {
 		"\2\32u\3\2\2\2\34}\3\2\2\2\36\u0083\3\2\2\2 \u008d\3\2\2\2\"\u00ae\3\2"+
 		"\2\2$\u00b0\3\2\2\2&\u00b7\3\2\2\2(\u00b9\3\2\2\2*\u00c1\3\2\2\2,\u00c3"+
 		"\3\2\2\2./\5\4\3\2/\3\3\2\2\2\60\61\7\3\2\2\61\62\5\6\4\2\62\63\5\20\t"+
-		"\2\63\5\3\2\2\2\64\65\7\b\2\2\65\67\7\13\2\2\668\5\b\5\2\67\66\3\2\2\2"+
+		"\2\63\5\3\2\2\2\64\65\7\n\2\2\65\67\7\13\2\2\668\5\b\5\2\67\66\3\2\2\2"+
 		"\678\3\2\2\289\3\2\2\29:\7\f\2\2:;\7\25\2\2;<\5\f\7\2<\7\3\2\2\2=B\5\n"+
 		"\6\2>?\7\23\2\2?A\5\n\6\2@>\3\2\2\2AD\3\2\2\2B@\3\2\2\2BC\3\2\2\2C\t\3"+
-		"\2\2\2DB\3\2\2\2EF\7\b\2\2FG\7\21\2\2GH\5\f\7\2H\13\3\2\2\2IJ\7\b\2\2"+
+		"\2\2\2DB\3\2\2\2EF\7\n\2\2FG\7\21\2\2GH\5\f\7\2H\13\3\2\2\2IJ\7\n\2\2"+
 		"J\r\3\2\2\2KT\5\20\t\2LT\5\22\n\2MT\5\24\13\2NT\5\26\f\2OT\5\30\r\2PT"+
 		"\5\32\16\2QT\5\34\17\2RT\5\36\20\2SK\3\2\2\2SL\3\2\2\2SM\3\2\2\2SN\3\2"+
 		"\2\2SO\3\2\2\2SP\3\2\2\2SQ\3\2\2\2SR\3\2\2\2T\17\3\2\2\2UY\7\r\2\2VX\5"+
 		"\16\b\2WV\3\2\2\2X[\3\2\2\2YW\3\2\2\2YZ\3\2\2\2Z\\\3\2\2\2[Y\3\2\2\2\\"+
-		"]\7\16\2\2]\21\3\2\2\2^_\5 \21\2_`\7\22\2\2`\23\3\2\2\2ab\7\b\2\2bc\7"+
-		"$\2\2cd\5 \21\2de\7\22\2\2e\25\3\2\2\2fg\7\b\2\2gh\7\21\2\2hk\5\f\7\2"+
+		"]\7\16\2\2]\21\3\2\2\2^_\5 \21\2_`\7\22\2\2`\23\3\2\2\2ab\7\n\2\2bc\7"+
+		"$\2\2cd\5 \21\2de\7\22\2\2e\25\3\2\2\2fg\7\n\2\2gh\7\21\2\2hk\5\f\7\2"+
 		"ij\7$\2\2jl\5 \21\2ki\3\2\2\2kl\3\2\2\2lm\3\2\2\2mn\7\22\2\2n\27\3\2\2"+
 		"\2op\7\4\2\2pq\7\13\2\2qr\5 \21\2rs\7\f\2\2st\5\20\t\2t\31\3\2\2\2uv\7"+
 		"\4\2\2vw\7\13\2\2wx\5 \21\2xy\7\f\2\2yz\5\20\t\2z{\7\5\2\2{|\5\20\t\2"+
@@ -1453,13 +1453,13 @@ public class GrammarParser extends Parser {
 		"\u00a7\u00a8\5 \21\2\u00a8\u00a9\7\f\2\2\u00a9\u00af\3\2\2\2\u00aa\u00af"+
 		"\5*\26\2\u00ab\u00af\5,\27\2\u00ac\u00af\5$\23\2\u00ad\u00af\5&\24\2\u00ae"+
 		"\u00a6\3\2\2\2\u00ae\u00aa\3\2\2\2\u00ae\u00ab\3\2\2\2\u00ae\u00ac\3\2"+
-		"\2\2\u00ae\u00ad\3\2\2\2\u00af#\3\2\2\2\u00b0\u00b1\7\b\2\2\u00b1\u00b3"+
+		"\2\2\u00ae\u00ad\3\2\2\2\u00af#\3\2\2\2\u00b0\u00b1\7\n\2\2\u00b1\u00b3"+
 		"\7\13\2\2\u00b2\u00b4\5(\25\2\u00b3\u00b2\3\2\2\2\u00b3\u00b4\3\2\2\2"+
 		"\u00b4\u00b5\3\2\2\2\u00b5\u00b6\7\f\2\2\u00b6%\3\2\2\2\u00b7\u00b8\7"+
-		"\b\2\2\u00b8\'\3\2\2\2\u00b9\u00be\5 \21\2\u00ba\u00bb\7\23\2\2\u00bb"+
+		"\n\2\2\u00b8\'\3\2\2\2\u00b9\u00be\5 \21\2\u00ba\u00bb\7\23\2\2\u00bb"+
 		"\u00bd\5 \21\2\u00bc\u00ba\3\2\2\2\u00bd\u00c0\3\2\2\2\u00be\u00bc\3\2"+
 		"\2\2\u00be\u00bf\3\2\2\2\u00bf)\3\2\2\2\u00c0\u00be\3\2\2\2\u00c1\u00c2"+
-		"\7\t\2\2\u00c2+\3\2\2\2\u00c3\u00c4\7\n\2\2\u00c4-\3\2\2\2\r\67BSYk\u008d"+
+		"\7\b\2\2\u00c2+\3\2\2\2\u00c3\u00c4\7\t\2\2\u00c4-\3\2\2\2\r\67BSYk\u008d"+
 		"\u00a1\u00a3\u00ae\u00b3\u00be";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());

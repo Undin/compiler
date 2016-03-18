@@ -1,4 +1,4 @@
-// Generated from /Users/warrior/Programming/Compiler/src/main/java/com/warrior/compiler/Grammar.g4 by ANTLR 4.5.1
+// Generated from /Users/warrior/Programming/compiler/src/main/java/com/warrior/compiler/Grammar.g4 by ANTLR 4.5.1
 package com.warrior.compiler;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
