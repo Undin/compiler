@@ -6,6 +6,7 @@ import com.warrior.compiler.Type
 import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Expr
 import org.bytedeco.javacpp.LLVM.*
+import org.bytedeco.javacpp.PointerPointer
 
 /**
  * Created by warrior on 13.03.16.
@@ -14,7 +15,7 @@ interface Statement : ASTNode {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                      symbolTable: SymbolTable, returnBlock: ReturnBlock?): Unit
     fun hasReturnStatement(): Boolean = false
-    fun isTerminalStatement() : Boolean = false
+    fun isTerminalStatement(): Boolean = false
 }
 
 data class ReturnBlock(val block: LLVMBasicBlockRef, val retValueRef: LLVMValueRef)
@@ -199,4 +200,34 @@ class Return(val expr: Expr) : Statement {
 
     override fun hasReturnStatement(): Boolean = true
     override fun isTerminalStatement(): Boolean = true
+}
+
+class Print(val expr: Expr, val newLine: Boolean) : Statement {
+
+    companion object {
+        private var str: LLVMValueRef? = null
+        private var strLn: LLVMValueRef? = null
+
+        private fun getStr(builder: LLVMBuilderRef): LLVMValueRef {
+            if (str == null) {
+                str = LLVMBuildGlobalStringPtr(builder, "%d", "str")
+            }
+            return str!!
+        }
+
+        private fun getStrLn(builder: LLVMBuilderRef): LLVMValueRef {
+            if (strLn == null) {
+                strLn = LLVMBuildGlobalStringPtr(builder, "%d\n", "strLn")
+            }
+            return strLn!!
+        }
+    }
+
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+        val s = if (newLine) getStrLn(builder) else getStr(builder)
+        val value = expr.generateCode(module, builder, symbolTable)
+        val printfFn = LLVMGetNamedFunction(module, "printf")
+        val args = arrayOf(s, value)
+        LLVMBuildCall(builder, printfFn, PointerPointer(*args), 2, "writeCall")
+    }
 }

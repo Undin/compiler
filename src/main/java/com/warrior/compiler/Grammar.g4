@@ -33,6 +33,7 @@ statement
     |   ifElseStatement
     |   whileStatement
     |   returnStatement
+    |   print
     ;
 
 block
@@ -65,6 +66,10 @@ whileStatement
 
 returnStatement
     :   'return' expression ';'
+    ;
+
+print
+    :   name=('print' | 'println') '(' expression ')' ';'
     ;
 
 expression

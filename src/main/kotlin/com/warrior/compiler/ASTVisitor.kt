@@ -106,6 +106,16 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Prototype(name, args, type)
     }
 
+    override fun visitPrint(ctx: GrammarParser.PrintContext): Print {
+        val expr = visitExpression(ctx.expression())
+        val newLine = when (ctx.name.text) {
+            "print" -> false
+            "println" -> true
+            else -> throw IllegalStateException("unreachable state")
+        }
+        return Print(expr, newLine)
+    }
+
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
         if (ctx.expression() != null) {
             return visitExpression(ctx.expression())
