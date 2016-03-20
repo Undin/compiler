@@ -11,6 +11,7 @@ class Module(val functions: List<Function>) : ASTNode {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
         functions.forEach { it.prototype.generateCode(module) }
         declarePrintf(module)
+        declareScanf(module)
         functions.forEach { it.generateCode(module, builder) }
     }
 
@@ -18,6 +19,13 @@ class Module(val functions: List<Function>) : ASTNode {
         val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0);
         val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1);
         val fn = LLVMAddFunction(module, "printf", fnType)
+        LLVMSetFunctionCallConv(fn, LLVMCCallConv)
+    }
+
+    private fun declareScanf(module: LLVMModuleRef) {
+        val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0);
+        val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1);
+        val fn = LLVMAddFunction(module, "scanf", fnType)
         LLVMSetFunctionCallConv(fn, LLVMCCallConv)
     }
 }

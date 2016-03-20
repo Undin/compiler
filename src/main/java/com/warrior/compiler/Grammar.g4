@@ -34,6 +34,7 @@ statement
     |   whileStatement
     |   returnStatement
     |   print
+    |   read
     ;
 
 block
@@ -70,6 +71,10 @@ returnStatement
 
 print
     :   name=('print' | 'println') '(' expression ')' ';'
+    ;
+
+read
+    :   'read' '(' Identifier ')' ';'
     ;
 
 expression

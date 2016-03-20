@@ -228,6 +228,29 @@ class Print(val expr: Expr, val newLine: Boolean) : Statement {
         val value = expr.generateCode(module, builder, symbolTable)
         val printfFn = LLVMGetNamedFunction(module, "printf")
         val args = arrayOf(s, value)
-        LLVMBuildCall(builder, printfFn, PointerPointer(*args), 2, "writeCall")
+        LLVMBuildCall(builder, printfFn, PointerPointer(*args), args.size, "writeCall")
+    }
+}
+
+class Read(val varName: String) : Statement {
+
+    companion object {
+        private var str: LLVMValueRef? = null
+
+        private fun getStr(builder: LLVMBuilderRef): LLVMValueRef {
+            if (str == null) {
+                str = LLVMBuildGlobalStringPtr(builder, "%d", "str")
+            }
+            return str!!
+        }
+    }
+
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+        val variable = symbolTable.variables[varName] ?: throw IllegalStateException("variable '$varName' isn't declared")
+
+        val s = getStr(builder)
+        val scanfFn = LLVMGetNamedFunction(module, "scanf")
+        val args = arrayOf(s, variable.ref)
+        LLVMBuildCall(builder, scanfFn, PointerPointer(*args), args.size, "readCall")
     }
 }

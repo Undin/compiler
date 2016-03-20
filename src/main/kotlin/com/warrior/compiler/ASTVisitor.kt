@@ -116,6 +116,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Print(expr, newLine)
     }
 
+    override fun visitRead(ctx: GrammarParser.ReadContext): Read {
+        val varName = ctx.Identifier().text
+        return Read(varName)
+    }
+
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
         if (ctx.expression() != null) {
             return visitExpression(ctx.expression())
