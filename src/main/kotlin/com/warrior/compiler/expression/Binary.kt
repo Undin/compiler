@@ -4,7 +4,8 @@ import com.warrior.compiler.Fn
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.TypedValue
 import com.warrior.compiler.expression.Binary.*
-import org.bytedeco.javacpp.LLVM
+import org.bytedeco.javacpp.LLVM.*
+import org.bytedeco.javacpp.PointerPointer
 
 /**
  * Created by warrior on 07.03.16.
@@ -13,14 +14,47 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
 
     class BinaryBool(val op: Operation, lhs: Expr, rhs: Expr) :
             Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), BoolExpr {
+
         enum class Operation(val opcode: Int) {
-            AND(LLVM.LLVMAnd),
-            OR(LLVM.LLVMOr);
+            AND(LLVMAnd),
+            OR(LLVMOr);
 
             override fun toString(): String = when (this) {
                 AND -> "&&"
                 OR -> "||"
             }
+        }
+
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable): LLVMValueRef {
+            val currentBlock = LLVMGetInsertBlock(builder)
+            val fn = LLVMGetBasicBlockParent(currentBlock)
+
+            val rhsBlock = LLVMAppendBasicBlock(fn, "rhs")
+            val joinBlock = LLVMAppendBasicBlock(fn, "join")
+
+            val lhsResult = lhs.generateCode(module, builder, symbolTable)
+
+            when (op) {
+                // if 'and' and lhsResult == false jump to join block
+                Operation.AND -> LLVMBuildCondBr(builder, lhsResult, rhsBlock, joinBlock)
+                // if 'or' and lhsResult == true jump to join block
+                Operation.OR -> LLVMBuildCondBr(builder, lhsResult, joinBlock, rhsBlock)
+            }
+
+            // calculate rhs and operation result
+            LLVMPositionBuilderAtEnd(builder, rhsBlock)
+            val rhsResult = rhs.generateCode(module, builder, symbolTable)
+            val exprResult = doOperation(builder, lhsResult, rhsResult)
+            LLVMBuildBr(builder, joinBlock)
+
+            LLVMPositionBuilderAtEnd(builder, joinBlock)
+            // join results
+            val phi = LLVMBuildPhi(builder, LLVMInt1Type(), "res")
+            val incomingValues = PointerPointer(*arrayOf(lhsResult, exprResult))
+            val incomingBlocks = PointerPointer(*arrayOf(currentBlock, rhsBlock))
+            LLVMAddIncoming(phi, incomingValues, incomingBlocks, 2)
+
+            return phi
         }
 
         override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
@@ -41,11 +75,11 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), IntExpr {
 
         enum class Operation(val opcode: Int) {
-            ADD(LLVM.LLVMAdd),
-            SUB(LLVM.LLVMSub),
-            MUL(LLVM.LLVMMul),
-            DIV(LLVM.LLVMSDiv),
-            MOD(LLVM.LLVMSRem);
+            ADD(LLVMAdd),
+            SUB(LLVMSub),
+            MUL(LLVMMul),
+            DIV(LLVMSDiv),
+            MOD(LLVMSRem);
 
             override fun toString(): String = when (this) {
                 ADD -> "+"
@@ -77,12 +111,12 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), BoolExpr {
 
         enum class Operation(val opcode: Int) {
-            EQUAL(LLVM.LLVMIntEQ),
-            NOT_EQUAL(LLVM.LLVMIntNE),
-            LESS(LLVM.LLVMIntSLT),
-            LESS_OR_EQUAL(LLVM.LLVMIntSLE),
-            GREATER(LLVM.LLVMIntSGT),
-            GREATER_OR_EQUAL(LLVM.LLVMIntSGE);
+            EQUAL(LLVMIntEQ),
+            NOT_EQUAL(LLVMIntNE),
+            LESS(LLVMIntSLT),
+            LESS_OR_EQUAL(LLVMIntSLE),
+            GREATER(LLVMIntSGT),
+            GREATER_OR_EQUAL(LLVMIntSGE);
 
             override fun toString(): String = when (this) {
                 EQUAL -> "=="
@@ -94,8 +128,8 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             }
         }
 
-        override fun doOperation(builder: LLVM.LLVMBuilderRef, left: LLVM.LLVMValueRef, right: LLVM.LLVMValueRef): LLVM.LLVMValueRef {
-            return LLVM.LLVMBuildICmp(builder, opcode, left, right, name)
+        override fun doOperation(builder: LLVMBuilderRef, left: LLVMValueRef, right: LLVMValueRef): LLVMValueRef {
+            return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
         override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
@@ -127,14 +161,14 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
         }
     }
 
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable): LLVMValueRef {
         val left = lhs.generateCode(module, builder, symbolTable)
         val right = rhs.generateCode(module, builder, symbolTable)
         return doOperation(builder, left, right)
     }
 
-    open protected fun doOperation(builder: LLVM.LLVMBuilderRef, left: LLVM.LLVMValueRef, right: LLVM.LLVMValueRef): LLVM.LLVMValueRef {
-        return LLVM.LLVMBuildBinOp(builder, opcode, left, right, name)
+    open protected fun doOperation(builder: LLVMBuilderRef, left: LLVMValueRef, right: LLVMValueRef): LLVMValueRef {
+        return LLVMBuildBinOp(builder, opcode, left, right, name)
     }
 
     override fun equals(other: Any?): Boolean {
