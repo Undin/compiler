@@ -1,12 +1,10 @@
 package com.warrior.compiler.statement
 
-import com.warrior.compiler.ASTNode
-import com.warrior.compiler.SymbolTable
-import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
+import com.warrior.compiler.*
 import com.warrior.compiler.expression.Expr
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
+import java.util.*
 
 /**
  * Created by warrior on 13.03.16.
@@ -16,6 +14,10 @@ interface Statement : ASTNode {
                      symbolTable: SymbolTable, returnBlock: ReturnBlock?): Unit
     fun hasReturnStatement(): Boolean = false
     fun isTerminalStatement(): Boolean = false
+
+    fun interpret(env: MutableMap<String, TypedValue> = HashMap(),
+                  functions: Map<String, Fn> = HashMap(),
+                  input: MutableList<TypedValue> = ArrayList()): List<TypedValue>
 }
 
 data class ReturnBlock(val block: LLVMBasicBlockRef, val retValueRef: LLVMValueRef)
@@ -31,16 +33,47 @@ class Block(val statements: List<Statement>) : Statement {
                 break;
             }
         }
+        for ((name, value) in symbolTable.variables) {
+            val value = localSymbolTable.variables[name]
+            if (value != null) {
+                symbolTable.variables[name] = value
+            }
+        }
     }
 
     override fun hasReturnStatement(): Boolean = statements.any { it.hasReturnStatement() }
     override fun isTerminalStatement(): Boolean = statements.any { it.isTerminalStatement() }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        val localEnv = HashMap(env)
+        val out = ArrayList<TypedValue>()
+        for (st in statements) {
+            out += st.interpret(localEnv, functions, input)
+            if (st.isTerminalStatement()) {
+                break;
+            }
+        }
+        for ((name, value) in env) {
+            val value = localEnv[name]
+            if (value != null) {
+                env[name] = value
+            }
+        }
+        return out
+    }
 }
 
 class ExpressionStatement(val expr: Expr) : Statement {
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
         expr.generateCode(module, builder, symbolTable)
+    }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        expr.calculate(env, functions)
+        return listOf()
     }
 }
 
@@ -50,6 +83,16 @@ class Assign(val name: String, val expr: Expr) : Statement {
         val v = symbolTable.variables[name] ?: throw IllegalStateException("variable '$name' is not declared");
         val value = expr.generateCode(module, builder, symbolTable)
         LLVMBuildStore(builder, value, v.ref)
+    }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        if (name !in env) {
+            throw IllegalStateException("variable '$name' is not declared");
+        }
+        val value = expr.calculate(env, functions)
+        env[name] = value
+        return listOf();
     }
 }
 
@@ -65,6 +108,24 @@ class AssignDecl(val name: String, val type: Type, val expr: Expr?) : Statement 
             val value = expr.generateCode(module, builder, symbolTable)
             LLVMBuildStore(builder, value, ref)
         }
+    }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        if (name in env) {
+            throw IllegalStateException("variable '$name' is already declared");
+        }
+
+        env[name] = if (expr != null) {
+            expr.calculate(env, functions)
+        } else {
+            when (type) {
+                is Type.Bool -> TypedValue.BoolValue(false)
+                is Type.I32 -> TypedValue.IntValue(0)
+                else -> throw IllegalStateException("Unknown variable type")
+            }
+        }
+        return listOf()
     }
 }
 
@@ -95,6 +156,16 @@ class If(val condition: Expr, val thenBlock: Block) : Statement {
     }
 
     override fun hasReturnStatement(): Boolean = thenBlock.hasReturnStatement()
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        val value = condition.calculate(env, functions) as TypedValue.BoolValue
+        return if (value.value) {
+            thenBlock.interpret(env, functions, input)
+        } else {
+            listOf()
+        }
+    }
 }
 
 class IfElse(val condition: Expr, val thenBlock: Block, val elseBlock: Block) : Statement {
@@ -144,6 +215,16 @@ class IfElse(val condition: Expr, val thenBlock: Block, val elseBlock: Block) : 
 
     override fun hasReturnStatement(): Boolean = thenBlock.hasReturnStatement() || elseBlock.hasReturnStatement()
     override fun isTerminalStatement(): Boolean = thenBlock.isTerminalStatement() && elseBlock.isTerminalStatement()
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        val value = condition.calculate(env, functions) as TypedValue.BoolValue
+        return if (value.value) {
+            thenBlock.interpret(env, functions, input)
+        } else {
+            elseBlock.interpret(env, functions, input)
+        }
+    }
 }
 
 class While(val condition: Expr, val bodyBlock: Block) : Statement {
@@ -179,6 +260,15 @@ class While(val condition: Expr, val bodyBlock: Block) : Statement {
     }
 
     override fun hasReturnStatement(): Boolean = bodyBlock.hasReturnStatement()
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        val output = ArrayList<TypedValue>()
+        while ((condition.calculate(env, functions) as TypedValue.BoolValue).value) {
+            output += bodyBlock.interpret(env, functions, input)
+        }
+        return output
+    }
 }
 
 private fun getCurrentFunction(builder: LLVMBuilderRef): LLVMValueRef {
@@ -200,6 +290,12 @@ class Return(val expr: Expr) : Statement {
 
     override fun hasReturnStatement(): Boolean = true
     override fun isTerminalStatement(): Boolean = true
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        expr.calculate(env, functions)
+        return listOf()
+    }
 }
 
 class Print(val expr: Expr, val newLine: Boolean) : Statement {
@@ -230,6 +326,12 @@ class Print(val expr: Expr, val newLine: Boolean) : Statement {
         val args = arrayOf(s, value)
         LLVMBuildCall(builder, printfFn, PointerPointer(*args), args.size, "writeCall")
     }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        val value = expr.calculate(env, functions)
+        return listOf(value)
+    }
 }
 
 class Read(val varName: String) : Statement {
@@ -252,5 +354,14 @@ class Read(val varName: String) : Statement {
         val scanfFn = LLVMGetNamedFunction(module, "scanf")
         val args = arrayOf(s, variable.ref)
         LLVMBuildCall(builder, scanfFn, PointerPointer(*args), args.size, "readCall")
+    }
+
+    override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                           input: MutableList<TypedValue>): List<TypedValue> {
+        if (varName !in env) {
+            throw IllegalStateException("variable '$varName' isn't declared")
+        }
+        env[varName] = input.removeAt(0)
+        return listOf()
     }
 }
