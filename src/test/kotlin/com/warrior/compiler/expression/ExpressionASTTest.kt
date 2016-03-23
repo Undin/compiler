@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import org.antlr.v4.runtime.ParserRuleContext
 import org.junit.Assert
 import org.junit.Test
 
@@ -7,11 +8,13 @@ import org.junit.Test
  * Created by warrior on 17.03.16.
  */
 class ExpressionASTTest {
+    
+    private val ctx = ParserRuleContext()
 
     @Test
     fun constTest1() {
         Assert.assertEquals(
-                I32(1),
+                i32(1),
                 parseExpr("1")
         )
     }
@@ -19,7 +22,7 @@ class ExpressionASTTest {
     @Test
     fun constTest2() {
         Assert.assertEquals(
-                Bool(false),
+                bool(false),
                 parseExpr("false")
         )
     }
@@ -27,7 +30,7 @@ class ExpressionASTTest {
     @Test
     fun variableTest() {
         Assert.assertEquals(
-                Variable("variableName"),
+                variable("variableName"),
                 parseExpr("variableName")
         )
     }
@@ -35,7 +38,7 @@ class ExpressionASTTest {
     @Test
     fun unaryTest1() {
         Assert.assertEquals(
-                Variable("a"),
+                variable("a"),
                 parseExpr("+a")
         )
     }
@@ -43,7 +46,7 @@ class ExpressionASTTest {
     @Test
     fun unaryTest2() {
         Assert.assertEquals(
-                UnaryMinus(I32(5)),
+                UnaryMinus(ctx, i32(5)),
                 parseExpr("-5")
         )
     }
@@ -51,7 +54,7 @@ class ExpressionASTTest {
     @Test
     fun unaryTest3() {
         Assert.assertEquals(
-                Not(Bool(true)),
+                Not(ctx, bool(true)),
                 parseExpr("!true")
         )
     }
@@ -59,7 +62,7 @@ class ExpressionASTTest {
     @Test
     fun arithmeticTest1() {
         Assert.assertEquals(
-                add(I32(1), I32(2)),
+                add(i32(1), i32(2)),
                 parseExpr("1 + 2")
         )
     }
@@ -67,7 +70,7 @@ class ExpressionASTTest {
     @Test
     fun arithmeticTest2() {
         Assert.assertEquals(
-                add(I32(1), mul(I32(2), I32(3))),
+                add(i32(1), mul(i32(2), i32(3))),
                 parseExpr("1 + 2 * 3")
         )
     }
@@ -75,7 +78,7 @@ class ExpressionASTTest {
     @Test
     fun arithmeticTest3() {
         Assert.assertEquals(
-                div(sub(I32(12), I32(2)), I32(5)),
+                div(sub(i32(12), i32(2)), i32(5)),
                 parseExpr("(12 - 2) / 5")
         )
     }
@@ -83,7 +86,7 @@ class ExpressionASTTest {
     @Test
     fun arithmeticTest4() {
         Assert.assertEquals(
-                add(UnaryMinus(mod(I32(4), I32(3))), I32(7)),
+                add(UnaryMinus(ctx, mod(i32(4), i32(3))), i32(7)),
                 parseExpr("-(4 % 3) + 7")
         )
     }
@@ -91,7 +94,7 @@ class ExpressionASTTest {
     @Test
     fun arithmeticTest5() {
         Assert.assertEquals(
-                mul(add(Variable("a"), I32(3)), sub(Variable("b"), I32(8))),
+                mul(add(variable("a"), i32(3)), sub(variable("b"), i32(8))),
                 parseExpr("(a + 3) * (b - 8)")
         )
     }
@@ -99,7 +102,7 @@ class ExpressionASTTest {
     @Test
     fun boolTest1() {
         Assert.assertEquals(
-                or(Bool(true), Variable("a")),
+                or(bool(true), variable("a")),
                 parseExpr("true || a")
         )
     }
@@ -107,7 +110,7 @@ class ExpressionASTTest {
     @Test
     fun boolTest2() {
         Assert.assertEquals(
-                or(Variable("b"), and(Variable("a"), Variable("c"))),
+                or(variable("b"), and(variable("a"), variable("c"))),
                 parseExpr("b || a && c")
         )
     }
@@ -115,7 +118,7 @@ class ExpressionASTTest {
     @Test
     fun boolTest3() {
         Assert.assertEquals(
-                or(Not(or(Variable("qqq"), Variable("b"))), and(Variable("a"), Variable("c"))),
+                or(Not(ctx, or(variable("qqq"), variable("b"))), and(variable("a"), variable("c"))),
                 parseExpr("!(qqq || b) || a && c")
         )
     }
@@ -123,7 +126,7 @@ class ExpressionASTTest {
     @Test
     fun cmpTest1() {
         Assert.assertEquals(
-                eq(I32(1), I32(5)),
+                eq(i32(1), i32(5)),
                 parseExpr("1 == 5")
         )
     }
@@ -131,7 +134,7 @@ class ExpressionASTTest {
     @Test
     fun cmpTest2() {
         Assert.assertEquals(
-                ge(Variable("b"), Variable("c")),
+                ge(variable("b"), variable("c")),
                 parseExpr("b >= c")
         )
     }
@@ -139,7 +142,7 @@ class ExpressionASTTest {
     @Test
     fun callTest1() {
         Assert.assertEquals(
-                Call("f", emptyList()),
+                call("f", emptyList()),
                 parseExpr("f()")
         )
     }
@@ -147,7 +150,7 @@ class ExpressionASTTest {
     @Test
     fun callTest2() {
         Assert.assertEquals(
-                Call("f", listOf(Variable("param"), I32(2), Bool(false))),
+                call("f", listOf(variable("param"), i32(2), bool(false))),
                 parseExpr("f(param, 2, false)")
         )
     }
@@ -155,7 +158,7 @@ class ExpressionASTTest {
     @Test
     fun callTest3() {
         Assert.assertEquals(
-                Call("f", listOf(Variable("a"), mul(I32(2), Variable("b")), or(Variable("c"), Variable("d")))),
+                call("f", listOf(variable("a"), mul(i32(2), variable("b")), or(variable("c"), variable("d")))),
                 parseExpr("f(a, 2 * b, c || d)")
         )
     }
@@ -163,7 +166,7 @@ class ExpressionASTTest {
     @Test
     fun test1() {
         Assert.assertEquals(
-                ne(add(I32(1), Variable("b")), Variable("c")),
+                ne(add(i32(1), variable("b")), variable("c")),
                 parseExpr("1 + b != c")
         )
     }
@@ -171,7 +174,7 @@ class ExpressionASTTest {
     @Test
     fun test2() {
         Assert.assertEquals(
-                gt(sub(mul(I32(5), Variable("a")), I32(1)), div(Variable("b"), I32(10))),
+                gt(sub(mul(i32(5), variable("a")), i32(1)), div(variable("b"), i32(10))),
                 parseExpr("5 * a - 1 > b / 10")
         )
     }
@@ -179,7 +182,7 @@ class ExpressionASTTest {
     @Test
     fun test3() {
         Assert.assertEquals(
-                and(le(Variable("x"), Variable("y")), eq(mod(Variable("x"), I32(2)), I32(0))),
+                and(le(variable("x"), variable("y")), eq(mod(variable("x"), i32(2)), i32(0))),
                 parseExpr("x <= y && x % 2 == 0")
         )
     }
@@ -187,7 +190,7 @@ class ExpressionASTTest {
     @Test
     fun test4() {
         Assert.assertEquals(
-                mul(I32(5), Call("f", listOf(Variable("x"), ge(Variable("y"), I32(0))))),
+                mul(i32(5), call("f", listOf(variable("x"), ge(variable("y"), i32(0))))),
                 parseExpr("5 * f(x, y >= 0)")
         )
     }
@@ -195,9 +198,28 @@ class ExpressionASTTest {
     @Test
     fun test5() {
         Assert.assertEquals(
-                or(le(Variable("x"), Call("g", listOf(Variable("y"), Bool(true)))),
-                        eq(mod(Call("f", listOf(mul(I32(5), Variable("x")))), I32(2)), I32(0))),
+                or(le(variable("x"), call("g", listOf(variable("y"), bool(true)))),
+                        eq(mod(call("f", listOf(mul(i32(5), variable("x")))), i32(2)), i32(0))),
                 parseExpr("x <= g(y, true) || f(5 * x) % 2 == 0")
         )
     }
+    
+    private fun i32(value: Int): I32 = I32(ctx, value)
+    private fun bool(value: Boolean): Bool = Bool(ctx, value)
+    private fun variable(name: String): Variable = Variable(ctx, name)
+    private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
+
+    private fun and(lhs: Expr, rhs: Expr) = and(ctx, lhs, rhs)
+    private fun or(lhs: Expr, rhs: Expr) = or(ctx, lhs, rhs)
+    private fun add(lhs: Expr, rhs: Expr) = add(ctx, lhs, rhs)
+    private fun sub(lhs: Expr, rhs: Expr) = sub(ctx, lhs, rhs)
+    private fun mul(lhs: Expr, rhs: Expr) = mul(ctx, lhs, rhs)
+    private fun div(lhs: Expr, rhs: Expr) = div(ctx, lhs, rhs)
+    private fun mod(lhs: Expr, rhs: Expr) = mod(ctx, lhs, rhs)
+    private fun eq(lhs: Expr, rhs: Expr) = eq(ctx, lhs, rhs)
+    private fun ne(lhs: Expr, rhs: Expr) = ne(ctx, lhs, rhs)
+    private fun lt(lhs: Expr, rhs: Expr) = lt(ctx, lhs, rhs)
+    private fun le(lhs: Expr, rhs: Expr) = le(ctx, lhs, rhs)
+    private fun gt(lhs: Expr, rhs: Expr) = gt(ctx, lhs, rhs)
+    private fun ge(lhs: Expr, rhs: Expr) = ge(ctx, lhs, rhs)
 }

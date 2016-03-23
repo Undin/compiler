@@ -84,7 +84,7 @@ expression
     |   left=expression op=('*' | '/' | '%') right=expression
     |   left=expression op=('+' | '-') right=expression
     |   left=expression cmpOp=('<=' | '>=' | '<' | '>') right=expression
-    |   left=expression cmpOp=('==' | '!=') right=expression
+    |   left=expression equalOp=('==' | '!=') right=expression
     |   left=expression boolOp='&&' right=expression
     |   left=expression boolOp='||' right=expression
     ;

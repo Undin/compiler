@@ -1001,6 +1001,7 @@ public class GrammarParser extends Parser {
 		public Token op;
 		public ExpressionContext right;
 		public Token cmpOp;
+		public Token equalOp;
 		public Token boolOp;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
@@ -1155,10 +1156,10 @@ public class GrammarParser extends Parser {
 						setState(171);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(172);
-						((ExpressionContext)_localctx).cmpOp = _input.LT(1);
+						((ExpressionContext)_localctx).equalOp = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(_la==EQUAL || _la==NOTEQUAL) ) {
-							((ExpressionContext)_localctx).cmpOp = (Token)_errHandler.recoverInline(this);
+							((ExpressionContext)_localctx).equalOp = (Token)_errHandler.recoverInline(this);
 						} else {
 							consume();
 						}

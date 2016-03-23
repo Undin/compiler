@@ -1,19 +1,29 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.Fn
-import com.warrior.compiler.SymbolTable
-import com.warrior.compiler.TypedValue
+import com.warrior.compiler.*
+import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.expression.Binary.*
+import com.warrior.compiler.expression.Binary.Arithmetic.Operation.*
+import com.warrior.compiler.expression.Binary.Cmp.Operation.*
+import com.warrior.compiler.expression.Binary.Equal.Operation.*
+import com.warrior.compiler.expression.Binary.Logic.Operation.*
+import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.Fn
+import com.warrior.compiler.validation.Result
+import com.warrior.compiler.validation.Result.*
+import com.warrior.compiler.validation.TypedValue
+import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
+import java.util.*
 
 /**
  * Created by warrior on 07.03.16.
  */
-sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: Expr) : Expr {
+sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, val lhs: Expr, val rhs: Expr) : Expr(ctx) {
 
-    class BinaryBool(val op: Operation, lhs: Expr, rhs: Expr) :
-            Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), BoolExpr {
+    class Logic(ctx: ParserRuleContext, val op: Operation, lhs: Expr, rhs: Expr) :
+            Binary(ctx, op.opcode, op.name.toLowerCase(), lhs, rhs) {
 
         enum class Operation(val opcode: Int) {
             AND(LLVMAnd),
@@ -36,9 +46,9 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
 
             when (op) {
                 // if 'and' and lhsResult == false jump to join block
-                Operation.AND -> LLVMBuildCondBr(builder, lhsResult, rhsBlock, joinBlock)
+                AND -> LLVMBuildCondBr(builder, lhsResult, rhsBlock, joinBlock)
                 // if 'or' and lhsResult == true jump to join block
-                Operation.OR -> LLVMBuildCondBr(builder, lhsResult, joinBlock, rhsBlock)
+                OR -> LLVMBuildCondBr(builder, lhsResult, joinBlock, rhsBlock)
             }
 
             // calculate rhs and operation result
@@ -57,13 +67,17 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             return phi
         }
 
-        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
-            val left = lhs.calculate(env, functions)
-            val right = rhs.calculate(env, functions)
+        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+
+        override fun expectedArgType(): Type = Type.Bool
+
+        override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue {
+            val left = lhs.calculate(functions, variables)
+            val right = rhs.calculate(functions, variables)
             if (left is TypedValue.BoolValue && right is TypedValue.BoolValue) {
                 return when (op) {
-                    Operation.AND -> TypedValue.BoolValue(left.value && right.value)
-                    Operation.OR -> TypedValue.BoolValue(left.value || right.value)
+                    AND -> TypedValue.BoolValue(left.value && right.value)
+                    OR -> TypedValue.BoolValue(left.value || right.value)
                 }
             } else {
                 throw IllegalStateException("Incompatible types: expressions must have bool type")
@@ -71,8 +85,8 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
         }
     }
 
-    class Arithmetic(val op: Operation, lhs: Expr, rhs: Expr) :
-            Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), IntExpr {
+    class Arithmetic(ctx: ParserRuleContext, val op: Operation, lhs: Expr, rhs: Expr) :
+            Binary(ctx, op.opcode, op.name.toLowerCase(), lhs, rhs) {
 
         enum class Operation(val opcode: Int) {
             ADD(LLVMAdd),
@@ -90,16 +104,20 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             }
         }
 
-        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.IntValue {
-            val left = lhs.calculate(env, functions)
-            val right = rhs.calculate(env, functions)
+        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.I32
+
+        override fun expectedArgType(): Type = Type.I32
+
+        override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.IntValue {
+            val left = lhs.calculate(functions, variables)
+            val right = rhs.calculate(functions, variables)
             if (left is TypedValue.IntValue && right is TypedValue.IntValue) {
                 return when (op) {
-                    Operation.ADD -> left + right
-                    Operation.SUB -> left - right
-                    Operation.MUL -> left * right
-                    Operation.DIV -> left / right
-                    Operation.MOD -> left % right
+                    ADD -> left + right
+                    SUB -> left - right
+                    MUL -> left * right
+                    DIV -> left / right
+                    MOD -> left % right
                 }
             } else {
                 throw IllegalStateException("Incompatible types: expressions must have int type")
@@ -107,20 +125,63 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
         }
     }
 
-    class Cmp(val op: Operation, lhs: Expr, rhs: Expr) :
-            Binary(op.opcode, op.name.toLowerCase(), lhs, rhs), BoolExpr {
+    class Equal(ctx: ParserRuleContext, val op: Operation, lhs: Expr, rhs: Expr) :
+            Binary(ctx, op.opcode, op.name.toLowerCase(), lhs, rhs) {
 
         enum class Operation(val opcode: Int) {
             EQUAL(LLVMIntEQ),
-            NOT_EQUAL(LLVMIntNE),
+            NOT_EQUAL(LLVMIntNE);
+
+            override fun toString(): String = when (this) {
+                EQUAL -> "=="
+                NOT_EQUAL -> "!="
+            }
+        }
+
+        override fun doOperation(builder: LLVMBuilderRef, left: LLVMValueRef, right: LLVMValueRef): LLVMValueRef {
+            return LLVMBuildICmp(builder, opcode, left, right, name)
+        }
+
+        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+
+        override fun doValidate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): List<ErrorMessage> {
+            val lhsType = lhs.getType(functions, variables)
+            val rhsType = rhs.getType(functions, variables)
+            if (lhsType != rhsType && lhsType != Type.Unknown && rhsType != Type.Unknown) {
+                val message = "'${lhs.getText()}' and '${rhs.getText()}' have different types"
+                return listOf(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            }
+            return listOf()
+        }
+
+        override fun expectedArgType(): Type {
+            throw UnsupportedOperationException()
+        }
+
+        override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue {
+            val left = lhs.calculate(functions, variables)
+            val right = rhs.calculate(functions, variables)
+            if (left.javaClass != right.javaClass) {
+                throw IllegalStateException("Incompatible types: you can not compare expression with different types")
+            }
+            val result = when (op) {
+                EQUAL -> left == right
+                NOT_EQUAL -> left != right
+            }
+            return TypedValue.BoolValue(result)
+        }
+    }
+
+    class Cmp(ctx: ParserRuleContext, val op: Operation, lhs: Expr, rhs: Expr) :
+            Binary(ctx, op.opcode, op.name.toLowerCase(), lhs, rhs) {
+
+        enum class Operation(val opcode: Int) {
             LESS(LLVMIntSLT),
             LESS_OR_EQUAL(LLVMIntSLE),
             GREATER(LLVMIntSGT),
             GREATER_OR_EQUAL(LLVMIntSGE);
 
             override fun toString(): String = when (this) {
-                EQUAL -> "=="
-                NOT_EQUAL -> "!="
                 LESS -> "<"
                 LESS_OR_EQUAL -> "<="
                 GREATER -> ">"
@@ -132,32 +193,24 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
             return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue.BoolValue {
-            val left = lhs.calculate(env, functions)
-            val right = rhs.calculate(env, functions)
+        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
 
-            if (left is TypedValue.IntValue && right is TypedValue.IntValue) {
-                val result = when (op) {
-                    Operation.EQUAL -> left == right
-                    Operation.NOT_EQUAL -> left != right
-                    Operation.LESS -> left < right
-                    Operation.LESS_OR_EQUAL -> left <= right
-                    Operation.GREATER -> left > right
-                    Operation.GREATER_OR_EQUAL -> left >= right
-                }
-                return TypedValue.BoolValue(result)
+        override fun expectedArgType(): Type = Type.I32
+
+        override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue {
+            val left = lhs.calculate(functions, variables)
+            val right = rhs.calculate(functions, variables)
+
+            if (left !is TypedValue.IntValue || right !is TypedValue.IntValue) {
+                throw IllegalStateException("Incompatible types: You can not compare non i32 expressions")
             }
-
-            if (left is TypedValue.BoolValue && right is TypedValue.BoolValue) {
-                val result = when (op) {
-                    Operation.EQUAL -> left == right
-                    Operation.NOT_EQUAL -> left != right
-                    else -> throw IllegalStateException("Incompatible types: You can not compare bool expressions")
-                }
-                return TypedValue.BoolValue(result)
+            val result = when (op) {
+                LESS -> left < right
+                LESS_OR_EQUAL -> left <= right
+                GREATER -> left > right
+                GREATER_OR_EQUAL -> left >= right
             }
-
-            throw IllegalStateException("Incompatible types")
+            return TypedValue.BoolValue(result)
         }
     }
 
@@ -169,6 +222,41 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
 
     open protected fun doOperation(builder: LLVMBuilderRef, left: LLVMValueRef, right: LLVMValueRef): LLVMValueRef {
         return LLVMBuildBinOp(builder, opcode, left, right, name)
+    }
+
+    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+        val lhsResult = lhs.validate(functions, variables)
+        val rhsResult = rhs.validate(functions, variables)
+        val messages = doValidate(functions, variables)
+        val result = if (messages.isEmpty()) {
+            Ok
+        } else {
+            Error(messages)
+        }
+        return lhsResult + rhsResult + result
+    }
+
+    open protected fun doValidate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): List<ErrorMessage> {
+        val lhsType = lhs.getType(functions, variables)
+        val rhsType = rhs.getType(functions, variables)
+        val expectedType = expectedArgType()
+        val messages = ArrayList<ErrorMessage>()
+
+        if (!matchType(lhsType, expectedType)) {
+            val msg = "expression '${lhs.getText()}' must have $expectedType type"
+            messages.add(ErrorMessage(TYPE_MISMATCH, msg, lhs.start(), lhs.end()))
+        }
+        if (!matchType(rhsType, expectedType)) {
+            val msg = "expression '${rhs.getText()}' must have $expectedType type"
+            messages.add(ErrorMessage(TYPE_MISMATCH, msg, rhs.start(), rhs.end()))
+        }
+        return messages
+    }
+
+    protected abstract fun expectedArgType(): Type
+
+    protected fun matchType(type: Type, expectedType: Type): Boolean {
+        return type == expectedType || type == Type.Unknown
     }
 
     override fun equals(other: Any?): Boolean {
@@ -190,22 +278,23 @@ sealed class Binary(val opcode: Int, val name: String, val lhs: Expr, val rhs: E
     }
 
     override fun toString(): String = when (this) {
-        is BinaryBool -> "$lhs $op $rhs"
+        is Logic -> "$lhs $op $rhs"
         is Arithmetic -> "$lhs $op $rhs"
+        is Equal -> "$lhs $op $rhs"
         is Cmp -> "$lhs $op $rhs"
     }
 }
 
-fun and(lhs: Expr, rhs: Expr) = BinaryBool(BinaryBool.Operation.AND, lhs, rhs)
-fun or(lhs: Expr, rhs: Expr) = BinaryBool(BinaryBool.Operation.OR, lhs, rhs)
-fun add(lhs: Expr, rhs: Expr) = Arithmetic(Arithmetic.Operation.ADD, lhs, rhs)
-fun sub(lhs: Expr, rhs: Expr) = Arithmetic(Arithmetic.Operation.SUB, lhs, rhs)
-fun mul(lhs: Expr, rhs: Expr) = Arithmetic(Arithmetic.Operation.MUL, lhs, rhs)
-fun div(lhs: Expr, rhs: Expr) = Arithmetic(Arithmetic.Operation.DIV, lhs, rhs)
-fun mod(lhs: Expr, rhs: Expr) = Arithmetic(Arithmetic.Operation.MOD, lhs, rhs)
-fun eq(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.EQUAL, lhs, rhs)
-fun ne(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.NOT_EQUAL, lhs, rhs)
-fun lt(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.LESS, lhs, rhs)
-fun le(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.LESS_OR_EQUAL, lhs, rhs)
-fun gt(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.GREATER, lhs, rhs)
-fun ge(lhs: Expr, rhs: Expr) = Cmp(Cmp.Operation.GREATER_OR_EQUAL, lhs, rhs)
+fun and(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Logic(ctx, AND, lhs, rhs)
+fun or(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Logic(ctx, OR, lhs, rhs)
+fun add(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Arithmetic(ctx, ADD, lhs, rhs)
+fun sub(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Arithmetic(ctx, SUB, lhs, rhs)
+fun mul(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Arithmetic(ctx, MUL, lhs, rhs)
+fun div(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Arithmetic(ctx, DIV, lhs, rhs)
+fun mod(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Arithmetic(ctx, MOD, lhs, rhs)
+fun eq(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Equal(ctx, EQUAL, lhs, rhs)
+fun ne(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Equal(ctx, NOT_EQUAL, lhs, rhs)
+fun lt(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Cmp(ctx, LESS, lhs, rhs)
+fun le(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Cmp(ctx, LESS_OR_EQUAL, lhs, rhs)
+fun gt(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Cmp(ctx, GREATER, lhs, rhs)
+fun ge(ctx: ParserRuleContext, lhs: Expr, rhs: Expr) = Cmp(ctx, GREATER_OR_EQUAL, lhs, rhs)

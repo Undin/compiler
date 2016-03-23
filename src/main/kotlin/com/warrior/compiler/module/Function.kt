@@ -1,17 +1,16 @@
 package com.warrior.compiler.module
 
-import com.warrior.compiler.ASTNode
-import com.warrior.compiler.SymbolTable
-import com.warrior.compiler.VariableAttrs
-import com.warrior.compiler.statement.Block
-import com.warrior.compiler.statement.Return
+import com.warrior.compiler.*
+import com.warrior.compiler.statement.Statement.Block
+import com.warrior.compiler.statement.Statement.Return
 import com.warrior.compiler.statement.ReturnBlock
+import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 
 /**
  * Created by warrior on 10.03.16.
  */
-class Function(val prototype: Prototype, val body: Block) : ASTNode {
+class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block) : ASTNode(ctx) {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
         val fn = LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
@@ -52,6 +51,6 @@ class Function(val prototype: Prototype, val body: Block) : ASTNode {
         }
 
         // verify function
-        LLVMVerifyFunction(fn, LLVMAbortProcessAction)
+        LLVMVerifyFunction(fn, LLVMPrintMessageAction)
     }
 }

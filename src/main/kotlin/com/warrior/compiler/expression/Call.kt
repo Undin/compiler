@@ -1,29 +1,64 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.Fn
-import com.warrior.compiler.SymbolTable
-import com.warrior.compiler.Type
-import com.warrior.compiler.TypedValue
+import com.warrior.compiler.*
+import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.Fn
+import com.warrior.compiler.validation.Result
+import com.warrior.compiler.validation.TypedValue
+import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM
 import org.bytedeco.javacpp.PointerPointer
+import java.util.*
 
 /**
  * Created by warrior on 10.03.16.
  */
-class Call(val fnName: String, val args: List<Expr>) : Expr {
+class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : Expr(ctx) {
     override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
-        val fn = LLVM.LLVMGetNamedFunction(module, fnName) ?: throw IllegalStateException("function must be declared")
+        val fn = LLVM.LLVMGetNamedFunction(module, fnName)
         val argsValues = args.map { it.generateCode(module, builder, symbolTable) }.toTypedArray()
         return LLVM.LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
     }
 
-    override fun getType(): Type {
-        throw UnsupportedOperationException()
+    override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type {
+        return functions[fnName]?.returnType ?: Type.Unknown
     }
 
-    override fun calculate(env: Map<String, TypedValue>, functions: Map<String, Fn>): TypedValue {
+    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+        val argsResults = args
+                .map { it.validate(functions, variables) }
+                .toList()
+
+        val messages = ArrayList<ErrorMessage>()
+        if (fnName !in functions) {
+            val msg = "'${getText()}': function '$fnName' is not declared"
+            messages.add(ErrorMessage(UNDECLARED_FUNCTION, msg, start(), end()))
+        } else {
+            val fnType = functions[fnName]!!
+            if (args.size != fnType.argsTypes.size) {
+                val msg = "'${getText()}': you must pass ${fnType.argsTypes.size} args to function '$fnName'"
+                messages.add(ErrorMessage(UNEXPECTED_ARGS_NUMBER, msg, start(), end()))
+            }
+            for ((i, arg) in args.slice(0..Math.min(args.size, fnType.argsTypes.size) - 1).withIndex()) {
+                val type = arg.getType(functions, variables)
+                if (type != fnType.argsTypes[i] && type != Type.Unknown) {
+                    val msg = "expression '${arg.getText()}' must have '$type' type";
+                    messages.add(ErrorMessage(TYPE_MISMATCH, msg, arg.start(), arg.end()))
+                }
+            }
+        }
+        val result = if (messages.isEmpty()) {
+            Result.Ok
+        } else {
+            Result.Error(messages)
+        }
+        return argsResults.fold(Result.Ok, Result::plus) + result
+    }
+
+    override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue {
         val fn = functions[fnName]!!
-        val arguments = args.map { it.calculate(env, functions) }.toList()
+        val arguments = args.map { it.calculate(functions, variables) }.toList()
         return fn(arguments)
     }
 

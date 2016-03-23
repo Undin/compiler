@@ -7,6 +7,7 @@ import com.warrior.compiler.statement.*
 import com.warrior.compiler.module.Function
 import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.module.Module
+import com.warrior.compiler.statement.Statement.*
 import java.util.*
 
 /**
@@ -18,7 +19,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         val functions = ctx.functionDefinition()
                 .map { visitFunctionDefinition(it) }
                 .toList()
-        return Module(functions)
+        return Module(ctx, functions)
     }
 
     override fun visitStatement(ctx: GrammarParser.StatementContext): Statement {
@@ -27,41 +28,41 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitReturnStatement(ctx: GrammarParser.ReturnStatementContext): Return {
         val expr = visitExpression(ctx.expression())
-        return Return(expr)
+        return Return(ctx, expr)
     }
 
-    override fun visitBlock(ctx: GrammarParser.BlockContext): Block {
+    override fun visitBlock(ctx: GrammarParser.BlockContext): Statement.Block {
         val statements = ctx.statement().map { visitStatement(it) }.toList()
-        return Block(statements)
+        return Block(ctx, statements)
     }
 
     override fun visitIfElseStatement(ctx: GrammarParser.IfElseStatementContext): IfElse {
         val condExpr = visitExpression(ctx.expression())
         val thenBlock = visitBlock(ctx.thenBlock)
         val elseBlock = visitBlock(ctx.elseBlock)
-        return IfElse(condExpr, thenBlock, elseBlock)
+        return IfElse(ctx, condExpr, thenBlock, elseBlock)
     }
 
     override fun visitIfStatement(ctx: GrammarParser.IfStatementContext): If {
         val condExpr = visitExpression(ctx.expression())
         val thenBlock = visitBlock(ctx.block())
-        return If(condExpr, thenBlock)
+        return If(ctx, condExpr, thenBlock)
     }
 
     override fun visitWhileStatement(ctx: GrammarParser.WhileStatementContext): While {
         val condExpr = visitExpression(ctx.expression())
         val bodyBlock = visitBlock(ctx.block())
-        return While(condExpr, bodyBlock)
+        return While(ctx, condExpr, bodyBlock)
     }
 
     override fun visitExprStatement(ctx: GrammarParser.ExprStatementContext): ExpressionStatement {
-        return ExpressionStatement(visitExpression(ctx.expression()))
+        return ExpressionStatement(ctx, visitExpression(ctx.expression()))
     }
 
     override fun visitAssign(ctx: GrammarParser.AssignContext): Assign {
         val name = ctx.Identifier().text
         val expr = visitExpression(ctx.expression())
-        return Assign(name, expr)
+        return Assign(ctx, name, expr)
     }
 
     override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): AssignDecl {
@@ -72,11 +73,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         } else {
             null
         }
-        return AssignDecl(name, type, expr)
+        return AssignDecl(ctx, name, type, expr)
     }
 
     override fun visitVariable(ctx: GrammarParser.VariableContext): Variable {
-        return Variable(ctx.text)
+        return Variable(ctx, ctx.text)
     }
 
     override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Call {
@@ -86,13 +87,13 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
                 ?.map { visitExpression(it) }
                 ?.toList()
                 ?: Collections.emptyList()
-        return Call(name, args)
+        return Call(ctx, name, args)
     }
 
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
         val prototype = visitPrototype(ctx.prototype())
         val body = visitBlock(ctx.block())
-        return Function(prototype, body)
+        return Function(ctx, prototype, body)
     }
 
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
@@ -103,7 +104,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
                 ?.toList()
                 ?: Collections.emptyList()
         val type = ctx.type().text.toType();
-        return Prototype(name, args, type)
+        return Prototype(ctx, name, args, type)
     }
 
     override fun visitPrint(ctx: GrammarParser.PrintContext): Print {
@@ -113,12 +114,12 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
             "println" -> true
             else -> throw IllegalStateException("unreachable state")
         }
-        return Print(expr, newLine)
+        return Print(ctx, expr, newLine)
     }
 
     override fun visitRead(ctx: GrammarParser.ReadContext): Read {
         val varName = ctx.Identifier().text
-        return Read(varName)
+        return Read(ctx, varName)
     }
 
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
@@ -134,66 +135,75 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         }
         val leftExpr = visitExpression(ctx.left)
         if (ctx.unaryOp != null) {
-            return unaryExpr(ctx.unaryOp.type, leftExpr)
+            return unaryExpr(ctx, ctx.unaryOp.type, leftExpr)
         }
         val rightExpr = visitExpression(ctx.right)
         if (ctx.op != null) {
-            return arithmeticExpr(ctx.op.type, leftExpr, rightExpr)
-        }
-        if (ctx.boolOp != null) {
-            return boolExpr(ctx.boolOp.type, leftExpr, rightExpr)
+            return arithmeticExpr(ctx, ctx.op.type, leftExpr, rightExpr)
         }
         if (ctx.cmpOp != null) {
-            return cmpExpr(ctx.cmpOp.type, leftExpr, rightExpr)
+            return cmpExpr(ctx, ctx.cmpOp.type, leftExpr, rightExpr)
+        }
+        if (ctx.equalOp != null) {
+            return equalExpr(ctx, ctx.equalOp.type, leftExpr, rightExpr)
+        }
+        if (ctx.boolOp != null) {
+            return boolExpr(ctx, ctx.boolOp.type, leftExpr, rightExpr)
         }
         throw IllegalStateException("unreachable state")
     }
 
-    private fun cmpExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): Cmp {
+    private fun equalExpr(ctx: GrammarParser.ExpressionContext, opType: Int, leftExpr: Expr, rightExpr: Expr): Equal {
         return when (opType) {
-            EQUAL -> eq(leftExpr, rightExpr)
-            NOTEQUAL -> ne(leftExpr, rightExpr)
-            LT -> lt(leftExpr, rightExpr)
-            LE -> le(leftExpr, rightExpr)
-            GT -> gt(leftExpr, rightExpr)
-            GE -> ge(leftExpr, rightExpr)
+            EQUAL -> eq(ctx, leftExpr, rightExpr)
+            NOTEQUAL -> ne(ctx, leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
     }
 
-    private fun boolExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): BinaryBool {
+    private fun cmpExpr(ctx: GrammarParser.ExpressionContext, opType: Int, leftExpr: Expr, rightExpr: Expr): Cmp {
         return when (opType) {
-            AND -> and(leftExpr, rightExpr)
-            OR -> or(leftExpr, rightExpr)
+            LT -> lt(ctx, leftExpr, rightExpr)
+            LE -> le(ctx, leftExpr, rightExpr)
+            GT -> gt(ctx, leftExpr, rightExpr)
+            GE -> ge(ctx, leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
     }
 
-    private fun arithmeticExpr(opType: Int, leftExpr: Expr, rightExpr: Expr): Arithmetic {
+    private fun boolExpr(ctx: GrammarParser.ExpressionContext, opType: Int, leftExpr: Expr, rightExpr: Expr): Logic {
         return when (opType) {
-            ADD -> add(leftExpr, rightExpr)
-            SUB -> sub(leftExpr, rightExpr)
-            MUL -> mul(leftExpr, rightExpr)
-            DIV -> div(leftExpr, rightExpr)
-            MOD -> mod(leftExpr, rightExpr)
+            AND -> and(ctx, leftExpr, rightExpr)
+            OR -> or(ctx, leftExpr, rightExpr)
             else -> throw IllegalStateException("unreachable state")
         }
     }
 
-    private fun unaryExpr(opType: Int, expr: Expr): Expr {
+    private fun arithmeticExpr(ctx: GrammarParser.ExpressionContext, opType: Int, leftExpr: Expr, rightExpr: Expr): Arithmetic {
         return when (opType) {
-            BANG -> Not(expr)
+            ADD -> add(ctx, leftExpr, rightExpr)
+            SUB -> sub(ctx, leftExpr, rightExpr)
+            MUL -> mul(ctx, leftExpr, rightExpr)
+            DIV -> div(ctx, leftExpr, rightExpr)
+            MOD -> mod(ctx, leftExpr, rightExpr)
+            else -> throw IllegalStateException("unreachable state")
+        }
+    }
+
+    private fun unaryExpr(ctx: GrammarParser.ExpressionContext, opType: Int, expr: Expr): Expr {
+        return when (opType) {
+            BANG -> Not(ctx, expr)
             ADD -> expr
-            SUB -> UnaryMinus(expr)
+            SUB -> UnaryMinus(ctx, expr)
             else -> throw IllegalStateException("unreachable state")
         }
     }
 
     override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): I32 {
-        return I32(ctx.text.toInt())
+        return I32(ctx, ctx.text.toInt())
     }
 
     override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Bool {
-        return Bool(ctx.text.toBoolean())
+        return Bool(ctx, ctx.text.toBoolean())
     }
 }

@@ -1,13 +1,13 @@
 package com.warrior.compiler.module
 
 import com.warrior.compiler.ASTNode
+import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 
 /**
  * Created by warrior on 19.03.16.
  */
-class Module(val functions: List<Function>) : ASTNode {
-
+class Module(ctx: ParserRuleContext, val functions: List<Function>) : ASTNode(ctx) {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
         functions.forEach { it.prototype.generateCode(module) }
         declarePrintf(module)
