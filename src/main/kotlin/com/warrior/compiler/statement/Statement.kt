@@ -5,13 +5,10 @@ import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Expr
-import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.*
 import com.warrior.compiler.validation.ErrorType.*
-import com.warrior.compiler.validation.Fn
-import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
-import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
@@ -59,12 +56,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             val localVariables = HashMap(variables)
             val result = statements
                     .map { it.validate(functions, localVariables, fnName) }
-                    .fold(Ok, Result::plus)
-//            if (!isTerminalStatement()) {
-//                val message = "function '$fnName' may not return result"
-//                val error = Error(ErrorMessage(RETURN_EXPRESSION, message, start(), end()))
-//                return result + error
-//            }
+                    .fold()
             return result
         }
 

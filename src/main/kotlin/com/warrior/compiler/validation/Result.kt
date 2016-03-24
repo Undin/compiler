@@ -46,6 +46,8 @@ sealed class Result {
     }
 }
 
+fun List<Result>.fold(): Result = this.fold(Result.Ok, Result::plus)
+
 data class ErrorMessage(val error: ErrorType, val message: String, val start: Position, val end: Position)
 
 enum class ErrorType {
