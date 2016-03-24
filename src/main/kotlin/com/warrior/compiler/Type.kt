@@ -28,6 +28,8 @@ sealed class Type {
 
     abstract fun toLLVMType(): LLVM.LLVMTypeRef
 
+    fun match(expectedType: Type): Boolean = this == expectedType || this == Unknown
+
     override fun toString(): String = when (this) {
         Unknown -> "unknown"
         Bool -> "bool"

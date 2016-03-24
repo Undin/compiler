@@ -1,5 +1,6 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.parseExpr
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.TypedValue.BoolValue
 import com.warrior.compiler.validation.TypedValue.IntValue

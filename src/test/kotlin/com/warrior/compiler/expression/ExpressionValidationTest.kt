@@ -1,12 +1,10 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.validation.ErrorMessage
-import com.warrior.compiler.validation.ErrorType
-import com.warrior.compiler.validation.ErrorType.*
-import com.warrior.compiler.Position
-import com.warrior.compiler.validation.Result.Error
-import com.warrior.compiler.validation.Result.Ok
 import com.warrior.compiler.Type
+import com.warrior.compiler.error
+import com.warrior.compiler.parseExpr
+import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.validation.Result.Ok
 import org.junit.Assert
 import org.junit.Test
 
@@ -303,10 +301,4 @@ class ExpressionValidationTest {
                 parseExpr("(x <= g(y, true)) + (f(5 * x) % 2 == 0)").validate(functions, variables)
         )
     }
-
-    private fun error(vararg errorType: ErrorType): Error {
-        val messages = errorType.map { ErrorMessage(it, "", Position(0, 0), Position(0, 0)) }
-        return Error(messages)
-    }
-
 }

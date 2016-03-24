@@ -242,11 +242,11 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         val expectedType = expectedArgType()
         val messages = ArrayList<ErrorMessage>()
 
-        if (!matchType(lhsType, expectedType)) {
+        if (!lhsType.match(expectedType)) {
             val msg = "expression '${lhs.getText()}' must have $expectedType type"
             messages.add(ErrorMessage(TYPE_MISMATCH, msg, lhs.start(), lhs.end()))
         }
-        if (!matchType(rhsType, expectedType)) {
+        if (!rhsType.match(expectedType)) {
             val msg = "expression '${rhs.getText()}' must have $expectedType type"
             messages.add(ErrorMessage(TYPE_MISMATCH, msg, rhs.start(), rhs.end()))
         }
@@ -254,10 +254,6 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
     }
 
     protected abstract fun expectedArgType(): Type
-
-    protected fun matchType(type: Type, expectedType: Type): Boolean {
-        return type == expectedType || type == Type.Unknown
-    }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other.javaClass != javaClass) {

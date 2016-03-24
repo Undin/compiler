@@ -42,7 +42,7 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
             }
             for ((i, arg) in args.slice(0..Math.min(args.size, fnType.argsTypes.size) - 1).withIndex()) {
                 val type = arg.getType(functions, variables)
-                if (type != fnType.argsTypes[i] && type != Type.Unknown) {
+                if (!type.match(fnType.argsTypes[i])) {
                     val msg = "expression '${arg.getText()}' must have '$type' type";
                     messages.add(ErrorMessage(TYPE_MISMATCH, msg, arg.start(), arg.end()))
                 }

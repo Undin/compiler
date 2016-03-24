@@ -1,12 +1,8 @@
 package com.warrior.compiler.statement
 
-import com.warrior.compiler.ASTVisitor
-import com.warrior.compiler.GrammarLexer
-import com.warrior.compiler.GrammarParser
+import com.warrior.compiler.parseStatement
 import com.warrior.compiler.validation.TypedValue
-import com.warrior.compiler.validation.TypedValue.*
-import org.antlr.v4.runtime.ANTLRInputStream
-import org.antlr.v4.runtime.CommonTokenStream
+import com.warrior.compiler.validation.TypedValue.IntValue
 import org.junit.Assert
 import org.junit.Test
 
@@ -166,15 +162,4 @@ class StatementInterpretTest {
                 parseStatement(statement).interpret(input = input)
         )
     }
-
-}
-
-fun parseStatement(statement: String): Statement {
-    val stream = ANTLRInputStream(statement);
-    val lexer = GrammarLexer(stream);
-    val tokens = CommonTokenStream(lexer);
-    val parser = GrammarParser(tokens);
-    val tree = parser.statement();
-    val visitor = ASTVisitor()
-    return visitor.visitStatement(tree)
 }

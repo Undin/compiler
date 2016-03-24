@@ -51,6 +51,8 @@ data class ErrorMessage(val error: ErrorType, val message: String, val start: Po
 enum class ErrorType {
     TYPE_MISMATCH,
     UNDECLARED_VARIABLE,
+    VARIABLE_IS_ALREADY_DECLARED,
     UNDECLARED_FUNCTION,
-    UNEXPECTED_ARGS_NUMBER
+    UNEXPECTED_ARGS_NUMBER,
+    RETURN_EXPRESSION
 }

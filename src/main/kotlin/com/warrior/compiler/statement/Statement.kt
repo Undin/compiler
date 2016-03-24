@@ -1,8 +1,16 @@
 package com.warrior.compiler.statement
 
-import com.warrior.compiler.*
+import com.warrior.compiler.ASTNode
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
+import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Expr
+import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Fn
+import com.warrior.compiler.validation.Result
+import com.warrior.compiler.validation.Result.Error
+import com.warrior.compiler.validation.Result.Ok
 import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
@@ -25,12 +33,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     break;
                 }
             }
-            for ((name, value) in symbolTable.variables) {
-                val value = localSymbolTable.variables[name]
-                if (value != null) {
-                    symbolTable.variables[name] = value
-                }
-            }
+            update(symbolTable.variables, localSymbolTable.variables)
         }
 
         override fun hasReturnStatement(): Boolean = statements.any { it.hasReturnStatement() }
@@ -46,13 +49,32 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     break;
                 }
             }
-            for ((name, value) in env) {
-                val value = localEnv[name]
+            update(env, localEnv)
+            return out
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val localVariables = HashMap(variables)
+            val result = statements
+                    .map { it.validate(functions, localVariables, fnName) }
+                    .fold(Ok, Result::plus)
+//            if (!isTerminalStatement()) {
+//                val message = "function '$fnName' may not return result"
+//                val error = Error(ErrorMessage(RETURN_EXPRESSION, message, start(), end()))
+//                return result + error
+//            }
+            return result
+        }
+
+        private fun <K, V> update(oldMap: MutableMap<K, V>, newMap: Map<K, V>) {
+            for ((name, v) in oldMap) {
+                val value = newMap[name]
                 if (value != null) {
-                    env[name] = value
+                    oldMap[name] = value
                 }
             }
-            return out
         }
     }
 
@@ -67,6 +89,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             expr.calculate(functions, env)
             return listOf()
         }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result =
+                expr.validate(functions, variables)
     }
 
     class Assign(ctx: ParserRuleContext, val name: String, val expr: Expr) : Statement(ctx) {
@@ -85,6 +112,26 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             val value = expr.calculate(functions, env)
             env[name] = value
             return listOf();
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val exprResult = expr.validate(functions, variables)
+            val result = if (name !in variables) {
+                val message = "'${getText()}': variable '$name' is not declared"
+                Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
+            } else {
+                val varType = variables[name]!!
+                val exprType = expr.getType(functions, variables)
+                if (exprType != Type.Unknown && !varType.match(exprType)) {
+                    val message = "'${getText()}': variable and expression types don't match"
+                    Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+                } else {
+                    Ok
+                }
+            }
+            return exprResult + result
         }
     }
 
@@ -118,6 +165,26 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 }
             }
             return listOf()
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val exprResult = expr?.validate(functions, variables) ?: Ok
+            val result = if (name in variables) {
+                val message = "'${getText()}': variable '$name' is already declared"
+                Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
+            } else {
+                variables[name] = type
+                val exprType = expr?.getType(functions, variables) ?: type
+                if (exprType != Type.Unknown && !type.match(exprType)) {
+                    val message = "'${getText()}': variable and expression types don't match"
+                    Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+                } else {
+                    Ok
+                }
+            }
+            return exprResult + result
         }
     }
 
@@ -157,6 +224,21 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             } else {
                 listOf()
             }
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val conditionResult = condition.validate(functions, variables)
+            val conditionType = condition.getType(functions, variables)
+            val typeResult = if (!conditionType.match(Type.Bool)) {
+                val message = "expression '${condition.getText()}' must have 'bool' type"
+                Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
+            } else {
+                Ok
+            }
+            val thenBlockResult = thenBlock.validate(functions, variables, fnName)
+            return conditionResult + typeResult + thenBlockResult
         }
     }
 
@@ -217,6 +299,22 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 elseBlock.interpret(env, functions, input)
             }
         }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val conditionResult = condition.validate(functions, variables)
+            val conditionType = condition.getType(functions, variables)
+            val typeResult = if (!conditionType.match(Type.Bool)) {
+                val message = "expression '${condition.getText()}' must have 'bool' type"
+                Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
+            } else {
+                Ok
+            }
+            val thenBlockResult = thenBlock.validate(functions, variables, fnName)
+            val elseBlockResult = elseBlock.validate(functions, variables, fnName)
+            return conditionResult + typeResult + thenBlockResult + elseBlockResult
+        }
     }
 
     class While(ctx: ParserRuleContext, val condition: Expr, val bodyBlock: Block) : Statement(ctx) {
@@ -261,6 +359,21 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
             return output
         }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val conditionResult = condition.validate(functions, variables)
+            val conditionType = condition.getType(functions, variables)
+            val typeResult = if (!conditionType.match(Type.Bool)) {
+                val message = "expression '${condition.getText()}' must have 'bool' type"
+                Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
+            } else {
+                Ok
+            }
+            val bodyBlockResult = bodyBlock.validate(functions, variables, fnName)
+            return conditionResult + typeResult + bodyBlockResult
+        }
     }
 
     class Return(ctx: ParserRuleContext, val expr: Expr) : Statement(ctx) {
@@ -282,6 +395,21 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                                input: MutableList<TypedValue>): List<TypedValue> {
             expr.calculate(functions, env)
             return listOf()
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            val exprResult = expr.validate(functions, variables)
+            val type = expr.getType(functions, variables)
+            val returnType = functions[fnName]!!.returnType
+            val result = if (!type.match(returnType)) {
+                val message = "'${getText()}': expression has '$type' but expected '$returnType'"
+                Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            } else {
+                Ok
+            }
+            return exprResult + result
         }
     }
 
@@ -319,6 +447,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             val value = expr.calculate(functions, env)
             return listOf(value)
         }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result =
+                expr.validate(functions, variables)
     }
 
     class Read(ctx: ParserRuleContext, val varName: String) : Statement(ctx) {
@@ -351,6 +484,16 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             env[varName] = input.removeAt(0)
             return listOf()
         }
+
+        override fun validate(functions: Map<String, Type.Fn>,
+                              variables: MutableMap<String, Type>,
+                              fnName: String): Result {
+            if (varName !in variables) {
+                val message = "'${getText()}': variable '$varName' is not declared"
+                return Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
+            }
+            return Ok
+        }
     }
 
     open fun hasReturnStatement(): Boolean = false
@@ -361,6 +504,9 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     abstract fun interpret(env: MutableMap<String, TypedValue> = HashMap(),
                            functions: Map<String, Fn> = HashMap(),
                            input: MutableList<TypedValue> = ArrayList()): List<TypedValue>
+    abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(),
+                          variables: MutableMap<String, Type> = HashMap(),
+                          fnName: String): Result
 
     protected fun getCurrentFunction(builder: LLVMBuilderRef): LLVMValueRef {
         val currentBlock = LLVMGetInsertBlock(builder)
