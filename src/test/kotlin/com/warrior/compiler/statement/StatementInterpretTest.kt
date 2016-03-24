@@ -84,6 +84,43 @@ class StatementInterpretTest {
     }
 
     @Test
+    fun innerBlockTest1() {
+        val statement = """
+            {
+                a: i32 = 4;
+                print(a);
+                {
+                    a = 10;
+                    print(a);
+                }
+                print(a);
+            }
+        """
+        Assert.assertEquals(
+                listOf(IntValue(4), IntValue(10), IntValue(10)),
+                parseStatement(statement).interpret()
+        )
+    }
+
+    @Test
+    fun innerBlockTest2() {
+        val statement = """
+            {
+                {
+                    a: i32 = 10;
+                    print(a);
+                }
+                a: i32 = 4;
+                print(a);
+            }
+        """
+        Assert.assertEquals(
+                listOf(IntValue(10), IntValue(4)),
+                parseStatement(statement).interpret()
+        )
+    }
+
+    @Test
     fun ifTest() {
         val statement = """
             if (a > 10) {
