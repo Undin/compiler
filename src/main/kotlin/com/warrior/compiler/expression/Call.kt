@@ -38,7 +38,7 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
             val fnType = functions[fnName]!!
             if (args.size != fnType.argsTypes.size) {
                 val msg = "'${getText()}': you must pass ${fnType.argsTypes.size} args to function '$fnName'"
-                messages.add(ErrorMessage(UNEXPECTED_ARGS_NUMBER, msg, start(), end()))
+                messages.add(ErrorMessage(WRONG_ARGS_NUMBER, msg, start(), end()))
             }
             for ((i, arg) in args.slice(0..Math.min(args.size, fnType.argsTypes.size) - 1).withIndex()) {
                 val type = arg.getType(functions, variables)

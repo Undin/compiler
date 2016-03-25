@@ -200,7 +200,7 @@ class ExpressionValidationTest {
     fun callTest4() {
         val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
         Assert.assertEquals(
-                error(UNEXPECTED_ARGS_NUMBER),
+                error(WRONG_ARGS_NUMBER),
                 parseExpr("f(12, true, 0)").validate(functions)
         )
     }
@@ -276,7 +276,7 @@ class ExpressionValidationTest {
         val variables = mapOf("x" to Type.Bool)
         val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.Bool))
         Assert.assertEquals(
-                error(UNDECLARED_VARIABLE, UNEXPECTED_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),
+                error(UNDECLARED_VARIABLE, WRONG_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),
                 parseExpr("5 * f(x, y >= 0, x)").validate(functions, variables)
         )
     }
@@ -297,7 +297,7 @@ class ExpressionValidationTest {
         val variables = mapOf("x" to Type.Bool, "y" to Type.I32)
         val functions = mapOf("f" to Type.Fn(listOf(), Type.I32))
         Assert.assertEquals(
-                error(UNDECLARED_FUNCTION, TYPE_MISMATCH, TYPE_MISMATCH, UNEXPECTED_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),
+                error(UNDECLARED_FUNCTION, TYPE_MISMATCH, TYPE_MISMATCH, WRONG_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),
                 parseExpr("(x <= g(y, true)) + (f(5 * x) % 2 == 0)").validate(functions, variables)
         )
     }

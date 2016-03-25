@@ -2,6 +2,9 @@ package com.warrior.compiler
 
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.statement.Statement
+import com.warrior.compiler.module.Function
+import com.warrior.compiler.module.Module
+import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType
 import com.warrior.compiler.validation.Result
@@ -21,6 +24,24 @@ fun parseStatement(statement: String): Statement {
     val tree = parser(statement).statement();
     val visitor = ASTVisitor()
     return visitor.visitStatement(tree)
+}
+
+fun parsePrototype(prototype: String): Prototype {
+    val tree = parser(prototype).prototype();
+    val visitor = ASTVisitor()
+    return visitor.visitPrototype(tree)
+}
+
+fun parseFunction(function: String): Function {
+    val tree = parser(function).functionDefinition();
+    val visitor = ASTVisitor()
+    return visitor.visitFunctionDefinition(tree)
+}
+
+fun parseModule(module: String): Module {
+    val tree = parser(module).module();
+    val visitor = ASTVisitor()
+    return visitor.visitModule(tree)
 }
 
 private fun parser(str: String): GrammarParser {
