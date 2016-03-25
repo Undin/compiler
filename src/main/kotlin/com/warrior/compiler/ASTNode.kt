@@ -20,4 +20,6 @@ abstract class ASTNode(val ctx: ParserRuleContext) {
     }
 }
 
-data class Position(val line: Int, val linePosition: Int)
+data class Position(val line: Int, val linePosition: Int) {
+    override fun toString(): String = "($line:$linePosition)"
+}

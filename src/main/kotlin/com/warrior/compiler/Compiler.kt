@@ -1,6 +1,7 @@
 package com.warrior.compiler
 
 import com.warrior.compiler.module.Module
+import com.warrior.compiler.validation.Result.*
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CommonTokenStream
 import org.bytedeco.javacpp.BytePointer
@@ -15,8 +16,22 @@ class Compiler(val program: String): Closeable {
     private val module: LLVMModuleRef = LLVMModuleCreateWithName("module")
     private val builder: LLVMBuilderRef = LLVMCreateBuilder()
 
-    fun compile(optimize: Boolean = false) {
+    fun compile(optimize: Boolean = false): Boolean {
         val ast = buildAST(program)
+        val result = ast.validate()
+        return when (result) {
+            Ok -> {
+                generateCode(ast, optimize)
+                true
+            }
+            is Error -> {
+                printError(result)
+                false
+            }
+        }
+    }
+
+    private fun generateCode(ast: Module, optimize: Boolean) {
         ast.generateCode(module, builder)
 
         if (optimize) {
@@ -39,6 +54,12 @@ class Compiler(val program: String): Closeable {
             System.err.println(error.string)
         } finally {
             LLVMDisposeMessage(error)
+        }
+    }
+
+    private fun printError(error: Error) {
+        error.messages.forEach {
+            System.err.println("$it\n")
         }
     }
 
