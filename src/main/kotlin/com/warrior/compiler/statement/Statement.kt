@@ -135,10 +135,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
             val ref = LLVMBuildAlloca(builder, type.toLLVMType(), name)
             symbolTable.variables[name] = VariableAttrs(name, type, ref)
-            if (expr != null) {
-                val value = expr.generateCode(module, builder, symbolTable)
-                LLVMBuildStore(builder, value, ref)
+            val value = if (expr != null) {
+                expr.generateCode(module, builder, symbolTable)
+            } else {
+                LLVMConstInt(type.toLLVMType(), 0L, 1)
             }
+            LLVMBuildStore(builder, value, ref)
         }
 
         override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
