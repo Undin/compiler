@@ -431,7 +431,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             val value = expr.generateCode(module, builder, symbolTable)
             val printfFn = LLVMGetNamedFunction(module, "printf")
             val args = arrayOf(s, value)
-            LLVMBuildCall(builder, printfFn, PointerPointer(*args), args.size, "writeCall")
+            LLVMBuildCall(builder, printfFn, PointerPointer(*args), args.size, "printCall")
         }
 
         override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
