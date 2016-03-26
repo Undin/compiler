@@ -3,6 +3,7 @@ package com.warrior.compiler
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.module.Function
+import com.warrior.compiler.module.GlobalDeclaration
 import com.warrior.compiler.module.Module
 import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.validation.ErrorMessage
@@ -36,6 +37,12 @@ fun parseFunction(function: String): Function {
     val tree = parser(function).functionDefinition();
     val visitor = ASTVisitor()
     return visitor.visitFunctionDefinition(tree)
+}
+
+fun parseGlobalDeclaration(global: String): GlobalDeclaration {
+    val tree = parser(global).globalDeclaration();
+    val visitor = ASTVisitor()
+    return visitor.visitGlobalDeclaration(tree)
 }
 
 fun parseModule(module: String): Module {

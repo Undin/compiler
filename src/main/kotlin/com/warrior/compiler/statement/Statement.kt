@@ -21,7 +21,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Block(ctx: ParserRuleContext, val statements: List<Statement>) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val localSymbolTable = SymbolTable(symbolTable)
 
             for (st in statements) {
@@ -30,7 +30,6 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     break;
                 }
             }
-            update(symbolTable.variables, localSymbolTable.variables)
         }
 
         override fun hasReturnStatement(): Boolean = statements.any { it.hasReturnStatement() }
@@ -51,11 +50,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+                              variables: SymbolTable<Type>,
                               fnName: String): Result {
-            val localVariables = HashMap(variables)
+            val localSymbolTable = SymbolTable(variables)
             val result = statements
-                    .map { it.validate(functions, localVariables, fnName) }
+                    .map { it.validate(functions, localSymbolTable, fnName) }
                     .fold()
             return result
         }
@@ -72,7 +71,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class ExpressionStatement(ctx: ParserRuleContext, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             expr.generateCode(module, builder, symbolTable)
         }
 
@@ -83,15 +82,15 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+                              variables: SymbolTable<Type>,
                               fnName: String): Result =
                 expr.validate(functions, variables)
     }
 
     class Assign(ctx: ParserRuleContext, val name: String, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
-            val v = symbolTable.variables[name] ?: throw IllegalStateException("variable '$name' is not declared");
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
+            val v = symbolTable[name] ?: throw IllegalStateException("variable '$name' is not declared");
             val value = expr.generateCode(module, builder, symbolTable)
             LLVMBuildStore(builder, value, v.ref)
         }
@@ -107,14 +106,14 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+                              variables: SymbolTable<Type>,
                               fnName: String): Result {
             val exprResult = expr.validate(functions, variables)
-            val result = if (name !in variables) {
+            val varType = variables[name]
+            val result = if (varType == null) {
                 val message = "'${getText()}': variable '$name' is not declared"
                 Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
             } else {
-                val varType = variables[name]!!
                 val exprType = expr.getType(functions, variables)
                 if (exprType != Type.Unknown && !varType.match(exprType)) {
                     val message = "'${getText()}': variable and expression types don't match"
@@ -129,12 +128,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class AssignDecl(ctx: ParserRuleContext, val name: String, val type: Type, val expr: Expr?) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
-            if (name in symbolTable.variables) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
+            if (name in symbolTable.getLocal()) {
                 throw IllegalStateException("$name is already declared")
             }
             val ref = LLVMBuildAlloca(builder, type.toLLVMType(), name)
-            symbolTable.variables[name] = VariableAttrs(name, type, ref)
+            symbolTable.putLocal(name, VariableAttrs(name, type, ref))
             val value = if (expr != null) {
                 expr.generateCode(module, builder, symbolTable)
             } else {
@@ -161,15 +160,14 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             return listOf()
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val exprResult = expr?.validate(functions, variables) ?: Ok
-            val result = if (name in variables) {
+            val result = if (name in variables.getLocal()) {
                 val message = "'${getText()}': variable '$name' is already declared"
                 Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
             } else {
-                variables[name] = type
+                variables.putLocal(name, type)
                 val exprType = expr?.getType(functions, variables) ?: type
                 if (exprType != Type.Unknown && !type.match(exprType)) {
                     val message = "'${getText()}': variable and expression types don't match"
@@ -184,7 +182,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class If(ctx: ParserRuleContext, val condition: Expr, val thenBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val value = condition.generateCode(module, builder, symbolTable)
             val fn = getCurrentFunction(builder)
 
@@ -220,8 +218,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.getType(functions, variables)
@@ -238,7 +235,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class IfElse(ctx: ParserRuleContext, val condition: Expr, val thenBlock: Block, val elseBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val value = condition.generateCode(module, builder, symbolTable)
             val fn = getCurrentFunction(builder)
 
@@ -294,8 +291,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.getType(functions, variables)
@@ -313,7 +309,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class While(ctx: ParserRuleContext, val condition: Expr, val bodyBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val fn = getCurrentFunction(builder)
 
             val condBasicBlock = LLVMAppendBasicBlock(fn, "while_cond")
@@ -354,8 +350,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             return output
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.getType(functions, variables)
@@ -372,7 +367,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Return(ctx: ParserRuleContext, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val value = expr.generateCode(module, builder, symbolTable)
             if (returnBlock != null) {
                 LLVMBuildStore(builder, value, returnBlock.retValueRef)
@@ -392,7 +387,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+                              variables: SymbolTable<Type>,
                               fnName: String): Result {
             val exprResult = expr.validate(functions, variables)
             val type = expr.getType(functions, variables)
@@ -428,7 +423,8 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
         }
 
-        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val s = if (newLine) getStrLn(builder) else getStr(builder)
             val value = expr.generateCode(module, builder, symbolTable)
             val printfFn = LLVMGetNamedFunction(module, "printf")
@@ -442,10 +438,8 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             return listOf(value)
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
-                              fnName: String): Result =
-                expr.validate(functions, variables)
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
+                              fnName: String): Result = expr.validate(functions, variables)
     }
 
     class Read(ctx: ParserRuleContext, val varName: String) : Statement(ctx) {
@@ -461,8 +455,9 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             }
         }
 
-        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable, returnBlock: ReturnBlock?) {
-            val variable = symbolTable.variables[varName] ?: throw IllegalStateException("variable '$varName' isn't declared")
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                                  symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
+            val variable = symbolTable[varName] ?: throw IllegalStateException("variable '$varName' isn't declared")
 
             val s = getStr(builder)
             val scanfFn = LLVMGetNamedFunction(module, "scanf")
@@ -479,8 +474,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             return listOf()
         }
 
-        override fun validate(functions: Map<String, Type.Fn>,
-                              variables: MutableMap<String, Type>,
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             if (varName !in variables) {
                 val message = "'${getText()}': variable '$varName' is not declared"
@@ -494,12 +488,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     open fun isTerminalStatement(): Boolean = false
 
     abstract fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                     symbolTable: SymbolTable, returnBlock: ReturnBlock?): Unit
+                     symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?): Unit
     abstract fun interpret(env: MutableMap<String, TypedValue> = HashMap(),
                            functions: Map<String, Fn> = HashMap(),
                            input: MutableList<TypedValue> = ArrayList()): List<TypedValue>
     abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(),
-                          variables: MutableMap<String, Type> = HashMap(),
+                          variables: SymbolTable<Type> = SymbolTable(),
                           fnName: String): Result
 
     protected fun getCurrentFunction(builder: LLVMBuilderRef): LLVMValueRef {

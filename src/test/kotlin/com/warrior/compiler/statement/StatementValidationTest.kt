@@ -1,5 +1,6 @@
 package com.warrior.compiler.statement
 
+import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
 import com.warrior.compiler.error
@@ -16,7 +17,8 @@ class StatementValidationTest {
 
     @Test
     fun expressionTest1() {
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 Ok,
@@ -29,14 +31,15 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement("1 + a;").validate(functions, mutableMapOf(), "f")
+                parseStatement("1 + a;").validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun assignTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
         Assert.assertEquals(
                 Ok,
                 parseStatement("a = 4;").validate(functions, variables, "f")
@@ -46,7 +49,8 @@ class StatementValidationTest {
     @Test
     fun assignTest2() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to Bool)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Bool) }
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
                 parseStatement("a = 4;").validate(functions, variables, "f")
@@ -58,7 +62,7 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement("a = 4;").validate(functions, mutableMapOf(), "f")
+                parseStatement("a = 4;").validate(functions, fnName = "f")
         )
     }
 
@@ -67,14 +71,15 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 Ok,
-                parseStatement("a: i32 = 4;").validate(functions, mutableMapOf(), "f")
+                parseStatement("a: i32 = 4;").validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun assignDeclTest2() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to Bool)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Bool) }
         Assert.assertEquals(
                 error(VARIABLE_IS_ALREADY_DECLARED),
                 parseStatement("a: i32 = 4;").validate(functions, variables, "f")
@@ -86,14 +91,15 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
-                parseStatement("a: i32 = false;").validate(functions, mutableMapOf(), "f")
+                parseStatement("a: i32 = false;").validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun returnTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
         Assert.assertEquals(
                 Ok,
                 parseStatement("return a;").validate(functions, variables, "f")
@@ -105,14 +111,15 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement("return a;").validate(functions, mutableMapOf(), "f")
+                parseStatement("return a;").validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun returnTest3() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to Bool)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Bool) }
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
                 parseStatement("return a;").validate(functions, variables, "f")
@@ -121,8 +128,9 @@ class StatementValidationTest {
 
     @Test
     fun printTest1() {
-        val variables = mutableMapOf<String, Type>("a" to Bool)
         val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Bool) }
         Assert.assertEquals(
                 Ok,
                 parseStatement("print(a);").validate(functions, variables, "f")
@@ -134,14 +142,15 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement("print(a);").validate(functions, mutableMapOf(), "f")
+                parseStatement("print(a);").validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun readTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
         Assert.assertEquals(
                 Ok,
                 parseStatement("read(a);").validate(functions, variables, "f")
@@ -153,7 +162,7 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement("read(a);").validate(functions, mutableMapOf(), "f")
+                parseStatement("read(a);").validate(functions, fnName = "f")
         )
     }
 
@@ -171,7 +180,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 Ok,
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
@@ -189,7 +198,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
@@ -207,7 +216,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 error(TYPE_MISMATCH, TYPE_MISMATCH, UNDECLARED_VARIABLE),
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
@@ -226,7 +235,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 Ok,
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
@@ -245,7 +254,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE),
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
@@ -264,14 +273,17 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 error(VARIABLE_IS_ALREADY_DECLARED),
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 
     @Test
     fun ifTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32, "b" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+            putLocal("b", I32)
+        }
         val statement = """
             if (a > 10) {
                 b = 10;
@@ -286,7 +298,10 @@ class StatementValidationTest {
     @Test
     fun ifTest2() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf("a" to Bool, "b" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Bool)
+            putLocal("b", I32)
+        }
         val statement = """
             if (a > 10) {
                 b = 10;
@@ -301,7 +316,9 @@ class StatementValidationTest {
     @Test
     fun ifTest3() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (a > 10) {
                 b = 10;
@@ -316,7 +333,9 @@ class StatementValidationTest {
     @Test
     fun ifTest4() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to Bool)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Bool)
+        }
         val statement = """
             if (a > 10) {
                 b = 10;
@@ -331,7 +350,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (a > 0) {
                 print(a);
@@ -348,7 +369,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest2() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (0) {
                 print(a);
@@ -365,7 +388,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest3() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (a > 0) {
                 print(a + false);
@@ -382,7 +407,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest4() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (a > 0) {
                 print(a);
@@ -399,7 +426,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest5() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (a > 0) {
                 print(a + false);
@@ -416,7 +445,9 @@ class StatementValidationTest {
     @Test
     fun ifElseTest6() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             if (b > 0) {
                 print(a + false);
@@ -433,7 +464,9 @@ class StatementValidationTest {
     @Test
     fun whileTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             while (a > 10) {
                 print(a);
@@ -449,7 +482,9 @@ class StatementValidationTest {
     @Test
     fun whileTest2() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             while (0) {
                 print(a);
@@ -465,7 +500,9 @@ class StatementValidationTest {
     @Test
     fun whileTest3() {
         val functions = mapOf("f" to Fn(listOf(), I32))
-        val variables = mutableMapOf<String, Type>("a" to I32)
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
         val statement = """
             while (a > 10) {
                 print(a);
@@ -489,7 +526,7 @@ class StatementValidationTest {
         """
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, UNDECLARED_VARIABLE, UNDECLARED_VARIABLE),
-                parseStatement(statement).validate(functions, mutableMapOf(), "f")
+                parseStatement(statement).validate(functions, fnName = "f")
         )
     }
 }

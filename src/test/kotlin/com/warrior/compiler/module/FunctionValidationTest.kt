@@ -8,7 +8,6 @@ import com.warrior.compiler.validation.Result.Ok
 import org.junit.Assert
 import org.junit.Test
 
-
 /**
  * Created by warrior on 25.03.16.
  */

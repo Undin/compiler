@@ -1,8 +1,13 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.*
-import com.warrior.compiler.validation.*
-import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
+import com.warrior.compiler.VariableAttrs
+import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.ErrorType.UNDECLARED_VARIABLE
+import com.warrior.compiler.validation.Fn
+import com.warrior.compiler.validation.Result
+import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM
 
@@ -10,16 +15,17 @@ import org.bytedeco.javacpp.LLVM
  * Created by warrior on 10.03.16.
  */
 class Variable(ctx: ParserRuleContext, val name: String) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
-        val ref = symbolTable.variables[name]!!.ref
-        return LLVM.LLVMBuildLoad(builder, ref, name)
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
+                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
+        val variable = symbolTable[name] ?: throw IllegalStateException("variable '$name' isn't declared")
+        return LLVM.LLVMBuildLoad(builder, variable.ref, name)
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type {
+    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
         return variables[name] ?: Type.Unknown
     }
 
-    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+    override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         return if (name in variables) {
             Result.Ok
         } else {

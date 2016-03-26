@@ -4,9 +4,10 @@ import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
-import com.warrior.compiler.module.Function
 import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.module.Module
+import com.warrior.compiler.module.Function
+import com.warrior.compiler.module.GlobalDeclaration
 import com.warrior.compiler.statement.Statement.*
 import java.util.*
 
@@ -16,10 +17,28 @@ import java.util.*
 class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitModule(ctx: GrammarParser.ModuleContext): Module {
-        val functions = ctx.functionDefinition()
-                .map { visitFunctionDefinition(it) }
-                .toList()
-        return Module(ctx, functions)
+        val globals = ctx.globalDeclaration().map { visitGlobalDeclaration(it) }
+        val functions = ctx.functionDefinition().map { visitFunctionDefinition(it) }
+        return Module(ctx, globals, functions)
+    }
+
+    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
+        val prototype = visitPrototype(ctx.prototype())
+        val body = visitBlock(ctx.block())
+        return Function(ctx, prototype, body)
+    }
+
+    override fun visitGlobalDeclaration(ctx: GrammarParser.GlobalDeclarationContext): GlobalDeclaration {
+        val name = ctx.Identifier().text
+        val type = ctx.type().text.toType()
+        val expr = if (ctx.boolLiteral() != null) {
+            visitBoolLiteral(ctx.boolLiteral())
+        } else if (ctx.intLiteral() != null) {
+            visitIntLiteral(ctx.intLiteral())
+        } else {
+            null
+        }
+        return GlobalDeclaration(ctx, name, type, expr)
     }
 
     override fun visitStatement(ctx: GrammarParser.StatementContext): Statement {
@@ -85,15 +104,8 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         val args = ctx.arguments()
                 ?.expression()
                 ?.map { visitExpression(it) }
-                ?.toList()
                 ?: Collections.emptyList()
         return Call(ctx, name, args)
-    }
-
-    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
-        val prototype = visitPrototype(ctx.prototype())
-        val body = visitBlock(ctx.block())
-        return Function(ctx, prototype, body)
     }
 
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
@@ -101,7 +113,6 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         val args = ctx.typedArguments()
                 ?.typedArgument()
                 ?.map { Prototype.Arg(it.Identifier().text, it.type().text.toType()) }
-                ?.toList()
                 ?: Collections.emptyList()
         val type = ctx.type().text.toType();
         return Prototype(ctx, name, args, type)

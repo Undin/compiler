@@ -1,7 +1,11 @@
 grammar Grammar;
 
 module
-    :   functionDefinition+
+    :   (globalDeclaration | functionDefinition)+
+    ;
+
+globalDeclaration
+    :   Identifier ':' type ('=' (intLiteral | boolLiteral))? ';'
     ;
 
 functionDefinition

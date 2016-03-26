@@ -1,16 +1,19 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.*
-import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
+import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.expression.Binary.Arithmetic.Operation.*
 import com.warrior.compiler.expression.Binary.Cmp.Operation.*
 import com.warrior.compiler.expression.Binary.Equal.Operation.*
 import com.warrior.compiler.expression.Binary.Logic.Operation.*
 import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.ErrorType.TYPE_MISMATCH
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result
-import com.warrior.compiler.validation.Result.*
+import com.warrior.compiler.validation.Result.Error
+import com.warrior.compiler.validation.Result.Ok
 import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
@@ -35,7 +38,8 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             }
         }
 
-        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable): LLVMValueRef {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                                  symbolTable: SymbolTable<VariableAttrs>): LLVMValueRef {
             val currentBlock = LLVMGetInsertBlock(builder)
             val fn = LLVMGetBasicBlockParent(currentBlock)
 
@@ -67,7 +71,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return phi
         }
 
-        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+        override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
         override fun expectedArgType(): Type = Type.Bool
 
@@ -104,7 +108,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             }
         }
 
-        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.I32
+        override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
 
         override fun expectedArgType(): Type = Type.I32
 
@@ -142,9 +146,9 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+        override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
-        override fun doValidate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): List<ErrorMessage> {
+        override fun doValidate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): List<ErrorMessage> {
             val lhsType = lhs.getType(functions, variables)
             val rhsType = rhs.getType(functions, variables)
             if (lhsType != rhsType && lhsType != Type.Unknown && rhsType != Type.Unknown) {
@@ -193,7 +197,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+        override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
         override fun expectedArgType(): Type = Type.I32
 
@@ -214,7 +218,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         }
     }
 
-    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable): LLVMValueRef {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<VariableAttrs>): LLVMValueRef {
         val left = lhs.generateCode(module, builder, symbolTable)
         val right = rhs.generateCode(module, builder, symbolTable)
         return doOperation(builder, left, right)
@@ -224,7 +228,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         return LLVMBuildBinOp(builder, opcode, left, right, name)
     }
 
-    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+    override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         val lhsResult = lhs.validate(functions, variables)
         val rhsResult = rhs.validate(functions, variables)
         val messages = doValidate(functions, variables)
@@ -236,7 +240,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         return lhsResult + rhsResult + result
     }
 
-    open protected fun doValidate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): List<ErrorMessage> {
+    open protected fun doValidate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): List<ErrorMessage> {
         val lhsType = lhs.getType(functions, variables)
         val rhsType = rhs.getType(functions, variables)
         val expectedType = expectedArgType()

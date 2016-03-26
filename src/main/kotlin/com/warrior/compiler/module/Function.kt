@@ -13,13 +13,12 @@ import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.Error
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
-import java.util.*
 
 /**
  * Created by warrior on 10.03.16.
  */
 class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block) : ASTNode(ctx) {
-    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
+    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<VariableAttrs>) {
         val fn = LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
         // create basic block
@@ -37,13 +36,12 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
         }
 
-        val symbolTable = SymbolTable()
         // allocate variables for arguments
         for ((i, arg) in prototype.args.withIndex()) {
             val value = LLVMGetParam(fn, i)
             val ref = LLVMBuildAlloca(builder, arg.type.toLLVMType(), arg.name)
             LLVMBuildStore(builder, value, ref)
-            symbolTable.variables[arg.name] = VariableAttrs(arg.name, arg.type, ref)
+            symbolTable.putLocal(arg.name, VariableAttrs(arg.name, arg.type, ref))
         }
 
         // generate code for 'body' block
@@ -62,10 +60,9 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         LLVMVerifyFunction(fn, LLVMPrintMessageAction)
     }
 
-    fun validate(functions: Map<String, Type.Fn>): Result {
+    fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type> = SymbolTable()): Result {
         val prototypeResult = prototype.validate()
-        val variables = HashMap<String, Type>();
-        prototype.args.forEach { variables[it.name] = it.type }
+        prototype.args.forEach { variables.putLocal(it.name, it.type) }
         val bodyResult = body.validate(functions, variables, prototype.name)
         if (!body.isTerminalStatement()) {
             val message = "function '${prototype.name}' may not return result"

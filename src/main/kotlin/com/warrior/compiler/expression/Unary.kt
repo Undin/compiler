@@ -1,8 +1,10 @@
 package com.warrior.compiler.expression
 
-import com.warrior.compiler.*
-import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.SymbolTable
+import com.warrior.compiler.Type
+import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.validation.ErrorMessage
+import com.warrior.compiler.validation.ErrorType.TYPE_MISMATCH
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.TypedValue
@@ -14,14 +16,15 @@ import org.bytedeco.javacpp.LLVM
  */
 
 class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
+                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
         val exprValue = expr.generateCode(module, builder, symbolTable)
         return LLVM.LLVMBuildNot(builder, exprValue, "not")
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.Bool
+    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
-    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+    override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         val exprResult = expr.validate(functions, variables)
         val exprType = expr.getType(functions, variables)
         val result = if (exprType != Type.Bool && exprType != Type.Unknown) {
@@ -54,14 +57,15 @@ class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
 }
 
 class UnaryMinus(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef, symbolTable: SymbolTable): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
+                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
         val exprValue = expr.generateCode(module, builder, symbolTable)
         return LLVM.LLVMBuildNeg(builder, exprValue, "unaryMinus")
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Type = Type.I32
+    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
 
-    override fun validate(functions: Map<String, Type.Fn>, variables: Map<String, Type>): Result {
+    override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         val exprResult = expr.validate(functions, variables)
         val exprType = expr.getType(functions, variables)
         val result = if (exprType != Type.I32 && exprType != Type.Unknown) {
