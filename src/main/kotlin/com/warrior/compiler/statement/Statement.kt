@@ -9,6 +9,7 @@ import com.warrior.compiler.validation.*
 import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
+import com.warrior.compiler.Compiler
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
@@ -403,29 +404,9 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 
     class Print(ctx: ParserRuleContext, val expr: Expr, val newLine: Boolean) : Statement(ctx) {
-
-        companion object {
-            private var str: LLVMValueRef? = null
-            private var strLn: LLVMValueRef? = null
-
-            private fun getStr(builder: LLVMBuilderRef): LLVMValueRef {
-                if (str == null) {
-                    str = LLVMBuildGlobalStringPtr(builder, "%d", "str")
-                }
-                return str!!
-            }
-
-            private fun getStrLn(builder: LLVMBuilderRef): LLVMValueRef {
-                if (strLn == null) {
-                    strLn = LLVMBuildGlobalStringPtr(builder, "%d\n", "strLn")
-                }
-                return strLn!!
-            }
-        }
-
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
-            val s = if (newLine) getStrLn(builder) else getStr(builder)
+            val s = if (newLine) Compiler.getStrLn(builder) else Compiler.getStr(builder)
             val value = expr.generateCode(module, builder, symbolTable)
             val printfFn = LLVMGetNamedFunction(module, "printf")
             val args = arrayOf(s, value)
@@ -443,23 +424,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 
     class Read(ctx: ParserRuleContext, val varName: String) : Statement(ctx) {
-
-        companion object {
-            private var str: LLVMValueRef? = null
-
-            private fun getStr(builder: LLVMBuilderRef): LLVMValueRef {
-                if (str == null) {
-                    str = LLVMBuildGlobalStringPtr(builder, "%d", "str")
-                }
-                return str!!
-            }
-        }
-
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<VariableAttrs>, returnBlock: ReturnBlock?) {
             val variable = symbolTable[varName] ?: throw IllegalStateException("variable '$varName' isn't declared")
 
-            val s = getStr(builder)
+            val s = Compiler.getStr(builder)
             val scanfFn = LLVMGetNamedFunction(module, "scanf")
             val args = arrayOf(s, variable.ref)
             LLVMBuildCall(builder, scanfFn, PointerPointer(*args), args.size, "readCall")

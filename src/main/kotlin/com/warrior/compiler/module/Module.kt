@@ -28,15 +28,15 @@ class Module(ctx: ParserRuleContext, val globals: List<GlobalDeclaration>, val f
     }
 
     private fun declarePrintf(module: LLVMModuleRef) {
-        val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0);
-        val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1);
+        val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0)
+        val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1)
         val fn = LLVMAddFunction(module, "printf", fnType)
         LLVMSetFunctionCallConv(fn, LLVMCCallConv)
     }
 
     private fun declareScanf(module: LLVMModuleRef) {
-        val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0);
-        val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1);
+        val i8Pointer = LLVMPointerType(LLVMInt8Type(), 0)
+        val fnType = LLVMFunctionType(LLVMInt32Type(), i8Pointer, 1, 1)
         val fn = LLVMAddFunction(module, "scanf", fnType)
         LLVMSetFunctionCallConv(fn, LLVMCCallConv)
     }

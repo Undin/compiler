@@ -9,7 +9,7 @@ import org.junit.Test
 /**
  * Created by warrior on 21.03.16.
  */
-class StatementInterpretTest {
+class StatementInterpretationTest {
 
     @Test
     fun expressionTest() {
