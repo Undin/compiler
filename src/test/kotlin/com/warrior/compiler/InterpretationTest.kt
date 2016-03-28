@@ -229,8 +229,25 @@ class InterpretationTest {
 
             fn readInt() -> i32 {
                 a: i32;
-                read(a)
+                read(a);
                 return a;
+            }
+        """
+        Assert.assertEquals("5", interpret(program, "2 3\n"))
+    }
+
+    @Test
+    fun prebuildsTest() {
+        val program = """
+            fn main() -> i32 {
+                a: i32 = readI32();
+                b: i32 = readI32();
+                print(add(a, b));
+                return 0;
+            }
+
+            fn add(a: i32, b: i32) -> i32 {
+                return a + b;
             }
         """
         Assert.assertEquals("5", interpret(program, "2 3\n"))

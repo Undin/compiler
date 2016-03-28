@@ -1,6 +1,8 @@
 package com.warrior.compiler
 
 import com.warrior.compiler.module.Module
+import com.warrior.compiler.prebuilds.readBoolFunction
+import com.warrior.compiler.prebuilds.readI32Function
 import com.warrior.compiler.validation.Result.*
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -89,7 +91,8 @@ class Compiler(val program: String): Closeable {
     }
 
     private fun buildAST(code: String): Module {
-        val stream = ANTLRInputStream(code);
+        val fullCode = addPrebuilds(code);
+        val stream = ANTLRInputStream(fullCode);
         val lexer = GrammarLexer(stream);
         val tokens = CommonTokenStream(lexer);
         val parser = GrammarParser(tokens);
@@ -97,6 +100,14 @@ class Compiler(val program: String): Closeable {
 
         val visitor = ASTVisitor()
         return visitor.visitModule(tree)
+    }
+
+    private fun addPrebuilds(code: String): String {
+        return StringBuilder(code)
+                .append("\n")
+                .append(readBoolFunction())
+                .append(readI32Function())
+                .toString()
     }
 
     fun getAsm(): String = LLVMPrintModuleToString(module).string
