@@ -3,7 +3,6 @@ package com.warrior.compiler.module
 import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.statement.ReturnBlock
 import com.warrior.compiler.statement.Statement.Block
 import com.warrior.compiler.statement.Statement.Return
@@ -18,7 +17,7 @@ import org.bytedeco.javacpp.LLVM.*
  * Created by warrior on 10.03.16.
  */
 class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block) : ASTNode(ctx) {
-    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<VariableAttrs>) {
+    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>) {
         val fn = LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
         // create basic block
@@ -42,7 +41,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             val value = LLVMGetParam(fn, i)
             val ref = LLVMBuildAlloca(builder, arg.type.toLLVMType(), arg.name)
             LLVMBuildStore(builder, value, ref)
-            localSymbolTable.putLocal(arg.name, VariableAttrs(arg.name, arg.type, ref))
+            localSymbolTable.putLocal(arg.name, ref)
         }
 
         // generate code for 'body' block

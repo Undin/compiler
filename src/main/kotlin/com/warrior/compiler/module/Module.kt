@@ -3,7 +3,6 @@ package com.warrior.compiler.module
 import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType.FUNCTION_IS_ALREADY_DECLARED
 import com.warrior.compiler.validation.Result
@@ -19,7 +18,7 @@ import java.util.*
  */
 class Module(ctx: ParserRuleContext, val globals: List<GlobalDeclaration>, val functions: List<Function>) : ASTNode(ctx) {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
-        val symbolTable = SymbolTable<VariableAttrs>()
+        val symbolTable = SymbolTable<LLVMValueRef>()
         globals.forEach { it.generateCode(module, builder, symbolTable) }
         functions.forEach { it.prototype.generateCode(module) }
         declarePrintf(module)

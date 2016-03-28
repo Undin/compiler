@@ -71,7 +71,7 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 Ok,
-                parseStatement("a: i32 = 4;").validate(functions, fnName = "f")
+                parseStatement("let a: i32 = 4;").validate(functions, fnName = "f")
         )
     }
 
@@ -82,7 +82,7 @@ class StatementValidationTest {
                 .apply { putLocal("a", Bool) }
         Assert.assertEquals(
                 error(VARIABLE_IS_ALREADY_DECLARED),
-                parseStatement("a: i32 = 4;").validate(functions, variables, "f")
+                parseStatement("let a: i32 = 4;").validate(functions, variables, "f")
         )
     }
 
@@ -91,7 +91,25 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
-                parseStatement("a: i32 = false;").validate(functions, fnName = "f")
+                parseStatement("let a: i32 = false;").validate(functions, fnName = "f")
+        )
+    }
+
+    @Test
+    fun assignDeclTest4() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        Assert.assertEquals(
+                Ok,
+                parseStatement("let a = 1;").validate(functions, fnName = "f")
+        )
+    }
+
+    @Test
+    fun assignDeclTest5() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        Assert.assertEquals(
+                error(UNKNOWN_VARIABLE_TYPE),
+                parseStatement("let a;").validate(functions, fnName = "f")
         )
     }
 
@@ -171,8 +189,8 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32;
-                b: i32;
+                let a: i32;
+                let b: i32;
                 read(a);
                 read(b);
                 print(a + b);
@@ -189,8 +207,8 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32;
-                b: bool;
+                let a: i32;
+                let b: bool;
                 read(a);
                 read(b);
                 print(a + b);
@@ -207,8 +225,8 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32 = true;
-                b: bool;
+                let a: i32 = true;
+                let b: bool;
                 read(a);
                 read(b);
                 print(a + b + c);
@@ -225,12 +243,12 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32 = 4;
+                let a: i32 = 4;
                 {
                     a = 10;
-                    b: i32 = 1;
+                    let b: i32 = 1;
                 }
-                b: i32 = 0;
+                let b: i32 = 0;
             }
         """
         Assert.assertEquals(
@@ -244,10 +262,10 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32 = 4;
+                let a: i32 = 4;
                 {
                     a = 10;
-                    b: i32 = 1;
+                    let b: i32 = 1;
                 }
                 b = 0;
             }
@@ -263,12 +281,12 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                a: i32 = 4;
+                let a: i32 = 4;
                 {
-                    a: i32 = 10;
-                    b: i32 = 1;
+                    let a: i32 = 10;
+                    let b: i32 = 1;
                 }
-                b: i32 = 0;
+                let b: i32 = 0;
             }
         """
         Assert.assertEquals(

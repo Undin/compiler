@@ -30,7 +30,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitGlobalDeclaration(ctx: GrammarParser.GlobalDeclarationContext): GlobalDeclaration {
         val name = ctx.Identifier().text
-        val type = ctx.type().text.toType()
+        val type = ctx.type()?.text?.toType()
         val expr = if (ctx.boolLiteral() != null) {
             visitBoolLiteral(ctx.boolLiteral())
         } else if (ctx.intLiteral() != null) {
@@ -86,7 +86,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): AssignDecl {
         val name = ctx.Identifier().text
-        val type = ctx.type().text.toType()
+        val type = ctx.type()?.text?.toType()
         val expr = if (ctx.expression() != null) {
             visitExpression(ctx.expression())
         } else {

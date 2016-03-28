@@ -3,11 +3,9 @@ package com.warrior.compiler.module
 import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.validation.ErrorMessage
-import com.warrior.compiler.validation.ErrorType.TYPE_MISMATCH
-import com.warrior.compiler.validation.ErrorType.VARIABLE_IS_ALREADY_DECLARED
+import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
@@ -17,35 +15,50 @@ import org.bytedeco.javacpp.LLVM.*
 /**
  * Created by warrior on 26.03.16.
  */
-class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type, val expr: Expr?) : ASTNode(ctx) {
-    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<VariableAttrs>) {
-        val globalVarRef = LLVMAddGlobal(module, type.toLLVMType(), name)
-        val value = if (expr != null) {
-            expr.generateCode(module, builder, symbolTable)
+class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type?, val expr: Expr?) : ASTNode(ctx) {
+    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>) {
+        val value: LLVMValueRef
+        if (type == null) {
+            if (expr == null) {
+                throw IllegalArgumentException("can't determine type of '$name' variable")
+            }
+            value = expr.generateCode(module, builder, symbolTable)
         } else {
-            LLVMConstInt(type.toLLVMType(), 0L, 1)
+            value = expr?.generateCode(module, builder, symbolTable) ?: LLVMConstInt(type.toLLVMType(), 0L, 1)
         }
+
+        val globalVarRef = LLVMAddGlobal(module, LLVMTypeOf(value), name)
         LLVMSetInitializer(globalVarRef, value)
-        symbolTable.putGlobal(name, VariableAttrs(name, type, globalVarRef))
+        symbolTable.putGlobal(name, globalVarRef)
     }
 
-    fun validate(symbolTable: SymbolTable<Type> = SymbolTable()): Result {
-        var result: Result = Ok
-        if (name in symbolTable.getGlobal()) {
+    fun validate(variables: SymbolTable<Type> = SymbolTable()): Result {
+        if (name in variables.getGlobal()) {
             val message = "'${getText()}': global variable '$name' is already declared"
-            result = Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
+            return Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
         }
-        var exprResult: Result = Ok
-        if (expr != null) {
-            val exprType = expr.getType(emptyMap(), symbolTable)
-            if (!exprType.match(type)) {
-                val message = "'${getText()}': variable and expression types don't match"
-                exprResult = Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+        val exprType: Type
+        val variableType: Type
+        if (type == null){
+            if (expr == null) {
+                variables.putGlobal(name, Type.Unknown)
+                val message = "'${getText()}': can't determine type of variable '$name'"
+                return Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
             }
+            exprType = expr.getType(emptyMap(), variables)
+            variableType = exprType
+        } else {
+            variableType = type
+            exprType = expr?.getType(emptyMap(), variables) ?: type
         }
-        if (result == Ok) {
-            symbolTable.putGlobal(name, type)
+        variables.putGlobal(name, variableType)
+
+        val result = if (!variableType.match(exprType)) {
+            val message = "'${getText()}': variable and expression types don't match"
+             Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+        } else {
+            Ok
         }
-        return result + exprResult
+        return result
     }
 }

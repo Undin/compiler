@@ -2,7 +2,6 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.expression.Binary.Arithmetic.Operation.*
 import com.warrior.compiler.expression.Binary.Cmp.Operation.*
@@ -39,7 +38,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         }
 
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<VariableAttrs>): LLVMValueRef {
+                                  symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
             val currentBlock = LLVMGetInsertBlock(builder)
             val fn = LLVMGetBasicBlockParent(currentBlock)
 
@@ -218,7 +217,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         }
     }
 
-    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<VariableAttrs>): LLVMValueRef {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
         val left = lhs.generateCode(module, builder, symbolTable)
         val right = rhs.generateCode(module, builder, symbolTable)
         return doOperation(builder, left, right)

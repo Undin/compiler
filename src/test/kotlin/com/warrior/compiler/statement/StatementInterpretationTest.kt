@@ -38,10 +38,9 @@ class StatementInterpretationTest {
         val env = mutableMapOf<String, TypedValue>("b" to b)
         Assert.assertEquals(
                 listOf<TypedValue>(),
-                parseStatement("a: i32 = b + 4;").interpret(env)
+                parseStatement("let a: i32 = b + 4;").interpret(env)
         )
     }
-
 
     @Test
     fun printTest() {
@@ -69,8 +68,8 @@ class StatementInterpretationTest {
     fun blockTest() {
         val statement = """
             {
-                a: i32;
-                b: i32;
+                let a: i32;
+                let b: i32;
                 read(a);
                 read(b);
                 print(a + b);
@@ -87,7 +86,7 @@ class StatementInterpretationTest {
     fun innerBlockTest1() {
         val statement = """
             {
-                a: i32 = 4;
+                let a: i32 = 4;
                 print(a);
                 {
                     a = 10;
@@ -107,10 +106,10 @@ class StatementInterpretationTest {
         val statement = """
             {
                 {
-                    a: i32 = 10;
+                    let a: i32 = 10;
                     print(a);
                 }
-                a: i32 = 4;
+                let a: i32 = 4;
                 print(a);
             }
         """
@@ -176,11 +175,11 @@ class StatementInterpretationTest {
     fun test() {
         val statement = """
             {
-                a: i32;
-                pow: i32;
+                let a: i32;
+                let pow: i32;
                 read(a);
                 read(pow);
-                result: i32 = 1;
+                let result = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;

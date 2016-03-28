@@ -59,8 +59,8 @@ class ModuleValidationTest {
     fun test3() {
         val module = """
             fn main() -> i32 {
-                a: i32;
-                pow: i32;
+                let a: i32;
+                let pow: i32;
                 read(a);
                 read(pow);
                 println(fast(a, pow));
@@ -68,7 +68,7 @@ class ModuleValidationTest {
             }
 
             fn fast(a: i32, pow: i32) -> i32 {
-                result: i32 = 1;
+                let result: i32 = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;
@@ -91,8 +91,8 @@ class ModuleValidationTest {
     fun test4() {
         val module = """
             fn main() -> i32 {
-                a: i32;
-                pow: bool;
+                let a: i32;
+                let pow: bool;
                 read(a);
                 read(pow);
                 println(fast(a, pow));
@@ -122,17 +122,17 @@ class ModuleValidationTest {
     @Test
     fun test5() {
         val module = """
-            pow: i32 = 5;
+            let pow: i32 = 5;
 
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 println(fast(a, pow));
                 return 0;
             }
 
             fn fast(a: i32, pow: i32) -> i32 {
-                result: i32 = 1;
+                let result: i32 = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;
@@ -154,17 +154,17 @@ class ModuleValidationTest {
     @Test
     fun test6() {
         val module = """
-            pow: bool;
+            let pow: bool;
 
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 println(fast(a, pow));
                 return 0;
             }
 
             fn fast(a: i32, pow: i32) -> i32 {
-                result: i32 = 1;
+                let result: i32 = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;
@@ -186,17 +186,17 @@ class ModuleValidationTest {
     @Test
     fun test7() {
         val module = """
-            pow: bool;
+            let pow: bool;
 
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 println(fast(a));
                 return 0;
             }
 
             fn fast(a: i32) -> i32 {
-                result: i32 = 1;
+                let result: i32 = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;
@@ -218,10 +218,10 @@ class ModuleValidationTest {
     @Test
     fun test8() {
         val module = """
-            a: bool;
+            let a: bool;
 
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 println(a + 10);
                 return 0;
@@ -241,7 +241,7 @@ class ModuleValidationTest {
             }
 
             fn f2() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 return a;
             }

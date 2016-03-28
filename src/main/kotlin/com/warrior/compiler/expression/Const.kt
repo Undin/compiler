@@ -2,20 +2,19 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
-import org.bytedeco.javacpp.LLVM
+import org.bytedeco.javacpp.LLVM.*
 
 /**
  * Created by warrior on 09.03.16.
  */
 class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
-                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
-        return LLVM.LLVMConstInt(LLVM.LLVMInt1Type(), if (value) 1 else 0, 0)
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
+        return LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
     }
 
     override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
@@ -34,9 +33,9 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
 }
 
 class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
-                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
-        return LLVM.LLVMConstInt(LLVM.LLVMInt32Type(), value.toLong(), 1)
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
+        return LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
     }
 
     override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32

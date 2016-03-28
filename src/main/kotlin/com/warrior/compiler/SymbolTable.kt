@@ -1,6 +1,5 @@
 package com.warrior.compiler
 
-import org.bytedeco.javacpp.LLVM
 import java.util.*
 
 /**
@@ -35,5 +34,3 @@ class SymbolTable<T> {
     fun getGlobal(): Map<String, T> = globalVariables
     fun getLocal(): Map<String, T> = localVariables
 }
-
-data class VariableAttrs(val name: String, val type: Type, val ref: LLVM.LLVMValueRef)

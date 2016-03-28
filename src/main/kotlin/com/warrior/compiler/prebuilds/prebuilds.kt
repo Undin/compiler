@@ -7,7 +7,7 @@ package com.warrior.compiler.prebuilds
 fun readI32Function(): String {
     return """
         fn readI32() -> i32 {
-            a: i32;
+            let a: i32;
             read(a);
             return a;
         }
@@ -17,7 +17,7 @@ fun readI32Function(): String {
 fun readBoolFunction(): String {
     return """
         fn readBool() -> bool {
-            a: bool;
+            let a: bool;
             read(a);
             return a;
         }

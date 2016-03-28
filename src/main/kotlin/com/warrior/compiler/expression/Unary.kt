@@ -2,24 +2,23 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType.TYPE_MISMATCH
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
-import org.bytedeco.javacpp.LLVM
+import org.bytedeco.javacpp.LLVM.*
 
 /**
  * Created by warrior on 09.03.16.
  */
 
 class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
-                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
         val exprValue = expr.generateCode(module, builder, symbolTable)
-        return LLVM.LLVMBuildNot(builder, exprValue, "not")
+        return LLVMBuildNot(builder, exprValue, "not")
     }
 
     override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
@@ -57,10 +56,10 @@ class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
 }
 
 class UnaryMinus(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
-                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
         val exprValue = expr.generateCode(module, builder, symbolTable)
-        return LLVM.LLVMBuildNeg(builder, exprValue, "unaryMinus")
+        return LLVMBuildNeg(builder, exprValue, "unaryMinus")
     }
 
     override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32

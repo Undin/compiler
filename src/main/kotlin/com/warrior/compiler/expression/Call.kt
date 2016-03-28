@@ -2,14 +2,13 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.VariableAttrs
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.TypedValue
 import org.antlr.v4.runtime.ParserRuleContext
-import org.bytedeco.javacpp.LLVM
+import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
 import java.util.*
 
@@ -17,11 +16,11 @@ import java.util.*
  * Created by warrior on 10.03.16.
  */
 class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : Expr(ctx) {
-    override fun generateCode(module: LLVM.LLVMModuleRef, builder: LLVM.LLVMBuilderRef,
-                              symbolTable: SymbolTable<VariableAttrs>): LLVM.LLVMValueRef {
-        val fn = LLVM.LLVMGetNamedFunction(module, fnName)
+    override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
+        val fn = LLVMGetNamedFunction(module, fnName)
         val argsValues = args.map { it.generateCode(module, builder, symbolTable) }.toTypedArray()
-        return LLVM.LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
+        return LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
     }
 
     override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {

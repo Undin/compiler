@@ -13,7 +13,7 @@ class InterpretationTest {
     fun simpleTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 print(a + 10);
                 return 0;
@@ -26,7 +26,7 @@ class InterpretationTest {
     fun lazyAndExpressionTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 if (f(a) && f(-a)) {
                     println(0);
@@ -48,7 +48,7 @@ class InterpretationTest {
     fun lazyOrExpressionTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 if (f(a) || f(-a)) {
                     println(0);
@@ -69,16 +69,16 @@ class InterpretationTest {
     fun innerBlockTest() {
         val program = """
             fn main() -> i32 {
-                a: i32 = 0;
+                let a: i32 = 0;
                 {
                     println(a);
                     a = 1;
                     println(a);
-                    b: i32 = 1;
+                    let b: i32 = 1;
                     println(b);
                 }
                 println(a);
-                b: i32 = 0;
+                let b: i32 = 0;
                 println(b);
                 return 0;
             }
@@ -89,12 +89,12 @@ class InterpretationTest {
     @Test
     fun scopeTest() {
         val program = """
-            a: i32 = 0;
+            let a: i32 = 0;
 
             fn main() -> i32 {
                 println(a);
                 {
-                    a: i32 = 1;
+                    let a: i32 = 1;
                     println(a);
                 }
                 println(a);
@@ -108,11 +108,11 @@ class InterpretationTest {
     fun fastPowTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
-                pow: i32;
+                let a: i32;
+                let pow: i32;
                 read(a);
                 read(pow);
-                result: i32 = 1;
+                let result: i32 = 1;
                 while (pow != 0) {
                     if (pow % 2 == 0) {
                         a = a * a;
@@ -140,14 +140,14 @@ class InterpretationTest {
     fun recursionTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 print(fib(a));
                 return 0;
             }
 
             fn fib(a: i32) -> i32 {
-                result: i32;
+                let result: i32;
                 if (a == 0 || a == 1) {
                     result = a;
                 } else {
@@ -174,7 +174,7 @@ class InterpretationTest {
     fun returnTest() {
         val program = """
             fn main() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 print(abs(a));
                 return 0;
@@ -194,7 +194,7 @@ class InterpretationTest {
     @Test
     fun globalTest() {
         val program = """
-            a: i32 = 0;
+            let a: i32 = 0;
 
             fn main() -> i32 {
                 println(a);
@@ -217,8 +217,8 @@ class InterpretationTest {
     fun argumentsTest() {
         val program = """
             fn main() -> i32 {
-                a: i32 = readInt();
-                b: i32 = readInt();
+                let a = readInt();
+                let b = readInt();
                 print(add(a, b));
                 return 0;
             }
@@ -228,7 +228,7 @@ class InterpretationTest {
             }
 
             fn readInt() -> i32 {
-                a: i32;
+                let a: i32;
                 read(a);
                 return a;
             }
@@ -240,8 +240,8 @@ class InterpretationTest {
     fun prebuildsTest() {
         val program = """
             fn main() -> i32 {
-                a: i32 = readI32();
-                b: i32 = readI32();
+                let a: i32 = readI32();
+                let b: i32 = readI32();
                 print(add(a, b));
                 return 0;
             }

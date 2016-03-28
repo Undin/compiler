@@ -59,7 +59,7 @@ class FunctionValidationTest {
     fun innerBlockTest1() {
         val function = """
             fn f(a: i32, b: i32) -> i32 {
-                c: i32 = a + b;
+                let c: i32 = a + b;
                 {
                     return 2 * c;
                 }
@@ -76,7 +76,7 @@ class FunctionValidationTest {
     fun innerBlockTest2() {
         val function = """
             fn f(a: i32, b: i32) -> i32 {
-                c: i32 = a + b;
+                let c: i32 = a + b;
                 {
                     2 * c;
                 }
@@ -93,7 +93,7 @@ class FunctionValidationTest {
     fun innerBlockTest3() {
         val function = """
             fn f(a: i32, b: i32) -> i32 {
-                c: i32 = a + b;
+                let c: i32 = a + b;
                 {
                     return 2 * c + g();
                 }
