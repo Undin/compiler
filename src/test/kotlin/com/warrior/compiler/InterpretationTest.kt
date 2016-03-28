@@ -127,7 +127,7 @@ class InterpretationTest {
             }
         """
         val rand = Random()
-        for (i in 0..100) {
+        for (i in 0 until 100) {
             val a = rand.nextInt(10) + 1
             val pow = rand.nextInt(9) + 1
             val input = "$a $pow\n"
@@ -211,6 +211,29 @@ class InterpretationTest {
             }
         """
         Assert.assertEquals("0\n1\n2\n", interpret(program, ""))
+    }
+
+    @Test
+    fun argumentsTest() {
+        val program = """
+            fn main() -> i32 {
+                a: i32 = readInt();
+                b: i32 = readInt();
+                print(add(a, b));
+                return 0;
+            }
+
+            fn add(a: i32, b: i32) -> i32 {
+                return a + b;
+            }
+
+            fn readInt() -> i32 {
+                a: i32;
+                read(a)
+                return a;
+            }
+        """
+        Assert.assertEquals("5", interpret(program, "2 3\n"))
     }
 
     private fun interpret(program: String, input: String): String {

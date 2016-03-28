@@ -36,16 +36,17 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
         }
 
+        val localSymbolTable = SymbolTable(symbolTable)
         // allocate variables for arguments
         for ((i, arg) in prototype.args.withIndex()) {
             val value = LLVMGetParam(fn, i)
             val ref = LLVMBuildAlloca(builder, arg.type.toLLVMType(), arg.name)
             LLVMBuildStore(builder, value, ref)
-            symbolTable.putLocal(arg.name, VariableAttrs(arg.name, arg.type, ref))
+            localSymbolTable.putLocal(arg.name, VariableAttrs(arg.name, arg.type, ref))
         }
 
         // generate code for 'body' block
-        body.generateCode(module, builder, symbolTable, returnBlock)
+        body.generateCode(module, builder, localSymbolTable, returnBlock)
 
         if (returnBlock != null) {
             val lastBlock = LLVMGetLastBasicBlock(fn)
@@ -62,8 +63,9 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
 
     fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type> = SymbolTable()): Result {
         val prototypeResult = prototype.validate()
-        prototype.args.forEach { variables.putLocal(it.name, it.type) }
-        val bodyResult = body.validate(functions, variables, prototype.name)
+        val localVariables = SymbolTable(variables)
+        prototype.args.forEach { localVariables.putLocal(it.name, it.type) }
+        val bodyResult = body.validate(functions, localVariables, prototype.name)
         if (!body.isTerminalStatement()) {
             val message = "function '${prototype.name}' may not return result"
             val error = Error(ErrorMessage(RETURN_EXPRESSION, message, start(), end()))

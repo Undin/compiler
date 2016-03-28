@@ -232,4 +232,23 @@ class ModuleValidationTest {
                 parseModule(module).validate()
         )
     }
+
+    @Test
+    fun test9() {
+        val module = """
+            fn f1(a: i32) -> i32 {
+                return 0;
+            }
+
+            fn f2() -> i32 {
+                a: i32;
+                read(a);
+                return a;
+            }
+        """
+        Assert.assertEquals(
+                Ok,
+                parseModule(module).validate()
+        )
+    }
 }
