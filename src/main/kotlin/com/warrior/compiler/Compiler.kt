@@ -128,7 +128,7 @@ class Compiler(val program: String): Closeable {
         try {
             Files.copy(getAsm().byteInputStream(), llvmCodePath, StandardCopyOption.REPLACE_EXISTING)
             val process = ProcessBuilder()
-                    .command("lli-3.7", llvmCodePath.toString())
+                    .command("lli", llvmCodePath.toString())
                     .start()
 
             process.outputStream.write(input.toByteArray())
