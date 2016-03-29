@@ -3,9 +3,9 @@ package com.warrior.compiler
 import com.warrior.compiler.module.Module
 import com.warrior.compiler.prebuilds.readBoolFunction
 import com.warrior.compiler.prebuilds.readI32Function
-import com.warrior.compiler.validation.Result.*
-import org.antlr.v4.runtime.ANTLRInputStream
-import org.antlr.v4.runtime.CommonTokenStream
+import com.warrior.compiler.validation.Result.Error
+import com.warrior.compiler.validation.Result.Ok
+import org.antlr.v4.runtime.*
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.Pointer
@@ -42,17 +42,20 @@ class Compiler(val program: String): Closeable {
 
     fun compile(optimize: Boolean = false): Boolean {
         val ast = buildAST(program)
-        val result = ast.validate()
-        return when (result) {
-            Ok -> {
-                generateCode(ast, optimize)
-                true
-            }
-            is Error -> {
-                printError(result)
-                false
+        if (ast != null) {
+            val result = ast.validate()
+            return when (result) {
+                Ok -> {
+                    generateCode(ast, optimize)
+                    true
+                }
+                is Error -> {
+                    printError(result)
+                    false
+                }
             }
         }
+        return false
     }
 
     private fun generateCode(ast: Module, optimize: Boolean) {
@@ -90,16 +93,24 @@ class Compiler(val program: String): Closeable {
         }
     }
 
-    private fun buildAST(code: String): Module {
+    private fun buildAST(code: String): Module? {
         val fullCode = addPrebuilds(code);
         val stream = ANTLRInputStream(fullCode);
         val lexer = GrammarLexer(stream);
         val tokens = CommonTokenStream(lexer);
         val parser = GrammarParser(tokens);
-        val tree = parser.module();
-
-        val visitor = ASTVisitor()
-        return visitor.visitModule(tree)
+        val errorListener = ErrorListener()
+        parser.addErrorListener(errorListener)
+        try {
+            val tree = parser.module();
+            if (!errorListener.hasSyntaxError) {
+                val visitor = ASTVisitor()
+                return visitor.visitModule(tree)
+            }
+        } catch (e: RecognitionException) {
+            e.printStackTrace()
+        }
+        return null
     }
 
     private fun addPrebuilds(code: String): String {
@@ -135,5 +146,16 @@ class Compiler(val program: String): Closeable {
         strLn = null
         LLVMDisposeBuilder(builder)
         LLVMDisposeModule(module)
+    }
+
+    private class ErrorListener : BaseErrorListener() {
+
+        var hasSyntaxError = false
+            private set
+
+        override fun syntaxError(recognizer: Recognizer<*, *>?, offendingSymbol: Any?,
+                                 line: Int, charPositionInLine: Int, msg: String?, e: RecognitionException?) {
+            hasSyntaxError = true
+        }
     }
 }
