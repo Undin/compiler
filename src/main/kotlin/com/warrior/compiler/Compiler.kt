@@ -1,8 +1,8 @@
 package com.warrior.compiler
 
 import com.warrior.compiler.module.Module
-import com.warrior.compiler.prebuilds.readBoolFunction
-import com.warrior.compiler.prebuilds.readI32Function
+import com.warrior.compiler.buildin.readBoolFunction
+import com.warrior.compiler.buildin.readI32Function
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
 import org.antlr.v4.runtime.*
@@ -94,7 +94,7 @@ class Compiler(val program: String): Closeable {
     }
 
     private fun buildAST(code: String): Module? {
-        val fullCode = addPrebuilds(code);
+        val fullCode = addBuildinCode(code);
         val stream = ANTLRInputStream(fullCode);
         val lexer = GrammarLexer(stream);
         val tokens = CommonTokenStream(lexer);
@@ -113,7 +113,7 @@ class Compiler(val program: String): Closeable {
         return null
     }
 
-    private fun addPrebuilds(code: String): String {
+    private fun addBuildinCode(code: String): String {
         return StringBuilder(code)
                 .append("\n")
                 .append(readBoolFunction())

@@ -1,4 +1,4 @@
-package com.warrior.compiler.prebuilds
+package com.warrior.compiler.buildin
 
 /**
  * Created by warrior on 28.03.16.
