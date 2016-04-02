@@ -57,13 +57,12 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             // calculate rhs and operation result
             LLVMPositionBuilderAtEnd(builder, rhsBlock)
             val rhsResult = rhs.generateCode(module, builder, symbolTable)
-            val exprResult = doOperation(builder, lhsResult, rhsResult)
             LLVMBuildBr(builder, joinBlock)
 
             LLVMPositionBuilderAtEnd(builder, joinBlock)
             // join results
             val phi = LLVMBuildPhi(builder, LLVMInt1Type(), "res")
-            val incomingValues = PointerPointer(*arrayOf(lhsResult, exprResult))
+            val incomingValues = PointerPointer(*arrayOf(lhsResult, rhsResult))
             val incomingBlocks = PointerPointer(*arrayOf(currentBlock, rhsBlock))
             LLVMAddIncoming(phi, incomingValues, incomingBlocks, 2)
 
