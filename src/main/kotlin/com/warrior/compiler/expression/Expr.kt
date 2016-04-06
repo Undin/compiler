@@ -13,8 +13,18 @@ import org.bytedeco.javacpp.LLVM.*
  * Created by warrior on 07.03.16.
  */
 abstract class Expr(ctx: ParserRuleContext) : ASTNode(ctx) {
+
+    lateinit var type: Type
+
+    fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
+        val type = getTypeInternal(functions, variables)
+        this.type = type
+        return type
+    }
+
     abstract fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef
-    abstract fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type
     abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()): Result
     abstract fun calculate(functions: Map<String, Fn> = emptyMap(), variables: Map<String, TypedValue> = emptyMap()): TypedValue
+
+    protected abstract fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type
 }

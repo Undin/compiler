@@ -17,7 +17,7 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
         return LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
+    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Result.Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue = TypedValue.BoolValue(value)
 
@@ -38,7 +38,7 @@ class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
         return LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
+    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Result.Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.IntValue = TypedValue.IntValue(value)
 

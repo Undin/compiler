@@ -438,7 +438,10 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
-                              fnName: String): Result = expr.validate(functions, variables)
+                              fnName: String): Result {
+            expr.getType(functions, variables)
+            return expr.validate(functions, variables)
+        }
     }
 
     class Read(ctx: ParserRuleContext, val varName: String) : Statement(ctx) {

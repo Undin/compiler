@@ -21,11 +21,11 @@ class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
         return LLVMBuildNot(builder, exprValue, "not")
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
+    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         val exprResult = expr.validate(functions, variables)
-        val exprType = expr.getType(functions, variables)
+        val exprType = expr.getTypeInternal(functions, variables)
         val result = if (exprType != Type.Bool && exprType != Type.Unknown) {
             val message = "expression '${expr.getText()}' must have 'bool' type"
             Result.Error(ErrorMessage(TYPE_MISMATCH, message, expr.start(), expr.end()))
@@ -62,11 +62,11 @@ class UnaryMinus(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
         return LLVMBuildNeg(builder, exprValue, "unaryMinus")
     }
 
-    override fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
+    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
 
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
         val exprResult = expr.validate(functions, variables)
-        val exprType = expr.getType(functions, variables)
+        val exprType = expr.getTypeInternal(functions, variables)
         val result = if (exprType != Type.I32 && exprType != Type.Unknown) {
             val message = "expression '${expr.getText()}' must have 'i32' type"
             Result.Error(ErrorMessage(TYPE_MISMATCH, message, expr.start(), expr.end()))
