@@ -4,11 +4,13 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.1"
+        classpath 'de.undercouch:gradle-download-task:2.1.0'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'de.undercouch.download'
 
 sourceCompatibility = 1.7
 version = 1.0
@@ -26,12 +28,61 @@ jar {
     }
 }
 
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            println("\n$output\n")
+        }
+    }
+}
+
 dependencies {
-    compile fileTree(dir: 'libs', include: "**/*.jar")
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.1"
     compile 'org.antlr:antlr4-runtime:4.5.2-1'
     compile 'org.bytedeco:javacpp:1.1'
     compile 'org.bytedeco.javacpp-presets:llvm:3.7.0-1.1'
 
     testCompile 'junit:junit:4.12'
+}
+
+import org.gradle.internal.os.OperatingSystem;
+
+task downloadLLVMBinaryDependencies {
+    def libName = "llvm-3.7.0-1.1-${getOsName()}.jar"
+    def outFile = "$projectDir/libs/$libName"
+
+    outputs.file file(outFile)
+    dependencies.add("compile", files(outFile))
+
+    doLast {
+        download {
+            src "http://repo1.maven.org/maven2/org/bytedeco/javacpp-presets/llvm/3.7.0-1.1/$libName"
+            dest outFile
+        }
+    }
+}
+
+compileKotlin.dependsOn downloadLLVMBinaryDependencies
+
+def getOsName() {
+    def os = OperatingSystem.current()
+    String osName;
+    if (os.isMacOsX()) {
+        osName = 'macosx'
+    }
+    if (os.isLinux()) {
+        osName = 'linux'
+    }
+    if (os.isWindows()) {
+        osName = 'windows'
+    }
+    if (osName == null) {
+        throw new IllegalStateException("unsupported OS")
+    }
+    def archName = System.properties['os.arch'].toString().contains("64") ? "x86_64" : "x86"
+    return "$osName-$archName"
 }

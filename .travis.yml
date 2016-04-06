@@ -1,0 +1,23 @@
+language: java
+
+jdk:
+  - oraclejdk7
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.7
+    packages:
+      - llvm-3.7
+
+before_install:
+  - export PATH=/usr/lib/llvm-3.7/bin:$PATH
+
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
