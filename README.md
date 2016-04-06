@@ -1,6 +1,4 @@
-# Compiler
-
-[![Build Status](https://travis-ci.org/Undin/compiler.svg?branch=master)](https://travis-ci.org/Undin/compiler)
+# Compiler [![Build Status](https://travis-ci.org/Undin/compiler.svg?branch=master)](https://travis-ci.org/Undin/compiler)
 
 ## Features
 * supported types: `i32` and `bool`
