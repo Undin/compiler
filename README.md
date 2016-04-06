@@ -1,5 +1,7 @@
 # Compiler
 
+[![Build Status](https://travis-ci.org/Undin/compiler.svg?branch=master)](https://travis-ci.org/Undin/compiler)
+
 ## Features
 * supported types: `i32` and `bool`
 * functions
@@ -20,8 +22,7 @@ See [example](https://github.com/Undin/compiler/blob/master/sample.y)
 * `llvm 3.7.0` (`lli` util needs for test)
 
 ## Build
-* download jar for you OS to `libs/` folder from http://search.maven.org/#artifactdetails|org.bytedeco.javacpp-presets|llvm|3.7.0-1.1|jar
-* run `./gradlew build` for *nix or `gradlew.bat build` for Windows
+run `./gradlew build` for *nix or `gradlew.bat build` for Windows
 
 ## Run
 `java -jar <compiler-jar-name>.jar <compiled-file-name>`
