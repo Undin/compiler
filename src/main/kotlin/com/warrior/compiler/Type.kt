@@ -1,12 +1,18 @@
 package com.warrior.compiler
 
+import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM
 import org.bytedeco.javacpp.PointerPointer
 
 /**
  * Created by warrior on 07.03.16.
  */
-sealed class Type {
+sealed class Type() : ASTNode(emptyContext) {
+
+    companion object {
+        val emptyContext = ParserRuleContext()
+    }
+
     object Unknown : Type() {
         override fun toLLVMType(): LLVM.LLVMTypeRef {
             throw UnsupportedOperationException()
@@ -16,9 +22,22 @@ sealed class Type {
     object Bool : Type() {
         override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt1Type()
     }
+
     object I32 : Type() {
         override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMInt32Type();
     }
+
+    class Tuple(val elementsTypes: List<Type>) : Type() {
+        override fun toLLVMType(): LLVM.LLVMTypeRef {
+            val llvmTypes = elementsTypes.map { it.toLLVMType() }.toTypedArray()
+            return LLVM.LLVMStructType(PointerPointer(*llvmTypes), llvmTypes.size, 0)
+        }
+    }
+
+    class Array(val elementType: Type, val size: Int) : Type() {
+        override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMArrayType(elementType.toLLVMType(), size)
+    }
+
     class Fn(val argsTypes: List<Type>, val returnType: Type) : Type() {
         override fun toLLVMType(): LLVM.LLVMTypeRef {
             val llvmArgsTypes = argsTypes.map { it.toLLVMType() }.toTypedArray()
@@ -34,7 +53,9 @@ sealed class Type {
         Unknown -> "unknown"
         Bool -> "bool"
         I32 -> "i32"
-        is Type.Fn -> argsTypes.joinToString(prefix = "(", postfix = ") -> $returnType")
+        is Tuple -> elementsTypes.joinToString(prefix = "(", postfix = ")")
+        is Array -> "[$elementType; $size]"
+        is Fn -> argsTypes.joinToString(prefix = "(", postfix = ") -> $returnType")
     }
 
     override fun equals(other: Any?): Boolean {
@@ -45,6 +66,8 @@ sealed class Type {
             is Unknown -> this is Unknown
             is Bool -> this is Bool
             is I32 -> this is I32
+            is Tuple -> this is Tuple && elementsTypes == other.elementsTypes
+            is Array -> this is Array && size == other.size && elementType == other.elementType
             is Fn -> this is Fn && argsTypes == other.argsTypes && returnType == other.returnType
             else -> false
         }
