@@ -20,7 +20,7 @@ class Variable(ctx: ParserRuleContext, val name: String) : Expr(ctx) {
         return LLVMBuildLoad(builder, variableRef, name)
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
         return variables[name] ?: Type.Unknown
     }
 

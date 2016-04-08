@@ -81,7 +81,10 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
-                              fnName: String): Result = expr.validate(functions, variables)
+                              fnName: String): Result {
+            expr.determineType(functions, variables)
+            return expr.validate(functions, variables)
+        }
     }
 
     class Assign(ctx: ParserRuleContext, val name: String, val expr: Expr) : Statement(ctx) {
@@ -111,7 +114,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 val message = "'${getText()}': variable '$name' is not declared"
                 Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
             } else {
-                val exprType = expr.getType(functions, variables)
+                val exprType = expr.determineType(functions, variables)
                 if (exprType != Type.Unknown && !varType.match(exprType)) {
                     val message = "'${getText()}': variable and expression types don't match"
                     Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
@@ -180,12 +183,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     val message = "'${getText()}': can't determine type of variable '$name'"
                     return exprResult + Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
                 }
-                exprType = expr.getType(functions, variables)
+                exprType = expr.determineType(functions, variables)
                 variableType = exprType
 
             } else {
                 variableType = type
-                exprType = expr?.getType(functions, variables) ?: type
+                exprType = expr?.determineType(functions, variables) ?: type
             }
             variables.putLocal(name, variableType)
 
@@ -240,7 +243,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
-            val conditionType = condition.getType(functions, variables)
+            val conditionType = condition.determineType(functions, variables)
             val typeResult = if (!conditionType.match(Type.Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
@@ -313,7 +316,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
-            val conditionType = condition.getType(functions, variables)
+            val conditionType = condition.determineType(functions, variables)
             val typeResult = if (!conditionType.match(Type.Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
@@ -372,7 +375,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
-            val conditionType = condition.getType(functions, variables)
+            val conditionType = condition.determineType(functions, variables)
             val typeResult = if (!conditionType.match(Type.Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
@@ -409,7 +412,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                               variables: SymbolTable<Type>,
                               fnName: String): Result {
             val exprResult = expr.validate(functions, variables)
-            val type = expr.getType(functions, variables)
+            val type = expr.determineType(functions, variables)
             val returnType = functions[fnName]!!.returnType
             val result = if (!type.match(returnType)) {
                 val message = "'${getText()}': expression has '$type' but expected '$returnType'"
@@ -439,7 +442,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
-            expr.getType(functions, variables)
+            expr.determineType(functions, variables)
             return expr.validate(functions, variables)
         }
     }

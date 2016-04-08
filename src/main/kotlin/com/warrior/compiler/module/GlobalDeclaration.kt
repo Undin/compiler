@@ -45,11 +45,11 @@ class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type
                 val message = "'${getText()}': can't determine type of variable '$name'"
                 return Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
             }
-            exprType = expr.getType(emptyMap(), variables)
+            exprType = expr.determineType(emptyMap(), variables)
             variableType = exprType
         } else {
             variableType = type
-            exprType = expr?.getType(emptyMap(), variables) ?: type
+            exprType = expr?.determineType(emptyMap(), variables) ?: type
         }
         variables.putGlobal(name, variableType)
 

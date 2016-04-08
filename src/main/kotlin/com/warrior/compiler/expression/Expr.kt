@@ -16,9 +16,8 @@ abstract class Expr(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     lateinit var type: Type
 
-    fun getType(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
-        val type = getTypeInternal(functions, variables)
-        this.type = type
+    fun determineType(functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()): Type {
+        this.type = determineTypeInternal(functions, variables)
         return type
     }
 
@@ -26,5 +25,5 @@ abstract class Expr(ctx: ParserRuleContext) : ASTNode(ctx) {
     abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()): Result
     abstract fun calculate(functions: Map<String, Fn> = emptyMap(), variables: Map<String, TypedValue> = emptyMap()): TypedValue
 
-    protected abstract fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type
+    protected abstract fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type
 }

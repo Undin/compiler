@@ -1,6 +1,7 @@
 package com.warrior.compiler
 
-import com.warrior.compiler.expression.Expr
+import com.warrior.compiler.expression.*
+import com.warrior.compiler.expression.Array
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.module.Function
 import com.warrior.compiler.module.GlobalDeclaration
@@ -61,4 +62,52 @@ private fun parser(str: String): GrammarParser {
 fun error(vararg errorType: ErrorType): Result.Error {
     val messages = errorType.map { ErrorMessage(it, "", Position(0, 0), Position(0, 0)) }
     return Result.Error(messages)
+}
+
+fun Module.checkTypes(): Unit {
+    globals.forEach { it.checkTypes() }
+    functions.forEach { it.checkTypes() }
+}
+
+fun Function.checkTypes(): Unit = body.checkTypes()
+fun GlobalDeclaration.checkTypes(): Unit = expr?.checkType() ?: Unit
+
+fun Statement.checkTypes(): Unit = when (this) {
+    is Statement.Block -> statements.forEach { it.checkTypes() }
+    is Statement.ExpressionStatement -> expr.checkType()
+    is Statement.Assign -> expr.checkType()
+    is Statement.AssignDecl -> expr?.checkType() ?: Unit
+    is Statement.If -> {
+        condition.checkType()
+        thenBlock.checkTypes()
+    }
+    is Statement.IfElse -> {
+        condition.checkType()
+        thenBlock.checkTypes()
+        elseBlock.checkTypes()
+    }
+    is Statement.While -> {
+        condition.checkType()
+        bodyBlock.checkTypes()
+    }
+    is Statement.Return -> expr.checkType()
+    is Statement.Print -> expr.checkType()
+    is Statement.Read -> Unit
+}
+
+fun Expr.checkType() {
+    if (type == Type.Unknown) {
+        throw IllegalStateException("Unknown type")
+    }
+    when (this) {
+        is Tuple -> elements.forEach { it.checkType() }
+        is Array -> elements.forEach { it.checkType() }
+        is Not -> expr.checkType()
+        is UnaryMinus -> expr.checkType()
+        is Binary -> {
+            lhs.checkType()
+            rhs.checkType()
+        }
+        is Call -> args.forEach { it.checkType() }
+    }
 }

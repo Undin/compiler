@@ -21,7 +21,7 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
         return LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Bool
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Bool
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue = TypedValue.BoolValue(value)
 
@@ -42,7 +42,7 @@ class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
         return LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = I32
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = I32
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.IntValue = TypedValue.IntValue(value)
 
@@ -78,8 +78,8 @@ class Tuple(ctx: ParserRuleContext, val elements: List<Expr>) : Expr(ctx) {
         return TypedValue.TupleValue(values)
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
-        val types = elements.map { it.getType(functions, variables) }
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
+        val types = elements.map { it.determineType(functions, variables) }
         return Tuple(types)
     }
 
@@ -110,8 +110,8 @@ class Array(ctx: ParserRuleContext, val elements: List<Expr>) : Expr(ctx) {
         return arrayRef
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
-        val types = elements.map { it.getType(functions, variables) }
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
+        val types = elements.map { it.determineType(functions, variables) }
         val t = types.firstOrNull { it != Unknown } ?: return Unknown
         if (types.any { it != t }) {
             return Unknown
@@ -123,7 +123,7 @@ class Array(ctx: ParserRuleContext, val elements: List<Expr>) : Expr(ctx) {
         val elementsResult = elements
                 .map { it.validate(functions, variables) }
                 .fold()
-        val knownTypes = elements.map { it.getType(functions, variables) }
+        val knownTypes = elements.map { it.determineType(functions, variables) }
                 .filter { it != Unknown }
         val result = if (knownTypes.isNotEmpty() && knownTypes.any { it != knownTypes[0] }) {
             val message = "'${getText()}': all elements must have same type"

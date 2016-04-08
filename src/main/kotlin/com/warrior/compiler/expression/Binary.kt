@@ -69,7 +69,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return phi
         }
 
-        override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
+        override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
         override fun expectedArgType(): Type = Type.Bool
 
@@ -106,7 +106,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             }
         }
 
-        override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
+        override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.I32
 
         override fun expectedArgType(): Type = Type.I32
 
@@ -144,11 +144,11 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
+        override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
         override fun doValidate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): List<ErrorMessage> {
-            val lhsType = lhs.getTypeInternal(functions, variables)
-            val rhsType = rhs.getTypeInternal(functions, variables)
+            val lhsType = lhs.determineType(functions, variables)
+            val rhsType = rhs.determineType(functions, variables)
             if (lhsType != rhsType && lhsType != Type.Unknown && rhsType != Type.Unknown) {
                 val message = "'${lhs.getText()}' and '${rhs.getText()}' have different types"
                 return listOf(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
@@ -195,7 +195,7 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
             return LLVMBuildICmp(builder, opcode, left, right, name)
         }
 
-        override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
+        override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Type.Bool
 
         override fun expectedArgType(): Type = Type.I32
 
@@ -239,8 +239,8 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
     }
 
     open protected fun doValidate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): List<ErrorMessage> {
-        val lhsType = lhs.getTypeInternal(functions, variables)
-        val rhsType = rhs.getTypeInternal(functions, variables)
+        val lhsType = lhs.determineType(functions, variables)
+        val rhsType = rhs.determineType(functions, variables)
         val expectedType = expectedArgType()
         val messages = ArrayList<ErrorMessage>()
 

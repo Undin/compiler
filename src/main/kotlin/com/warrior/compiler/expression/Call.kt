@@ -23,7 +23,7 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
         return LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
     }
 
-    override fun getTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
+    override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
         return functions[fnName]?.returnType ?: Type.Unknown
     }
 
@@ -43,7 +43,7 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
                 messages.add(ErrorMessage(WRONG_ARGS_NUMBER, msg, start(), end()))
             }
             for ((i, arg) in args.slice(0..Math.min(args.size, fnType.argsTypes.size) - 1).withIndex()) {
-                val type = arg.getTypeInternal(functions, variables)
+                val type = arg.determineType(functions, variables)
                 if (!type.match(fnType.argsTypes[i])) {
                     val msg = "expression '${arg.getText()}' must have '$type' type";
                     messages.add(ErrorMessage(TYPE_MISMATCH, msg, arg.start(), arg.end()))
