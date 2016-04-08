@@ -1,5 +1,7 @@
 package com.warrior.compiler.validation
 
+import java.util.*
+
 /**
  * Created by warrior on 24.03.16.
  */
@@ -21,6 +23,7 @@ sealed class TypedValue {
     }
 
     class ArrayValue(val elements: List<TypedValue>) : TypedValue() {
+        constructor(elementsValue: TypedValue, size: Int): this(Collections.nCopies(size, elementsValue))
         operator fun get(i: IntValue): TypedValue = elements[i.value]
     }
 

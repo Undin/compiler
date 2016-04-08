@@ -2,7 +2,6 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
-import com.warrior.compiler.expression.Array
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
 import com.warrior.compiler.module.Prototype
@@ -230,9 +229,15 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Tuple(ctx, elements)
     }
 
-    override fun visitArrayLiteral(ctx: GrammarParser.ArrayLiteralContext): Array {
+    override fun visitSeqArrayLiteral(ctx: GrammarParser.SeqArrayLiteralContext): SeqArray {
         val elements = ctx.expression().map { visitExpression(it) }
-        return Array(ctx, elements)
+        return SeqArray(ctx, elements)
+    }
+
+    override fun visitRepeatArrayLiteral(ctx: GrammarParser.RepeatArrayLiteralContext): RepeatArray {
+        val elementValue = visitExpression(ctx.expression())
+        val size = visitIntLiteral(ctx.intLiteral()).value
+        return RepeatArray(ctx, elementValue, size)
     }
 
     // Types

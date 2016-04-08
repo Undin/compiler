@@ -47,7 +47,7 @@ class ExpressionValidationTest {
     }
 
     @Test
-    fun arrayLiteralTest1() {
+    fun seqArrayLiteralTest1() {
         Assert.assertEquals(
                 Ok,
                 parseExpr("[1, 2]").validate()
@@ -55,10 +55,34 @@ class ExpressionValidationTest {
     }
 
     @Test
-    fun arrayLiteralTest2() {
+    fun seqArrayLiteralTest2() {
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
                 parseExpr("[1, true]").validate()
+        )
+    }
+
+    @Test
+    fun seqArrayLiteralTest3() {
+        Assert.assertEquals(
+                error(UNDECLARED_VARIABLE),
+                parseExpr("[1, v]").validate()
+        )
+    }
+
+    @Test
+    fun repeatArrayLiteralTest1() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("[1; 10]").validate()
+        )
+    }
+
+    @Test
+    fun repeatArrayLiteralTest2() {
+        Assert.assertEquals(
+                error(UNDECLARED_VARIABLE),
+                parseExpr("[v; 10]").validate()
         )
     }
 

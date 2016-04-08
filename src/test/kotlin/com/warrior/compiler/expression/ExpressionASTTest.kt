@@ -37,10 +37,18 @@ class ExpressionASTTest {
     }
 
     @Test
-    fun arrayLiteralTest() {
+    fun seqArrayLiteralTest() {
         Assert.assertEquals(
-            array(i32(1), i32(2)),
-            parseExpr("[1, 2]")
+                array(i32(1), i32(2)),
+                parseExpr("[1, 2]")
+        )
+    }
+
+    @Test
+    fun repeatArrayLiteralTest() {
+        Assert.assertEquals(
+                array(i32(1), 10),
+                parseExpr("[1; 10]")
         )
     }
 
@@ -224,7 +232,8 @@ class ExpressionASTTest {
     private fun i32(value: Int): I32 = I32(ctx, value)
     private fun bool(value: Boolean): Bool = Bool(ctx, value)
     private fun tuple(vararg elements: Expr): Tuple = Tuple(ctx, elements.asList())
-    private fun array(vararg elements: Expr): Array = Array(ctx, elements.asList())
+    private fun array(vararg elements: Expr): SeqArray = SeqArray(ctx, elements.asList())
+    private fun array(elementsValue: Expr, size: Int): RepeatArray = RepeatArray(ctx, elementsValue, size)
     private fun variable(name: String): Variable = Variable(ctx, name)
     private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
 

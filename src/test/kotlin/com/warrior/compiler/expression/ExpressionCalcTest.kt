@@ -36,10 +36,18 @@ class ExpressionCalcTest {
     }
 
     @Test
-    fun arrayLiteralTest() {
+    fun seqArrayLiteralTest() {
         Assert.assertEquals(
                 ArrayValue(listOf(IntValue(1), IntValue(2))),
                 parseExpr("[1, 2]").calculate()
+        )
+    }
+
+    @Test
+    fun repeatArrayLiteralTest() {
+        Assert.assertEquals(
+                ArrayValue(IntValue(1), 10),
+                parseExpr("[1; 10]").calculate()
         )
     }
 

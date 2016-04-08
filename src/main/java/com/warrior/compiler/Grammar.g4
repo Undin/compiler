@@ -112,7 +112,8 @@ primary
     |   intLiteral
     |   boolLiteral
     |   tupleLiteral
-    |   arrayLiteral
+    |   seqArrayLiteral
+    |   repeatArrayLiteral
     |   functionCall
     |   variable
     ;
@@ -141,8 +142,12 @@ tupleLiteral
     :   '(' (expression (',' expression)*)? ')'
     ;
 
-arrayLiteral
+seqArrayLiteral
     :   '[' (expression (',' expression)*)? ']'
+    ;
+
+repeatArrayLiteral
+    :   '[' expression ';' intLiteral ']'
     ;
 
 //

@@ -1,7 +1,6 @@
 package com.warrior.compiler
 
 import com.warrior.compiler.expression.*
-import com.warrior.compiler.expression.Array
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.module.Function
 import com.warrior.compiler.module.GlobalDeclaration
@@ -101,7 +100,8 @@ fun Expr.checkType() {
     }
     when (this) {
         is Tuple -> elements.forEach { it.checkType() }
-        is Array -> elements.forEach { it.checkType() }
+        is SeqArray -> elements.forEach { it.checkType() }
+        is RepeatArray -> elementValue.checkType()
         is Not -> expr.checkType()
         is UnaryMinus -> expr.checkType()
         is Binary -> {

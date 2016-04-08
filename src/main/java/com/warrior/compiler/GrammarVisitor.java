@@ -185,9 +185,15 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTupleLiteral(GrammarParser.TupleLiteralContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GrammarParser#arrayLiteral}.
+	 * Visit a parse tree produced by {@link GrammarParser#seqArrayLiteral}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArrayLiteral(GrammarParser.ArrayLiteralContext ctx);
+	T visitSeqArrayLiteral(GrammarParser.SeqArrayLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#repeatArrayLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRepeatArrayLiteral(GrammarParser.RepeatArrayLiteralContext ctx);
 }
