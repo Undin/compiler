@@ -14,9 +14,7 @@ sealed class Type() : ASTNode(emptyContext) {
     }
 
     object Unknown : Type() {
-        override fun toLLVMType(): LLVM.LLVMTypeRef {
-            throw UnsupportedOperationException()
-        }
+        override fun toLLVMType(): LLVM.LLVMTypeRef = throw UnsupportedOperationException()
     }
 
     object Bool : Type() {
@@ -48,6 +46,15 @@ sealed class Type() : ASTNode(emptyContext) {
     abstract fun toLLVMType(): LLVM.LLVMTypeRef
 
     fun match(expectedType: Type): Boolean = this == expectedType || this == Unknown
+
+    fun isPrimitive(): Boolean = when (this) {
+        Unknown -> throw UnsupportedOperationException()
+        Bool -> true
+        I32 -> true
+        is Tuple -> false
+        is Array -> false
+        is Fn -> false
+    }
 
     override fun toString(): String = when (this) {
         Unknown -> "unknown"

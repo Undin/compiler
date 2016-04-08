@@ -44,6 +44,8 @@ class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
         }
     }
 
+    override fun isLValue(): Boolean = false
+
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Not) {
             return false
@@ -84,6 +86,8 @@ class UnaryMinus(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
             throw IllegalStateException("Expression must have int type")
         }
     }
+
+    override fun isLValue(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is UnaryMinus) {

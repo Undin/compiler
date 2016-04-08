@@ -16,6 +16,7 @@ import org.bytedeco.javacpp.PointerPointer
  * Created by warrior on 09.03.16.
  */
 class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
+
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
         return LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
@@ -24,6 +25,7 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Bool
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue = TypedValue.BoolValue(value)
+    override fun isLValue(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Bool) {
@@ -45,6 +47,7 @@ class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = I32
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.IntValue = TypedValue.IntValue(value)
+    override fun isLValue(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is I32) {
@@ -77,6 +80,8 @@ class Tuple(ctx: ParserRuleContext, val elements: List<Expr>) : Expr(ctx) {
         val values = elements.map { it.calculate(functions, variables) }
         return TypedValue.TupleValue(values)
     }
+
+    override fun isLValue(): Boolean = false
 
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
         val types = elements.map { it.determineType(functions, variables) }
@@ -138,6 +143,8 @@ class Array(ctx: ParserRuleContext, val elements: List<Expr>) : Expr(ctx) {
         val elementsValues = elements.map { it.calculate(functions, variables) }
         return TypedValue.ArrayValue(elementsValues)
     }
+
+    override fun isLValue(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Array) {

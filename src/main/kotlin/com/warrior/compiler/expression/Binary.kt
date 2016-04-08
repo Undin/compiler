@@ -255,6 +255,8 @@ sealed class Binary(ctx: ParserRuleContext, val opcode: Int, val name: String, v
         return messages
     }
 
+    override fun isLValue(): Boolean = false
+
     protected abstract fun expectedArgType(): Type
 
     override fun equals(other: Any?): Boolean {

@@ -37,6 +37,8 @@ class Variable(ctx: ParserRuleContext, val name: String) : Expr(ctx) {
         return variables[name] ?: throw IllegalStateException("variable '$name' isn't declared")
     }
 
+    override fun isLValue(): Boolean = true
+
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Variable) {
             return false
