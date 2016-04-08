@@ -25,7 +25,21 @@ typedArgument
     ;
 
 type
+    :   simpleType
+    |   tupleType
+    |   arrayType
+    ;
+
+simpleType
     :   Identifier
+    ;
+
+tupleType
+    :   '(' (type (',' type)*)? ')'
+    ;
+
+arrayType
+    :   '[' type ';' intLiteral ']'
     ;
 
 statement
@@ -97,6 +111,8 @@ primary
     :   '(' expression ')'
     |   intLiteral
     |   boolLiteral
+    |   tupleLiteral
+    |   arrayLiteral
     |   functionCall
     |   variable
     ;
@@ -119,6 +135,14 @@ intLiteral
 
 boolLiteral
     :   BoolLiteral
+    ;
+
+tupleLiteral
+    :   '(' (expression (',' expression)*)? ')'
+    ;
+
+arrayLiteral
+    :   '[' (expression (',' expression)*)? ']'
     ;
 
 //

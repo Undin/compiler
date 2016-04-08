@@ -2,8 +2,7 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.parseExpr
 import com.warrior.compiler.validation.Fn
-import com.warrior.compiler.validation.TypedValue.BoolValue
-import com.warrior.compiler.validation.TypedValue.IntValue
+import com.warrior.compiler.validation.TypedValue.*
 import org.junit.Assert
 import org.junit.Test
 
@@ -13,7 +12,7 @@ import org.junit.Test
 class ExpressionCalcTest {
 
     @Test
-    fun constTest1() {
+    fun intLiteralTest() {
         Assert.assertEquals(
                 IntValue(1),
                 parseExpr("1").calculate()
@@ -21,10 +20,26 @@ class ExpressionCalcTest {
     }
 
     @Test
-    fun constTest2() {
+    fun boolLiteralTest() {
         Assert.assertEquals(
                 BoolValue(false),
                 parseExpr("false").calculate()
+        )
+    }
+
+    @Test
+    fun tupleLiteralTest() {
+        Assert.assertEquals(
+                TupleValue(listOf(IntValue(1), BoolValue(true))),
+                parseExpr("(1, true)").calculate()
+        )
+    }
+
+    @Test
+    fun arrayLiteralTest() {
+        Assert.assertEquals(
+                ArrayValue(listOf(IntValue(1), IntValue(2))),
+                parseExpr("[1, 2]").calculate()
         )
     }
 

@@ -15,7 +15,7 @@ import org.junit.Test
 class ExpressionValidationTest {
 
     @Test
-    fun constTest1() {
+    fun intLiteralTest() {
         Assert.assertEquals(
                 Ok,
                 parseExpr("1").validate()
@@ -23,10 +23,42 @@ class ExpressionValidationTest {
     }
 
     @Test
-    fun constTest2() {
+    fun boolLiteralTest() {
         Assert.assertEquals(
                 Ok,
                 parseExpr("false").validate()
+        )
+    }
+
+    @Test
+    fun tupleLiteralTest1() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("(1, true)").validate()
+        )
+    }
+
+    @Test
+    fun tupleLiteralTest2() {
+        Assert.assertEquals(
+                error(UNDECLARED_VARIABLE),
+                parseExpr("(1, v)").validate()
+        )
+    }
+
+    @Test
+    fun arrayLiteralTest1() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("[1, 2]").validate()
+        )
+    }
+
+    @Test
+    fun arrayLiteralTest2() {
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("[1, true]").validate()
         )
     }
 

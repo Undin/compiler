@@ -2,6 +2,7 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
+import com.warrior.compiler.expression.Array
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
 import com.warrior.compiler.module.Prototype
@@ -22,6 +23,16 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Module(ctx, globals, functions)
     }
 
+    override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
+        val name = ctx.Identifier().text
+        val args = ctx.typedArguments()
+                ?.typedArgument()
+                ?.map { Prototype.Arg(it.Identifier().text, it.type().text.toType()) }
+                ?: Collections.emptyList()
+        val type = ctx.type().text.toType();
+        return Prototype(ctx, name, args, type)
+    }
+
     override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
         val prototype = visitPrototype(ctx.prototype())
         val body = visitBlock(ctx.block())
@@ -40,6 +51,8 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         }
         return GlobalDeclaration(ctx, name, type, expr)
     }
+
+    // Statements
 
     override fun visitStatement(ctx: GrammarParser.StatementContext): Statement {
         return super.visitStatement(ctx) as Statement
@@ -95,29 +108,6 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return AssignDecl(ctx, name, type, expr)
     }
 
-    override fun visitVariable(ctx: GrammarParser.VariableContext): Variable {
-        return Variable(ctx, ctx.text)
-    }
-
-    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Call {
-        val name = ctx.Identifier().text
-        val args = ctx.arguments()
-                ?.expression()
-                ?.map { visitExpression(it) }
-                ?: Collections.emptyList()
-        return Call(ctx, name, args)
-    }
-
-    override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
-        val name = ctx.Identifier().text
-        val args = ctx.typedArguments()
-                ?.typedArgument()
-                ?.map { Prototype.Arg(it.Identifier().text, it.type().text.toType()) }
-                ?: Collections.emptyList()
-        val type = ctx.type().text.toType();
-        return Prototype(ctx, name, args, type)
-    }
-
     override fun visitPrint(ctx: GrammarParser.PrintContext): Print {
         val expr = visitExpression(ctx.expression())
         val newLine = when (ctx.name.text) {
@@ -132,6 +122,8 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         val varName = ctx.Identifier().text
         return Read(ctx, varName)
     }
+
+    // Expressions
 
     override fun visitPrimary(ctx: GrammarParser.PrimaryContext): Expr {
         if (ctx.expression() != null) {
@@ -210,11 +202,58 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         }
     }
 
+    override fun visitVariable(ctx: GrammarParser.VariableContext): Variable {
+        return Variable(ctx, ctx.text)
+    }
+
+    override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Call {
+        val name = ctx.Identifier().text
+        val args = ctx.arguments()
+                ?.expression()
+                ?.map { visitExpression(it) }
+                ?: Collections.emptyList()
+        return Call(ctx, name, args)
+    }
+
+    // Literals
+
     override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): I32 {
         return I32(ctx, ctx.text.toInt())
     }
 
     override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Bool {
         return Bool(ctx, ctx.text.toBoolean())
+    }
+
+    override fun visitTupleLiteral(ctx: GrammarParser.TupleLiteralContext): Tuple {
+        val elements = ctx.expression().map { visitExpression(it) }
+        return Tuple(ctx, elements)
+    }
+
+    override fun visitArrayLiteral(ctx: GrammarParser.ArrayLiteralContext): Array {
+        val elements = ctx.expression().map { visitExpression(it) }
+        return Array(ctx, elements)
+    }
+
+    // Types
+
+    override fun visitType(ctx: GrammarParser.TypeContext): Type = when (ctx) {
+        is GrammarParser.SimpleTypeContext -> visitSimpleType(ctx)
+        is GrammarParser.TupleTypeContext -> visitTupleType(ctx)
+        is GrammarParser.ArrayTypeContext -> visitArrayType(ctx)
+        else -> throw IllegalStateException("unexpected type name")
+    }
+
+    override fun visitSimpleType(ctx: GrammarParser.SimpleTypeContext): Type = ctx.Identifier().text.toType()
+
+    override fun visitTupleType(ctx: GrammarParser.TupleTypeContext): Type.Tuple {
+        val elementTypes = ctx.type().map { visitType(it) }
+        return Type.Tuple(elementTypes)
+    }
+
+    override fun visitArrayType(ctx: GrammarParser.ArrayTypeContext): Type.Array {
+        val elementType = visitType(ctx.type())
+        val size = ctx.intLiteral().text.toInt()
+        return Type.Array(elementType, size)
     }
 }

@@ -13,7 +13,7 @@ class ExpressionASTTest {
     private val ctx = ParserRuleContext()
 
     @Test
-    fun constTest1() {
+    fun intLiteralTest() {
         Assert.assertEquals(
                 i32(1),
                 parseExpr("1")
@@ -21,10 +21,26 @@ class ExpressionASTTest {
     }
 
     @Test
-    fun constTest2() {
+    fun boolLiteralTest() {
         Assert.assertEquals(
                 bool(false),
                 parseExpr("false")
+        )
+    }
+
+    @Test
+    fun tupleLiteralTest() {
+        Assert.assertEquals(
+                tuple(i32(1), bool(true)),
+                parseExpr("(1, true)")
+        )
+    }
+
+    @Test
+    fun arrayLiteralTest() {
+        Assert.assertEquals(
+            array(i32(1), i32(2)),
+            parseExpr("[1, 2]")
         )
     }
 
@@ -207,6 +223,8 @@ class ExpressionASTTest {
     
     private fun i32(value: Int): I32 = I32(ctx, value)
     private fun bool(value: Boolean): Bool = Bool(ctx, value)
+    private fun tuple(vararg elements: Expr): Tuple = Tuple(ctx, elements.asList())
+    private fun array(vararg elements: Expr): Array = Array(ctx, elements.asList())
     private fun variable(name: String): Variable = Variable(ctx, name)
     private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
 

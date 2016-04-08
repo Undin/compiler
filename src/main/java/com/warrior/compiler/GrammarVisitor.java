@@ -53,6 +53,24 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(GrammarParser.TypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#simpleType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSimpleType(GrammarParser.SimpleTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#tupleType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTupleType(GrammarParser.TupleTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#arrayType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayType(GrammarParser.ArrayTypeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -160,4 +178,16 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBoolLiteral(GrammarParser.BoolLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#tupleLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTupleLiteral(GrammarParser.TupleLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#arrayLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayLiteral(GrammarParser.ArrayLiteralContext ctx);
 }
