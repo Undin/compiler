@@ -4,6 +4,7 @@ import com.warrior.compiler.ASTNode
 import com.warrior.compiler.Compiler
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
+import com.warrior.compiler.expression.AggregateLiteral
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.validation.*
 import com.warrior.compiler.validation.ErrorType.*
@@ -133,9 +134,15 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 throw IllegalStateException("$name is already declared")
             }
 
-            val value = expr.generateCode(module, builder, symbolTable)
             val ref = LLVMBuildAlloca(builder, expr.type.toLLVMType(), name)
-            LLVMBuildStore(builder, value, ref)
+
+            if (expr is AggregateLiteral) {
+                expr.pointer = ref
+                expr.generateCode(module, builder, symbolTable)
+            } else {
+                val value = expr.generateCode(module, builder, symbolTable)
+                LLVMBuildStore(builder, value, ref)
+            }
 
             symbolTable.putLocal(name, ref)
         }

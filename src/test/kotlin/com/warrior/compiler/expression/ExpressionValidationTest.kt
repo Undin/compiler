@@ -87,6 +87,38 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun nestedAggregationLiteralTest1() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("([1, 2], [0; 3], false)").validate()
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest2() {
+        Assert.assertEquals(
+                error(UNDECLARED_VARIABLE),
+                parseExpr("([1, v], [0; 3], false)").validate()
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest3() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("[(1, 2), (3, 4)]").validate()
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest4() {
+        Assert.assertEquals(
+                error(UNDECLARED_VARIABLE),
+                parseExpr("[(1, 2), (v, 4)]").validate()
+        )
+    }
+
+    @Test
     fun variableTest1() {
         val variables = SymbolTable<Type>().apply {
             putLocal("variableName", Type.I32)

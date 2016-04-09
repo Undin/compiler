@@ -1,6 +1,7 @@
 package com.warrior.compiler
 
 import com.warrior.compiler.expression.*
+import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.module.Function
 import com.warrior.compiler.module.GlobalDeclaration

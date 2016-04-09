@@ -2,6 +2,7 @@ package com.warrior.compiler
 
 import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
+import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.statement.*
 import com.warrior.compiler.module.Prototype

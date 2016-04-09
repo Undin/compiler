@@ -45,7 +45,29 @@ sealed class Type() : ASTNode(emptyContext) {
 
     abstract fun toLLVMType(): LLVM.LLVMTypeRef
 
-    fun match(expectedType: Type): Boolean = this == expectedType || this == Unknown
+    fun isDetermined(): Boolean = when (this) {
+        Unknown -> false
+        Bool -> true
+        I32 -> true
+        is Tuple -> elementsTypes.all { it.isDetermined() }
+        is Array -> elementType.isDetermined()
+        is Fn -> true
+    }
+
+    fun match(expectedType: Type): Boolean {
+        if (this == expectedType || this == Unknown) {
+            return true;
+        }
+        return when (this) {
+            is Tuple -> expectedType is Tuple && elementsTypes
+                    .mapIndexed { i, type -> type.match(expectedType.elementsTypes[i]) }
+                    .all { it }
+            is Array -> expectedType is Array &&
+                    size == expectedType.size &&
+                    elementType.match(expectedType.elementType)
+            else -> false
+        }
+    }
 
     fun isPrimitive(): Boolean = when (this) {
         Unknown -> throw UnsupportedOperationException()

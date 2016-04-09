@@ -1,8 +1,10 @@
 package com.warrior.compiler.expression
 
+import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.parseExpr
 import org.antlr.v4.runtime.ParserRuleContext
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -49,6 +51,22 @@ class ExpressionASTTest {
         Assert.assertEquals(
                 array(i32(1), 10),
                 parseExpr("[1; 10]")
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest1() {
+        Assert.assertEquals(
+                tuple(array(i32(1), i32(2)), array(i32(0), 3), bool(false)),
+                parseExpr("([1, 2], [0; 3], false)")
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest2() {
+        Assert.assertEquals(
+                array(tuple(i32(1), i32(2)), tuple(i32(3), i32(4))),
+                parseExpr("[(1, 2), (3, 4)]")
         )
     }
 

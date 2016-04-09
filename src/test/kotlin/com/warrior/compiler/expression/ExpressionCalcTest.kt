@@ -52,6 +52,24 @@ class ExpressionCalcTest {
     }
 
     @Test
+    fun nestedAggregationLiteralTest1() {
+        Assert.assertEquals(
+                TupleValue(listOf(ArrayValue(listOf(IntValue(1), IntValue(2))),
+                        ArrayValue(IntValue(0), 3), BoolValue(false))),
+                parseExpr("([1, 2], [0; 3], false)").calculate()
+        )
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest2() {
+        Assert.assertEquals(
+                ArrayValue(listOf(TupleValue(listOf(IntValue(1), IntValue(2))),
+                        TupleValue(listOf(IntValue(3), IntValue(4))))),
+                parseExpr("[(1, 2), (3, 4)]").calculate()
+        )
+    }
+
+    @Test
     fun variableTest() {
         val variables = mapOf("variableName" to IntValue(5))
         Assert.assertEquals(

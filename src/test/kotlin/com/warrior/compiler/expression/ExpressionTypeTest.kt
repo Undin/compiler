@@ -18,8 +18,23 @@ class ExpressionTypeTest {
     }
 
     @Test
-    fun arrayLiteralTest() {
+    fun seqArrayLiteralTest() {
         checkType("[1, 2]")
+    }
+
+    @Test
+    fun repeatArrayLiteralTest() {
+        checkType("[1; 2]")
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest1() {
+        checkType("([1, 2], [0; 3], false)")
+    }
+
+    @Test
+    fun nestedAggregationLiteralTest2() {
+        checkType("[(1, 2), (3, 4)]")
     }
 
     @Test
