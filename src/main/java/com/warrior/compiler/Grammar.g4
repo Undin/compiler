@@ -5,7 +5,7 @@ module
     ;
 
 globalDeclaration
-    :   'let' Identifier (':' type)? ('=' (intLiteral | boolLiteral))? ';'
+    :   'let' Identifier (':' type)? '=' (intLiteral | boolLiteral) ';'
     ;
 
 functionDefinition
@@ -68,7 +68,7 @@ assign
     ;
 
 assignDeclaration
-    :   'let' Identifier (':' type)? ('=' expression)? ';'
+    :   'let' Identifier (':' type)? '=' expression ';'
     ;
 
 ifStatement

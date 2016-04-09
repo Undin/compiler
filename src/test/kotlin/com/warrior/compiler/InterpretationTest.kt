@@ -13,7 +13,7 @@ class InterpretationTest {
     fun simpleTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 print(a + 10);
                 return 0;
@@ -26,7 +26,7 @@ class InterpretationTest {
     fun lazyAndExpressionTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 if (f(a) && f(-a)) {
                     println(0);
@@ -48,7 +48,7 @@ class InterpretationTest {
     fun lazyOrExpressionTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 if (f(a) || f(-a)) {
                     println(0);
@@ -108,8 +108,8 @@ class InterpretationTest {
     fun fastPowTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
-                let pow: i32;
+                let a: i32 = 0;
+                let pow: i32 = 0;
                 read(a);
                 read(pow);
                 let result: i32 = 1;
@@ -140,14 +140,14 @@ class InterpretationTest {
     fun recursionTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 print(fib(a));
                 return 0;
             }
 
             fn fib(a: i32) -> i32 {
-                let result: i32;
+                let result: i32 = 0;
                 if (a == 0 || a == 1) {
                     result = a;
                 } else {
@@ -174,7 +174,7 @@ class InterpretationTest {
     fun returnTest() {
         val program = """
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 print(abs(a));
                 return 0;
@@ -228,7 +228,7 @@ class InterpretationTest {
             }
 
             fn readInt() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 return a;
             }

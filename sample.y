@@ -1,7 +1,7 @@
-let pow: i32;
+let pow: i32 = 0;
 
 fn main() -> i32 {
-    let a: i32;
+    let a: i32 = 0;
     read(a);
     pow = readI32();
     println(fast(a, pow));

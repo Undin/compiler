@@ -105,15 +105,6 @@ class StatementValidationTest {
     }
 
     @Test
-    fun assignDeclTest5() {
-        val functions = mapOf("f" to Fn(listOf(), I32))
-        Assert.assertEquals(
-                error(UNKNOWN_VARIABLE_TYPE),
-                parseStatement("let a;").validate(functions, fnName = "f")
-        )
-    }
-
-    @Test
     fun returnTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val variables = SymbolTable<Type>()
@@ -189,8 +180,8 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                let a: i32;
-                let b: i32;
+                let a: i32 = 0;
+                let b: i32 = 0;
                 read(a);
                 read(b);
                 print(a + b);
@@ -207,8 +198,8 @@ class StatementValidationTest {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val statement = """
             {
-                let a: i32;
-                let b: bool;
+                let a: i32 = 0;
+                let b: bool = false;
                 read(a);
                 read(b);
                 print(a + b);
@@ -226,7 +217,7 @@ class StatementValidationTest {
         val statement = """
             {
                 let a: i32 = true;
-                let b: bool;
+                let b: bool = false;
                 read(a);
                 read(b);
                 print(a + b + c);

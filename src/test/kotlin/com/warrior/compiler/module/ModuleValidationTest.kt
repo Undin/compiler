@@ -59,8 +59,8 @@ class ModuleValidationTest {
     fun test3() {
         val module = """
             fn main() -> i32 {
-                let a: i32;
-                let pow: i32;
+                let a: i32 = 0;
+                let pow: i32 = 0;
                 read(a);
                 read(pow);
                 println(fast(a, pow));
@@ -91,8 +91,8 @@ class ModuleValidationTest {
     fun test4() {
         val module = """
             fn main() -> i32 {
-                let a: i32;
-                let pow: bool;
+                let a: i32 = 0;
+                let pow: bool = false;
                 read(a);
                 read(pow);
                 println(fast(a, pow));
@@ -125,7 +125,7 @@ class ModuleValidationTest {
             let pow: i32 = 5;
 
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 println(fast(a, pow));
                 return 0;
@@ -154,10 +154,10 @@ class ModuleValidationTest {
     @Test
     fun test6() {
         val module = """
-            let pow: bool;
+            let pow: bool = false;
 
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 println(fast(a, pow));
                 return 0;
@@ -186,10 +186,10 @@ class ModuleValidationTest {
     @Test
     fun test7() {
         val module = """
-            let pow: bool;
+            let pow: bool = false;
 
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 println(fast(a));
                 return 0;
@@ -218,10 +218,10 @@ class ModuleValidationTest {
     @Test
     fun test8() {
         val module = """
-            let a: bool;
+            let a: bool = false;
 
             fn main() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 println(a + 10);
                 return 0;
@@ -241,7 +241,7 @@ class ModuleValidationTest {
             }
 
             fn f2() -> i32 {
-                let a: i32;
+                let a: i32 = 0;
                 read(a);
                 return a;
             }

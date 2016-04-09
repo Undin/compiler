@@ -68,8 +68,8 @@ class StatementInterpretationTest {
     fun blockTest() {
         val statement = """
             {
-                let a: i32;
-                let b: i32;
+                let a: i32 = 0;
+                let b: i32 = 0;
                 read(a);
                 read(b);
                 print(a + b);
@@ -175,8 +175,8 @@ class StatementInterpretationTest {
     fun test() {
         val statement = """
             {
-                let a: i32;
-                let pow: i32;
+                let a: i32 = 0;
+                let pow: i32 = 0;
                 read(a);
                 read(pow);
                 let result = 1;

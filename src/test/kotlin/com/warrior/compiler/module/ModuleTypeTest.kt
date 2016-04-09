@@ -16,7 +16,7 @@ class ModuleTypeTest {
 
             fn main() -> i32 {
                 a + 5;
-                let pow: i32;
+                let pow: i32 = 0;
                 read(pow);
                 if (pow < 0) {
                     println(-1);

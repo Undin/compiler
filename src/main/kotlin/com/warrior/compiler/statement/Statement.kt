@@ -126,24 +126,15 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
     }
 
-    class AssignDecl(ctx: ParserRuleContext, val name: String, val type: Type?, val expr: Expr?) : Statement(ctx) {
+    class AssignDecl(ctx: ParserRuleContext, val name: String, val type: Type?, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
             if (name in symbolTable.getLocal()) {
                 throw IllegalStateException("$name is already declared")
             }
 
-            val value: LLVMValueRef
-            if (type == null) {
-                if (expr == null) {
-                    throw IllegalArgumentException("can't determine type of variable '$name'")
-                }
-                value = expr.generateCode(module, builder, symbolTable)
-            } else {
-                value = expr?.generateCode(module, builder, symbolTable) ?: LLVMConstInt(type.toLLVMType(), 0L, 1)
-            }
-
-            val ref = LLVMBuildAlloca(builder, LLVMTypeOf(value), name)
+            val value = expr.generateCode(module, builder, symbolTable)
+            val ref = LLVMBuildAlloca(builder, expr.type.toLLVMType(), name)
             LLVMBuildStore(builder, value, ref)
 
             symbolTable.putLocal(name, ref)
@@ -155,41 +146,20 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 throw IllegalStateException("variable '$name' is already declared");
             }
 
-            env[name] = if (expr != null) {
-                expr.calculate(functions, env)
-            } else {
-                when (type) {
-                    is Type.Bool -> TypedValue.BoolValue(false)
-                    is Type.I32 -> TypedValue.IntValue(0)
-                    else -> throw IllegalStateException("Unknown variable type")
-                }
-            }
+            env[name] = expr.calculate(functions, env)
             return listOf()
         }
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
-            val exprResult = expr?.validate(functions, variables) ?: Ok
+            val exprResult = expr.validate(functions, variables)
             if (name in variables.getLocal()) {
                 val message = "'${getText()}': variable '$name' is already declared"
                 return exprResult + Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
             }
 
-            val variableType: Type
-            val exprType: Type
-            if (type == null) {
-                if (expr == null) {
-                    variables.putLocal(name, Type.Unknown)
-                    val message = "'${getText()}': can't determine type of variable '$name'"
-                    return exprResult + Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
-                }
-                exprType = expr.determineType(functions, variables)
-                variableType = exprType
-
-            } else {
-                variableType = type
-                exprType = expr?.determineType(functions, variables) ?: type
-            }
+            val exprType = expr.determineType(functions, variables)
+            val variableType = type ?: exprType
             variables.putLocal(name, variableType)
 
             val result = if (exprType != Type.Unknown && !variableType.match(exprType)) {

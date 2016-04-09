@@ -64,13 +64,4 @@ class GlobalValidationTest {
                 parseGlobalDeclaration(global).validate()
         )
     }
-
-    @Test
-    fun test6() {
-        val global = "let a;"
-        Assert.assertEquals(
-                error(UNKNOWN_VARIABLE_TYPE),
-                parseGlobalDeclaration(global).validate()
-        )
-    }
 }
