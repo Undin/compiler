@@ -41,12 +41,8 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitGlobalDeclaration(ctx: GrammarParser.GlobalDeclarationContext): GlobalDeclaration {
         val name = ctx.Identifier().text
-        val type = ctx.type()?.text?.toType()
-        val expr = if (ctx.boolLiteral() != null) {
-            visitBoolLiteral(ctx.boolLiteral())
-        } else {
-            visitIntLiteral(ctx.intLiteral())
-        }
+        val type = ctx.type()?.let { visitType(it) }
+        val expr = ctx.boolLiteral()?.let { visitBoolLiteral(it) } ?: visitIntLiteral(ctx.intLiteral())
         return GlobalDeclaration(ctx, name, type, expr)
     }
 
@@ -97,7 +93,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): AssignDecl {
         val name = ctx.Identifier().text
-        val type = ctx.type()?.text?.toType()
+        val type = ctx.type()?.let { visitType(ctx.type()) }
         val expr = visitExpression(ctx.expression())
         return AssignDecl(ctx, name, type, expr)
     }
@@ -237,11 +233,11 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     // Types
 
-    override fun visitType(ctx: GrammarParser.TypeContext): Type = when (ctx) {
-        is GrammarParser.SimpleTypeContext -> visitSimpleType(ctx)
-        is GrammarParser.TupleTypeContext -> visitTupleType(ctx)
-        is GrammarParser.ArrayTypeContext -> visitArrayType(ctx)
-        else -> throw IllegalStateException("unexpected type name")
+    override fun visitType(ctx: GrammarParser.TypeContext): Type {
+        ctx.simpleType()?.let { return visitSimpleType(it) }
+        ctx.tupleType()?.let { return visitTupleType(it) }
+        ctx.arrayType()?.let { return visitArrayType(it) }
+        throw IllegalStateException("unexpected type name")
     }
 
     override fun visitSimpleType(ctx: GrammarParser.SimpleTypeContext): Type = ctx.Identifier().text.toType()
