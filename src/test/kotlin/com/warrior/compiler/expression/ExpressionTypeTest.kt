@@ -71,16 +71,35 @@ class ExpressionTypeTest {
     }
 
     @Test
-    fun test() {
-        val functions = mapOf("f" to Type.Fn(listOf(Array(I32, 2), Tuple(listOf(I32, Bool)), Bool), I32))
+    fun tupleElementTest() {
         val symbolTable = SymbolTable<Type>().apply {
-            putLocal("a", I32)
-            putLocal("b", I32)
-            putLocal("c", Bool)
-            putLocal("d", I32)
-            putLocal("e", Bool)
+            putLocal("a", Tuple(Bool, I32))
         }
-        checkType("-f([a + 1, 2], (b * 3, c || d < 10), e) * 4", functions, symbolTable)
+        checkType("a.1", variables = symbolTable)
+    }
+
+    @Test
+    fun arrayElementTest() {
+        val symbolTable = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(I32, 2))
+        }
+        checkType("a[1]", variables = symbolTable)
+    }
+
+    @Test
+    fun elementTest1() {
+        val symbolTable = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Type.Array(Bool, 2), I32))
+        }
+        checkType("a.0[1]", variables = symbolTable)
+    }
+
+    @Test
+    fun elementTest2() {
+        val symbolTable = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(Tuple(Bool, I32), 2))
+        }
+        checkType("a[0].1", variables = symbolTable)
     }
 
     private fun checkType(expression: String, functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()) {

@@ -97,6 +97,8 @@ read
 
 expression
     :   primary
+    |   tuple=expression '.' tupleIndex=intLiteral
+    |   array=expression '[' arrayIndex=expression ']'
     |   unaryOp=('+' | '-') left=expression
     |   unaryOp='!' left=expression
     |   left=expression op=('*' | '/' | '%') right=expression

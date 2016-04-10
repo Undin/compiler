@@ -4,6 +4,7 @@ import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
 import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.expression.Binary.*
+import com.warrior.compiler.expression.MemoryExpr.*
 import com.warrior.compiler.statement.*
 import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.module.Module
@@ -126,6 +127,17 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         if (ctx.primary() != null) {
             return visitPrimary(ctx.primary())
         }
+        if (ctx.tuple != null) {
+            val tuple = visitExpression(ctx.tuple)
+            val index = visitIntLiteral(ctx.tupleIndex)
+            return TupleElement(ctx, tuple, index.value)
+        }
+        if (ctx.array != null) {
+            val array = visitExpression(ctx.array)
+            val index = visitExpression(ctx.arrayIndex)
+            return ArrayElement(ctx, array, index)
+        }
+
         val leftExpr = visitExpression(ctx.left)
         if (ctx.unaryOp != null) {
             return unaryExpr(ctx, ctx.unaryOp.type, leftExpr)
@@ -192,9 +204,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         }
     }
 
-    override fun visitVariable(ctx: GrammarParser.VariableContext): Variable {
-        return Variable(ctx, ctx.text)
-    }
+    override fun visitVariable(ctx: GrammarParser.VariableContext): Variable = Variable(ctx, ctx.text)
 
     override fun visitFunctionCall(ctx: GrammarParser.FunctionCallContext): Call {
         val name = ctx.Identifier().text
@@ -207,13 +217,9 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
 
     // Literals
 
-    override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): I32 {
-        return I32(ctx, ctx.text.toInt())
-    }
+    override fun visitIntLiteral(ctx: GrammarParser.IntLiteralContext): I32 = I32(ctx, ctx.text.toInt())
 
-    override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Bool {
-        return Bool(ctx, ctx.text.toBoolean())
-    }
+    override fun visitBoolLiteral(ctx: GrammarParser.BoolLiteralContext): Bool = Bool(ctx, ctx.text.toBoolean())
 
     override fun visitTupleLiteral(ctx: GrammarParser.TupleLiteralContext): Tuple {
         val elements = ctx.expression().map { visitExpression(it) }

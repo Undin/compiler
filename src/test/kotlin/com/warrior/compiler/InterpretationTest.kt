@@ -237,7 +237,7 @@ class InterpretationTest {
     }
 
     @Test
-    fun prebuildsTest() {
+    fun buildinTest() {
         val program = """
             fn main() -> i32 {
                 let a: i32 = readI32();
@@ -251,6 +251,60 @@ class InterpretationTest {
             }
         """
         Assert.assertEquals("5", interpret(program, "2 3\n"))
+    }
+
+    @Test
+    fun tupleElementTest() {
+        val program = """
+            fn main() -> i32 {
+                let a: i32 = readI32();
+                let b: i32 = readI32();
+                let c = (a, b, a + b);
+                println(c.0);
+                println(c.1);
+                println(c.2);
+                return 0;
+            }
+        """
+        Assert.assertEquals("2\n3\n5\n", interpret(program, "2 3\n"))
+    }
+
+    @Test
+    fun arrayElementTest() {
+        val program = """
+            fn main() -> i32 {
+                let a: i32 = readI32();
+                let b: i32 = readI32();
+                let c = [a, b, a + b];
+                let d = [a * b; 10];
+                let i = 0;
+                while (i < 3) {
+                    println(c[i]);
+                    i = i + 1;
+                }
+                println(d[5]);
+                return 0;
+            }
+        """
+        Assert.assertEquals("2\n3\n5\n6\n", interpret(program, "2 3\n"))
+    }
+
+    @Test
+    fun elementTest() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let array = [[v + 1, v + 2], [v + 3, v + 4]];
+                let tuple = ([v + 1, v + 2], v + 3);
+                println(array[0][0]);
+                println(array[1][1]);
+                println(tuple.0[0]);
+                println(tuple.0[1]);
+                println(tuple.1);
+                return 0;
+            }
+        """
+        Assert.assertEquals("3\n6\n3\n4\n5\n", interpret(program, "2\n"))
     }
 
     private fun interpret(program: String, input: String): String {

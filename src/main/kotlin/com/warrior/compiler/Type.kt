@@ -26,6 +26,9 @@ sealed class Type() : ASTNode(emptyContext) {
     }
 
     class Tuple(val elementsTypes: List<Type>) : Type() {
+
+        constructor(vararg elementsTypes: Type) : this(elementsTypes.toList())
+
         override fun toLLVMType(): LLVM.LLVMTypeRef {
             val llvmTypes = elementsTypes.map { it.toLLVMType() }.toTypedArray()
             return LLVM.LLVMStructType(PointerPointer(*llvmTypes), llvmTypes.size, 0)

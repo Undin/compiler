@@ -1,10 +1,10 @@
 package com.warrior.compiler.expression
 
 import com.warrior.compiler.expression.AggregateLiteral.*
+import com.warrior.compiler.expression.MemoryExpr.*
 import com.warrior.compiler.parseExpr
 import org.antlr.v4.runtime.ParserRuleContext
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -207,6 +207,38 @@ class ExpressionASTTest {
     }
 
     @Test
+    fun tupleElementTest() {
+        Assert.assertEquals(
+                tupleElem(variable("a"), 1),
+                parseExpr("a.1")
+        )
+    }
+
+    @Test
+    fun arrayElementTest() {
+        Assert.assertEquals(
+                arrayElem(variable("a"), i32(1)),
+                parseExpr("a[1]")
+        )
+    }
+
+    @Test
+    fun elementTest1() {
+        Assert.assertEquals(
+                tupleElem(arrayElem(variable("a"), i32(1)), 0),
+                parseExpr("a[1].0")
+        )
+    }
+
+    @Test
+    fun elementTest2() {
+        Assert.assertEquals(
+                arrayElem(tupleElem(variable("a"), 1), i32(0)),
+                parseExpr("a.1[0]")
+        )
+    }
+
+    @Test
     fun test1() {
         Assert.assertEquals(
                 ne(add(i32(1), variable("b")), variable("c")),
@@ -246,7 +278,15 @@ class ExpressionASTTest {
                 parseExpr("x <= g(y, true) || f(5 * x) % 2 == 0")
         )
     }
-    
+
+    @Test
+    fun test6() {
+        Assert.assertEquals(
+                lt(mul(i32(5), arrayElem(variable("a"), variable("x"))), add(tupleElem(variable("b"), 2), i32(10))),
+                parseExpr("5 * a[x] < b.2 + 10")
+        )
+    }
+
     private fun i32(value: Int): I32 = I32(ctx, value)
     private fun bool(value: Boolean): Bool = Bool(ctx, value)
     private fun tuple(vararg elements: Expr): Tuple = Tuple(ctx, elements.asList())
@@ -254,6 +294,8 @@ class ExpressionASTTest {
     private fun array(elementsValue: Expr, size: Int): RepeatArray = RepeatArray(ctx, elementsValue, size)
     private fun variable(name: String): Variable = Variable(ctx, name)
     private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
+    private fun tupleElem(array: Expr, index: Int) = TupleElement(ctx, array, index)
+    private fun arrayElem(array: Expr, index: Expr) = ArrayElement(ctx, array, index)
 
     private fun and(lhs: Expr, rhs: Expr) = and(ctx, lhs, rhs)
     private fun or(lhs: Expr, rhs: Expr) = or(ctx, lhs, rhs)

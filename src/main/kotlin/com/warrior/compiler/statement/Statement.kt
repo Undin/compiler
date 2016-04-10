@@ -92,7 +92,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
             val ref = symbolTable[name] ?: throw IllegalStateException("variable '$name' is not declared");
-            val value = expr.generateCode(module, builder, symbolTable)
+            val exprValue = expr.generateCode(module, builder, symbolTable)
+            val value = if (expr.type.isPrimitive()) {
+                exprValue
+            } else {
+                LLVMBuildLoad(builder, exprValue, "")
+            }
             LLVMBuildStore(builder, value, ref)
         }
 
@@ -140,7 +145,12 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 expr.pointer = ref
                 expr.generateCode(module, builder, symbolTable)
             } else {
-                val value = expr.generateCode(module, builder, symbolTable)
+                val exprValue = expr.generateCode(module, builder, symbolTable)
+                val value = if (expr.type.isPrimitive()) {
+                    exprValue
+                } else {
+                    LLVMBuildLoad(builder, exprValue, "")
+                }
                 LLVMBuildStore(builder, value, ref)
             }
 

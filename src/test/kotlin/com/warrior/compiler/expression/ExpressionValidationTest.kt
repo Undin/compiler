@@ -2,6 +2,7 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
+import com.warrior.compiler.Type.*
 import com.warrior.compiler.error
 import com.warrior.compiler.parseExpr
 import com.warrior.compiler.validation.ErrorType.*
@@ -121,7 +122,7 @@ class ExpressionValidationTest {
     @Test
     fun variableTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("variableName", Type.I32)
+            putLocal("variableName", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -140,7 +141,7 @@ class ExpressionValidationTest {
     @Test
     fun unaryTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
+            putLocal("a", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -151,7 +152,7 @@ class ExpressionValidationTest {
     @Test
     fun unaryTest2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
+            putLocal("a", Bool)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
@@ -170,7 +171,7 @@ class ExpressionValidationTest {
     @Test
     fun arithmeticTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
+            putLocal("a", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -181,7 +182,7 @@ class ExpressionValidationTest {
     @Test
     fun arithmeticTest2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
+            putLocal("a", Bool)
         }
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, TYPE_MISMATCH),
@@ -192,7 +193,7 @@ class ExpressionValidationTest {
     @Test
     fun boolTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
+            putLocal("a", Bool)
         }
         Assert.assertEquals(
                 Ok,
@@ -203,7 +204,7 @@ class ExpressionValidationTest {
     @Test
     fun boolTest2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
+            putLocal("a", I32)
         }
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, UNDECLARED_VARIABLE, TYPE_MISMATCH),
@@ -214,7 +215,7 @@ class ExpressionValidationTest {
     @Test
     fun equalTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
+            putLocal("a", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -225,7 +226,7 @@ class ExpressionValidationTest {
     @Test
     fun equalTest2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
+            putLocal("a", Bool)
         }
         Assert.assertEquals(
                 Ok,
@@ -244,8 +245,8 @@ class ExpressionValidationTest {
     @Test
     fun equalTest3() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
-            putLocal("b", Type.I32)
+            putLocal("a", Bool)
+            putLocal("b", I32)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
@@ -256,8 +257,8 @@ class ExpressionValidationTest {
     @Test
     fun cmpTest1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
-            putLocal("b", Type.I32)
+            putLocal("a", I32)
+            putLocal("b", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -268,8 +269,8 @@ class ExpressionValidationTest {
     @Test
     fun cmpTest2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
-            putLocal("b", Type.I32)
+            putLocal("a", Bool)
+            putLocal("b", I32)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
@@ -280,7 +281,7 @@ class ExpressionValidationTest {
     @Test
     fun cmpTest3() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.Bool)
+            putLocal("a", Bool)
         }
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, TYPE_MISMATCH),
@@ -290,7 +291,7 @@ class ExpressionValidationTest {
 
     @Test
     fun callTest1() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         Assert.assertEquals(
                 Ok,
                 parseExpr("f(12, true)").validate(functions)
@@ -307,7 +308,7 @@ class ExpressionValidationTest {
 
     @Test
     fun callTest3() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         Assert.assertEquals(
                 error(TYPE_MISMATCH),
                 parseExpr("f(12, 1)").validate(functions)
@@ -316,7 +317,7 @@ class ExpressionValidationTest {
 
     @Test
     fun callTest4() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         Assert.assertEquals(
                 error(WRONG_ARGS_NUMBER),
                 parseExpr("f(12, true, 0)").validate(functions)
@@ -325,9 +326,9 @@ class ExpressionValidationTest {
 
     @Test
     fun callTest5() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
+            putLocal("a", I32)
         }
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, TYPE_MISMATCH),
@@ -337,12 +338,12 @@ class ExpressionValidationTest {
 
     @Test
     fun callTest6() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         val variables = SymbolTable<Type>().apply {
-            putLocal("a", Type.I32)
-            putLocal("b", Type.I32)
-            putLocal("c", Type.Bool)
-            putLocal("d", Type.Bool)
+            putLocal("a", I32)
+            putLocal("b", I32)
+            putLocal("c", Bool)
+            putLocal("d", Bool)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH, TYPE_MISMATCH),
@@ -351,10 +352,88 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun tupleElementTest1() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Bool, I32))
+        }
+        Assert.assertEquals(
+                Ok,
+                parseExpr("a.1").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun tupleElementTest2() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("a.1").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun arrayElementTest1() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Array(I32, 3))
+        }
+        Assert.assertEquals(
+                Ok,
+                parseExpr("a[1]").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun arrayElementTest2() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("a[1]").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun arrayElementTest3() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Array(I32, 3))
+            putLocal("i", Bool)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("a[i]").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun elementTest1() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Array(I32, 3), Bool))
+        }
+        Assert.assertEquals(
+                Ok,
+                parseExpr("a.0[1]").validate(variables = variables)
+        )
+    }
+
+    @Test
+    fun elementTest2() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Array(Tuple(I32, I32), 2))
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("a.0[1]").validate(variables = variables)
+        )
+    }
+
+    @Test
     fun test1() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("b", Type.I32)
-            putLocal("c", Type.I32)
+            putLocal("b", I32)
+            putLocal("c", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -365,8 +444,8 @@ class ExpressionValidationTest {
     @Test
     fun test2() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("b", Type.Bool)
-            putLocal("c", Type.Bool)
+            putLocal("b", Bool)
+            putLocal("c", Bool)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH, TYPE_MISMATCH),
@@ -377,8 +456,8 @@ class ExpressionValidationTest {
     @Test
     fun test3() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.I32)
-            putLocal("y", Type.I32)
+            putLocal("x", I32)
+            putLocal("y", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -389,8 +468,8 @@ class ExpressionValidationTest {
     @Test
     fun test4() {
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.Bool)
-            putLocal("y", Type.I32)
+            putLocal("x", Bool)
+            putLocal("y", I32)
         }
         Assert.assertEquals(
                 error(TYPE_MISMATCH, TYPE_MISMATCH, UNDECLARED_VARIABLE, TYPE_MISMATCH),
@@ -400,10 +479,10 @@ class ExpressionValidationTest {
 
     @Test
     fun test5() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), I32))
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.I32)
-            putLocal("y", Type.I32)
+            putLocal("x", I32)
+            putLocal("y", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -413,9 +492,9 @@ class ExpressionValidationTest {
 
     @Test
     fun test6() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32, Type.Bool), Type.Bool))
+        val functions = mapOf("f" to Fn(listOf(I32, Bool), Bool))
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.Bool)
+            putLocal("x", Bool)
         }
         Assert.assertEquals(
                 error(UNDECLARED_VARIABLE, WRONG_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),
@@ -425,11 +504,11 @@ class ExpressionValidationTest {
 
     @Test
     fun test7() {
-        val functions = mapOf("f" to Type.Fn(listOf(Type.I32), Type.I32),
-                "g" to Type.Fn(listOf(Type.I32, Type.Bool), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(I32), I32),
+                "g" to Fn(listOf(I32, Bool), I32))
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.I32)
-            putLocal("y", Type.I32)
+            putLocal("x", I32)
+            putLocal("y", I32)
         }
         Assert.assertEquals(
                 Ok,
@@ -439,10 +518,10 @@ class ExpressionValidationTest {
 
     @Test
     fun test8() {
-        val functions = mapOf("f" to Type.Fn(listOf(), Type.I32))
+        val functions = mapOf("f" to Fn(listOf(), I32))
         val variables = SymbolTable<Type>().apply {
-            putLocal("x", Type.Bool)
-            putLocal("y", Type.I32)
+            putLocal("x", Bool)
+            putLocal("y", I32)
         }
         Assert.assertEquals(
                 error(UNDECLARED_FUNCTION, TYPE_MISMATCH, TYPE_MISMATCH, WRONG_ARGS_NUMBER, TYPE_MISMATCH, TYPE_MISMATCH),

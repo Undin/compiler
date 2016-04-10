@@ -271,6 +271,48 @@ class ExpressionCalcTest {
     }
 
     @Test
+    fun tupleElementTest() {
+        val variables = mapOf("a" to TupleValue(listOf(IntValue(1), IntValue(2))))
+        Assert.assertEquals(
+                IntValue(2),
+                parseExpr("a.1").calculate(variables = variables)
+        )
+    }
+
+    @Test
+    fun arrayElementTest() {
+        val variables = mapOf("a" to ArrayValue(listOf(IntValue(1), IntValue(2))))
+        Assert.assertEquals(
+                IntValue(2),
+                parseExpr("a[1]").calculate(variables = variables)
+        )
+    }
+
+    @Test
+    fun elementTest1() {
+        val variables = mapOf("a" to ArrayValue(listOf(
+                TupleValue(listOf(IntValue(0), IntValue(1))),
+                TupleValue(listOf(IntValue(2), IntValue(3)))
+        )))
+        Assert.assertEquals(
+                IntValue(2),
+                parseExpr("a[1].0").calculate(variables = variables)
+        )
+    }
+
+    @Test
+    fun elementTest2() {
+        val variables = mapOf("a" to TupleValue(listOf(
+                TupleValue(listOf(IntValue(0), IntValue(1))),
+                ArrayValue(listOf(IntValue(2), IntValue(3)))
+        )))
+        Assert.assertEquals(
+                IntValue(2),
+                parseExpr("a.1[0]").calculate(variables = variables)
+        )
+    }
+
+    @Test
     fun test1() {
         val b = 5
         val c = 7
@@ -348,6 +390,19 @@ class ExpressionCalcTest {
                 BoolValue(x <= g(listOf(y, BoolValue(true))) as IntValue ||
                         f(listOf(IntValue(5) * x)) as IntValue % IntValue(2) == IntValue(0)),
                 parseExpr("x <= g(y, true) || f(5 * x) % 2 == 0").calculate(functions, variables)
+        )
+    }
+
+    @Test
+    fun test6() {
+        val a = ArrayValue(listOf(IntValue(1), IntValue(2)))
+        val x = IntValue(1)
+        val b = TupleValue(listOf(BoolValue(false), IntValue(1), IntValue(7)))
+
+        val variables = mapOf("a" to a, "x" to x, "b" to b)
+        Assert.assertEquals(
+                BoolValue(IntValue(5) * (a[x] as IntValue) < b[2] as IntValue + IntValue(10)),
+                parseExpr("5 * a[x] < b.2 + 10").calculate(variables = variables)
         )
     }
 }
