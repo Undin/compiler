@@ -70,13 +70,13 @@ fun Module.checkTypes(): Unit {
 }
 
 fun Function.checkTypes(): Unit = body.checkTypes()
-fun GlobalDeclaration.checkTypes(): Unit = expr?.checkType() ?: Unit
+fun GlobalDeclaration.checkTypes(): Unit = expr.checkType()
 
 fun Statement.checkTypes(): Unit = when (this) {
     is Statement.Block -> statements.forEach { it.checkTypes() }
     is Statement.ExpressionStatement -> expr.checkType()
     is Statement.Assign -> expr.checkType()
-    is Statement.AssignDecl -> expr?.checkType() ?: Unit
+    is Statement.AssignDecl -> expr.checkType()
     is Statement.If -> {
         condition.checkType()
         thenBlock.checkTypes()
