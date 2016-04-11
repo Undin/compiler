@@ -374,6 +374,17 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun tupleElementTest3() {
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Bool, I32))
+        }
+        Assert.assertEquals(
+                error(INDEX_OUT_OF_RANGE),
+                parseExpr("a.2").validate(variables = variables)
+        )
+    }
+
+    @Test
     fun arrayElementTest1() {
         val variables = SymbolTable<Type>().apply {
             putLocal("a", Array(I32, 3))
