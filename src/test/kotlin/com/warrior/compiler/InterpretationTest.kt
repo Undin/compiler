@@ -307,6 +307,102 @@ class InterpretationTest {
         Assert.assertEquals("3\n6\n3\n4\n5\n", interpret(program, "2\n"))
     }
 
+    @Test
+    fun setTupleElementTest() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let tuple = (v + 1, v + 2);
+                println(tuple.1);
+                v = readI32();
+                tuple.1 = v;
+                println(tuple.1);
+                return 0;
+            }
+        """
+        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+    }
+
+    @Test
+    fun setArrayElementTest() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let array = [v + 1, v + 2];
+                println(array[1]);
+                v = readI32();
+                array[1] = v;
+                println(array[1]);
+                return 0;
+            }
+        """
+        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+    }
+
+    @Test
+    fun setElementTest1() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let array = [(v + 1, v + 2), (v + 3, v + 4)];
+                println(array[1].0);
+                v = readI32();
+                array[1].0 = v;
+                println(array[1].0);
+                return 0;
+            }
+        """
+        Assert.assertEquals("5\n1\n", interpret(program, "2\n1\n"))
+    }
+
+    @Test
+    fun setElementTest2() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let tuple = ([v + 1, v + 2], v + 3);
+                println(tuple.0[1]);
+                v = readI32();
+                tuple.0[1] = v;
+                println(tuple.0[1]);
+                return 0;
+            }
+        """
+        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+    }
+
+    @Test
+    fun copyTest1() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let a1 = [1, 2];
+                let a2 = a1;
+                a1[1] = v;
+                println(a1[1]);
+                println(a2[1]);
+                return 0;
+            }
+        """
+        Assert.assertEquals("3\n2\n", interpret(program, "3\n"))
+    }
+
+    @Test
+    fun copyTest2() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let a1 = ([1, 2], 3);
+                let a2 = a1.0;
+                a2[1] = v;
+                println(a1.0[1]);
+                println(a2[1]);
+                return 0;
+            }
+        """
+        Assert.assertEquals("2\n5\n", interpret(program, "5\n"))
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {

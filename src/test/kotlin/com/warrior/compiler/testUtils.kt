@@ -10,6 +10,8 @@ import com.warrior.compiler.module.Prototype
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType
 import com.warrior.compiler.validation.Result
+import com.warrior.compiler.validation.TypedValue
+import com.warrior.compiler.validation.TypedValue.*
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CommonTokenStream
 
@@ -64,6 +66,12 @@ fun error(vararg errorType: ErrorType): Result.Error {
     return Result.Error(messages)
 }
 
+fun bool(value: Boolean): BoolValue = BoolValue(value)
+fun int(value: Int): IntValue = IntValue(value)
+fun tuple(vararg values: TypedValue): TupleValue = TupleValue(values.toMutableList())
+fun array(vararg values: TypedValue): ArrayValue = ArrayValue(values.toMutableList())
+fun array(value: TypedValue, size: Int): ArrayValue = ArrayValue(value, size)
+
 fun Module.checkTypes(): Unit {
     globals.forEach { it.checkTypes() }
     functions.forEach { it.checkTypes() }
@@ -76,6 +84,15 @@ fun Statement.checkTypes(): Unit = when (this) {
     is Statement.Block -> statements.forEach { it.checkTypes() }
     is Statement.ExpressionStatement -> expr.checkType()
     is Statement.Assign -> expr.checkType()
+    is Statement.SetTupleElement -> {
+        tupleExpr.checkType()
+        valueExpr.checkType()
+    }
+    is Statement.SetArrayElement -> {
+        arrayExpr.checkType()
+        indexExpr.checkType()
+        valueExpr.checkType()
+    }
     is Statement.AssignDecl -> expr.checkType()
     is Statement.If -> {
         condition.checkType()

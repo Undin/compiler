@@ -4,10 +4,12 @@ import com.warrior.compiler.ASTNode
 import com.warrior.compiler.Compiler
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
+import com.warrior.compiler.Type.*
 import com.warrior.compiler.expression.AggregateLiteral
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.validation.*
 import com.warrior.compiler.validation.ErrorType.*
+import com.warrior.compiler.validation.Fn
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
 import org.antlr.v4.runtime.ParserRuleContext
@@ -92,12 +94,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
             val ref = symbolTable[name] ?: throw IllegalStateException("variable '$name' is not declared");
-            val exprValue = expr.generateCode(module, builder, symbolTable)
-            val value = if (expr.type.isPrimitive()) {
-                exprValue
-            } else {
-                LLVMBuildLoad(builder, exprValue, "")
-            }
+            val value = loadValue(expr, module, builder, symbolTable)
             LLVMBuildStore(builder, value, ref)
         }
 
@@ -121,7 +118,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
             } else {
                 val exprType = expr.determineType(functions, variables)
-                if (exprType != Type.Unknown && !varType.match(exprType)) {
+                if (exprType != Unknown && !varType.match(exprType)) {
                     val message = "'${getText()}': variable and expression types don't match"
                     Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
                 } else {
@@ -129,6 +126,123 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 }
             }
             return exprResult + result
+        }
+    }
+
+    class SetTupleElement(ctx: ParserRuleContext, val tupleExpr: Expr, val index: Int, val valueExpr: Expr) : Statement(ctx) {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+            val tupleValue = tupleExpr.generateCode(module, builder, symbolTable)
+            val value = loadValue(valueExpr, module, builder, symbolTable)
+            val elementPtr = LLVMBuildStructGEP(builder, tupleValue, index, "")
+            LLVMBuildStore(builder, value, elementPtr)
+        }
+
+        override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                               input: MutableList<TypedValue>): List<TypedValue> {
+            val tupleValue = tupleExpr.calculate(functions, env)
+            if (tupleValue !is TypedValue.TupleValue) {
+                throw IllegalStateException("'$tupleExpr' must be tuple")
+            }
+            val value = valueExpr.calculate(functions, env)
+            tupleValue[index] = value
+            return emptyList()
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
+                              fnName: String): Result {
+            var result = tupleExpr.validate(functions, variables)
+            result += valueExpr.validate(functions, variables)
+
+            val tupleType = tupleExpr.determineType(functions, variables)
+            val valueType = valueExpr.determineType(functions, variables)
+
+            if (!(tupleType == Unknown || tupleType is Tuple)) {
+                val message = "'${getText()}': '${tupleExpr.getText()}' must have 'tuple' type"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, tupleExpr.start(), tupleExpr.end()))
+            }
+            if (tupleType is Tuple) {
+                if (index >= tupleType.elementsTypes.size) {
+                    val message = "'${getText()}': attempted out-of-bounds tuple index '$index' on type '$tupleType'"
+                    result += Error(ErrorMessage(INDEX_OUT_OF_RANGE, message, start(), end()))
+                } else {
+                    val elemType = tupleType.elementsTypes[index]
+                    if (!(elemType == Unknown || valueType.match(elemType))) {
+                        val message = "'${getText()}': '${valueExpr.getText()}' must have '$elemType' type"
+                        result += Error(ErrorMessage(TYPE_MISMATCH, message, valueExpr.start(), valueExpr.end()))
+                    }
+                }
+            }
+            return result
+        }
+    }
+
+    class SetArrayElement(ctx: ParserRuleContext, val arrayExpr: Expr, val indexExpr: Expr, val valueExpr: Expr) : Statement(ctx) {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+            val arrayValue = arrayExpr.generateCode(module, builder, symbolTable)
+            val index = indexExpr.generateCode(module, builder, symbolTable)
+            val value = loadValue(valueExpr, module, builder, symbolTable)
+
+            val zero = LLVMConstInt(LLVMInt32Type(), 0L, 1)
+            val elementPtr = LLVMBuildInBoundsGEP(builder, arrayValue, PointerPointer(*arrayOf(zero, index)), 2, "");
+
+            LLVMBuildStore(builder, value, elementPtr)
+        }
+
+        override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>,
+                               input: MutableList<TypedValue>): List<TypedValue> {
+            val arrayValue = arrayExpr.calculate(functions, env)
+            if (arrayValue !is TypedValue.ArrayValue) {
+                throw IllegalStateException("'$arrayExpr' must be tuple")
+            }
+            val indexValue = indexExpr.calculate(functions, env)
+            if (indexValue !is TypedValue.IntValue) {
+                throw IllegalStateException("'$arrayExpr' must be i32")
+            }
+            val value = valueExpr.calculate(functions, env)
+            arrayValue[indexValue] = value
+            return emptyList()
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
+                              fnName: String): Result {
+            var result = arrayExpr.validate(functions, variables)
+            result += indexExpr.validate(functions, variables)
+            result += valueExpr.validate(functions, variables)
+
+            val arrayType = arrayExpr.determineType(functions, variables)
+            val indexType = indexExpr.determineType(functions, variables)
+            val valueType = valueExpr.determineType(functions, variables)
+
+            if (!(arrayType == Unknown || arrayType is Type.Array)) {
+                val message = "'${getText()}': '${arrayExpr.getText()}' must have 'array' type"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, arrayExpr.start(), arrayExpr.end()))
+            }
+            if (!indexType.match(I32)) {
+                val message = "'${getText()}': '${indexExpr.getText()}' must have 'i32' type"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, indexExpr.start(), indexExpr.end()))
+            }
+
+            if (arrayType is Type.Array) {
+                val elementType = arrayType.elementType
+                if (!(elementType == Unknown || valueType.match(elementType))) {
+                    val message = "'${getText()}': '${valueExpr.getText()}' must have '$elementType' type"
+                    result += Error(ErrorMessage(TYPE_MISMATCH, message, valueExpr.start(), valueExpr.end()))
+                }
+            }
+
+            return result
+        }
+    }
+
+    protected fun loadValue(expr: Expr, module: LLVMModuleRef, builder: LLVMBuilderRef,
+                          symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
+        val exprValue = expr.generateCode(module, builder, symbolTable)
+        return if (expr.type.isPrimitive()) {
+            exprValue
+        } else {
+            LLVMBuildLoad(builder, exprValue, "")
         }
     }
 
@@ -179,7 +293,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
             val variableType = type ?: exprType
             variables.putLocal(name, variableType)
 
-            val result = if (exprType != Type.Unknown && !variableType.match(exprType)) {
+            val result = if (exprType != Unknown && !variableType.match(exprType)) {
                 val message = "'${getText()}': variable and expression types don't match"
                 Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
             } else {
@@ -231,7 +345,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.determineType(functions, variables)
-            val typeResult = if (!conditionType.match(Type.Bool)) {
+            val typeResult = if (!conditionType.match(Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
             } else {
@@ -304,7 +418,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.determineType(functions, variables)
-            val typeResult = if (!conditionType.match(Type.Bool)) {
+            val typeResult = if (!conditionType.match(Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
             } else {
@@ -363,7 +477,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                               fnName: String): Result {
             val conditionResult = condition.validate(functions, variables)
             val conditionType = condition.determineType(functions, variables)
-            val typeResult = if (!conditionType.match(Type.Bool)) {
+            val typeResult = if (!conditionType.match(Bool)) {
                 val message = "expression '${condition.getText()}' must have 'bool' type"
                 Error(ErrorMessage(TYPE_MISMATCH, message, condition.start(), condition.end()))
             } else {

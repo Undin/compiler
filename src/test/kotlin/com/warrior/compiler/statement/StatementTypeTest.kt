@@ -2,8 +2,7 @@ package com.warrior.compiler.statement
 
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
-import com.warrior.compiler.Type.Fn
-import com.warrior.compiler.Type.I32
+import com.warrior.compiler.Type.*
 import com.warrior.compiler.checkTypes
 import com.warrior.compiler.parseStatement
 import org.junit.Test
@@ -56,6 +55,58 @@ class StatementTypeTest {
         val functions = mapOf("main" to Fn(emptyList(), I32))
         val variables = SymbolTable<Type>().apply {
             putLocal("a", I32)
+            putLocal("b", I32)
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun setTupleElementTest() {
+        val statement = "a.1 = b;"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Bool, I32))
+            putLocal("b", I32)
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun setArrayElementTest() {
+        val statement = "a[1] = b;"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(I32, 2))
+            putLocal("b", I32)
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun setElementTest1() {
+        val statement = "a[1].0 = b;"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(Tuple(I32, Bool), 2))
+            putLocal("b", I32)
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun setElementTest2() {
+        val statement = "a.1[0] = b;"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(I32, Type.Array(I32, 3)))
             putLocal("b", I32)
         }
         st.validate(functions, variables, "main")

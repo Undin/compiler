@@ -67,6 +67,98 @@ class StatementValidationTest {
     }
 
     @Test
+    fun setTupleElementTest1() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Tuple(I32, Bool)) }
+        Assert.assertEquals(
+                Ok,
+                parseStatement("a.0 = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setTupleElementTest2() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("a.0 = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setTupleElementTest3() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Tuple(I32, Bool)) }
+        Assert.assertEquals(
+                error(INDEX_OUT_OF_RANGE),
+                parseStatement("a.2 = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setTupleElementTest4() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Tuple(I32, Bool)) }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("a.1 = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setArrayElementTest1() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", Type.Array(I32, 3)) }
+        Assert.assertEquals(
+                Ok,
+                parseStatement("a[0] = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setArrayElementTest2() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>()
+                .apply { putLocal("a", I32) }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("a[0] = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setArrayElementTest3() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Array(I32, 3))
+            putLocal("b", Bool)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("a[b] = 4;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun setArrayElementTest4() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Array(I32, 3))
+            putLocal("b", Bool)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("a[1] = b;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
     fun assignDeclTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
         Assert.assertEquals(

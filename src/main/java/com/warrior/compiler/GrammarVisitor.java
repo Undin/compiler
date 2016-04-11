@@ -95,6 +95,18 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAssign(GrammarParser.AssignContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#setTupleElement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSetTupleElement(GrammarParser.SetTupleElementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#setArrayElement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSetArrayElement(GrammarParser.SetArrayElementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#assignDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

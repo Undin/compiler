@@ -92,6 +92,20 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Assign(ctx, name, expr)
     }
 
+    override fun visitSetTupleElement(ctx: GrammarParser.SetTupleElementContext): SetTupleElement {
+        val tupleExpr = visitExpression(ctx.tuple)
+        val index = visitIntLiteral(ctx.index).value
+        val valueExpr = visitExpression(ctx.value)
+        return SetTupleElement(ctx, tupleExpr, index, valueExpr)
+    }
+
+    override fun visitSetArrayElement(ctx: GrammarParser.SetArrayElementContext): SetArrayElement {
+        val arrayExpr = visitExpression(ctx.array)
+        val indexExpr = visitExpression(ctx.index)
+        val valueExpr = visitExpression(ctx.value)
+        return SetArrayElement(ctx, arrayExpr, indexExpr, valueExpr)
+    }
+
     override fun visitAssignDeclaration(ctx: GrammarParser.AssignDeclarationContext): AssignDecl {
         val name = ctx.Identifier().text
         val type = ctx.type()?.let { visitType(ctx.type()) }

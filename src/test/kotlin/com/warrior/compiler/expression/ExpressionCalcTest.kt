@@ -2,6 +2,7 @@ package com.warrior.compiler.expression
 
 import com.warrior.compiler.parseExpr
 import com.warrior.compiler.validation.Fn
+import com.warrior.compiler.*
 import com.warrior.compiler.validation.TypedValue.*
 import org.junit.Assert
 import org.junit.Test
@@ -14,7 +15,7 @@ class ExpressionCalcTest {
     @Test
     fun intLiteralTest() {
         Assert.assertEquals(
-                IntValue(1),
+                int(1),
                 parseExpr("1").calculate()
         )
     }
@@ -22,7 +23,7 @@ class ExpressionCalcTest {
     @Test
     fun boolLiteralTest() {
         Assert.assertEquals(
-                BoolValue(false),
+                bool(false),
                 parseExpr("false").calculate()
         )
     }
@@ -30,7 +31,7 @@ class ExpressionCalcTest {
     @Test
     fun tupleLiteralTest() {
         Assert.assertEquals(
-                TupleValue(listOf(IntValue(1), BoolValue(true))),
+                tuple(int(1), bool(true)),
                 parseExpr("(1, true)").calculate()
         )
     }
@@ -38,7 +39,7 @@ class ExpressionCalcTest {
     @Test
     fun seqArrayLiteralTest() {
         Assert.assertEquals(
-                ArrayValue(listOf(IntValue(1), IntValue(2))),
+                array(int(1), int(2)),
                 parseExpr("[1, 2]").calculate()
         )
     }
@@ -46,7 +47,7 @@ class ExpressionCalcTest {
     @Test
     fun repeatArrayLiteralTest() {
         Assert.assertEquals(
-                ArrayValue(IntValue(1), 10),
+                array(int(1), 10),
                 parseExpr("[1; 10]").calculate()
         )
     }
@@ -54,8 +55,7 @@ class ExpressionCalcTest {
     @Test
     fun nestedAggregationLiteralTest1() {
         Assert.assertEquals(
-                TupleValue(listOf(ArrayValue(listOf(IntValue(1), IntValue(2))),
-                        ArrayValue(IntValue(0), 3), BoolValue(false))),
+                tuple(array(int(1), int(2)), array(int(0), 3), bool(false)),
                 parseExpr("([1, 2], [0; 3], false)").calculate()
         )
     }
@@ -63,17 +63,16 @@ class ExpressionCalcTest {
     @Test
     fun nestedAggregationLiteralTest2() {
         Assert.assertEquals(
-                ArrayValue(listOf(TupleValue(listOf(IntValue(1), IntValue(2))),
-                        TupleValue(listOf(IntValue(3), IntValue(4))))),
+                array(tuple(int(1), int(2)), tuple(int(3), int(4))),
                 parseExpr("[(1, 2), (3, 4)]").calculate()
         )
     }
 
     @Test
     fun variableTest() {
-        val variables = mapOf("variableName" to IntValue(5))
+        val variables = mapOf("variableName" to int(5))
         Assert.assertEquals(
-                IntValue(5),
+                int(5),
                 parseExpr("variableName").calculate(variables = variables)
         )
     }
@@ -81,9 +80,9 @@ class ExpressionCalcTest {
     @Test
     fun unaryTest1() {
         val a = 2
-        val variables = mapOf("a" to IntValue(a))
+        val variables = mapOf("a" to int(a))
         Assert.assertEquals(
-                IntValue(+a),
+                int(+a),
                 parseExpr("+a").calculate(variables = variables)
         )
     }
@@ -91,7 +90,7 @@ class ExpressionCalcTest {
     @Test
     fun unaryTest2() {
         Assert.assertEquals(
-                IntValue(-5),
+                int(-5),
                 parseExpr("-5").calculate()
         )
     }
@@ -99,7 +98,7 @@ class ExpressionCalcTest {
     @Test
     fun unaryTest3() {
         Assert.assertEquals(
-                BoolValue(!true),
+                bool(!true),
                 parseExpr("!true").calculate()
         )
     }
@@ -107,7 +106,7 @@ class ExpressionCalcTest {
     @Test
     fun arithmeticTest1() {
         Assert.assertEquals(
-                IntValue(1 + 2),
+                int(1 + 2),
                 parseExpr("1 + 2").calculate()
         )
     }
@@ -115,7 +114,7 @@ class ExpressionCalcTest {
     @Test
     fun arithmeticTest2() {
         Assert.assertEquals(
-                IntValue(1 + 2 * 3),
+                int(1 + 2 * 3),
                 parseExpr("1 + 2 * 3").calculate()
         )
     }
@@ -123,7 +122,7 @@ class ExpressionCalcTest {
     @Test
     fun arithmeticTest3() {
         Assert.assertEquals(
-                IntValue((12 - 2) / 5),
+                int((12 - 2) / 5),
                 parseExpr("(12 - 2) / 5").calculate()
         )
     }
@@ -131,7 +130,7 @@ class ExpressionCalcTest {
     @Test
     fun arithmeticTest4() {
         Assert.assertEquals(
-                IntValue(-(4 % 3) + 7),
+                int(-(4 % 3) + 7),
                 parseExpr("-(4 % 3) + 7").calculate()
         )
     }
@@ -140,9 +139,9 @@ class ExpressionCalcTest {
     fun arithmeticTest5() {
         val a = 4;
         val b = 2;
-        val variables = mapOf("a" to IntValue(a), "b" to IntValue(b))
+        val variables = mapOf("a" to int(a), "b" to int(b))
         Assert.assertEquals(
-                IntValue((a + 3) * (b - 8)),
+                int((a + 3) * (b - 8)),
                 parseExpr("(a + 3) * (b - 8)").calculate(variables = variables)
         )
     }
@@ -150,9 +149,9 @@ class ExpressionCalcTest {
     @Test
     fun boolTest1() {
         val a = false
-        val variables = mapOf("a" to BoolValue(a))
+        val variables = mapOf("a" to bool(a))
         Assert.assertEquals(
-                BoolValue(true || a),
+                bool(true || a),
                 parseExpr("true || a").calculate(variables = variables)
         )
     }
@@ -162,9 +161,9 @@ class ExpressionCalcTest {
         val a = true
         val b = false
         val c = false
-        val variables = mapOf("a" to BoolValue(a), "b" to BoolValue(b), "c" to BoolValue(c))
+        val variables = mapOf("a" to bool(a), "b" to bool(b), "c" to bool(c))
         Assert.assertEquals(
-                BoolValue(b || a && c),
+                bool(b || a && c),
                 parseExpr("b || a && c").calculate(variables = variables)
         )
     }
@@ -175,9 +174,9 @@ class ExpressionCalcTest {
         val b = false
         val c = true
         val qqq = true
-        val variables = mapOf("a" to BoolValue(a), "b" to BoolValue(b), "c" to BoolValue(c), "qqq" to BoolValue(qqq))
+        val variables = mapOf("a" to bool(a), "b" to bool(b), "c" to bool(c), "qqq" to bool(qqq))
         Assert.assertEquals(
-                BoolValue(!(qqq || b) || a && c),
+                bool(!(qqq || b) || a && c),
                 parseExpr("!(qqq || b) || a && c").calculate(variables = variables)
         )
     }
@@ -185,7 +184,7 @@ class ExpressionCalcTest {
     @Test
     fun equalTest1() {
         Assert.assertEquals(
-                BoolValue(1 == 5),
+                bool(1 == 5),
                 parseExpr("1 == 5").calculate()
         )
     }
@@ -193,9 +192,9 @@ class ExpressionCalcTest {
     @Test
     fun equalTest2() {
         val a = true
-        val variables = mapOf("a" to BoolValue(a))
+        val variables = mapOf("a" to bool(a))
         Assert.assertEquals(
-                BoolValue(true != a),
+                bool(true != a),
                 parseExpr("true != a").calculate(variables = variables)
         )
     }
@@ -204,9 +203,9 @@ class ExpressionCalcTest {
     fun cmpTest1() {
         val b = 10
         val c = -4
-        val variables = mapOf("b" to IntValue(b), "c" to IntValue(c))
+        val variables = mapOf("b" to int(b), "c" to int(c))
         Assert.assertEquals(
-                BoolValue(b >= c),
+                bool(b >= c),
                 parseExpr("b >= c").calculate(variables = variables)
         )
     }
@@ -214,7 +213,7 @@ class ExpressionCalcTest {
     @Test
     fun callTest1() {
         val f = Fn() {
-            IntValue(10);
+            int(10);
         }
         val functions = mapOf("f" to f);
         Assert.assertEquals(
@@ -232,15 +231,15 @@ class ExpressionCalcTest {
             if (flag.value) {
                 param * int
             } else {
-                param * int - IntValue(1)
+                param * int - int(1)
             }
         }
-        val param = IntValue(5)
+        val param = int(5)
 
         val variables = mapOf("param" to param)
         val functions = mapOf("f" to f)
         Assert.assertEquals(
-                f(listOf(param, IntValue(2), BoolValue(false))),
+                f(listOf(param, int(2), bool(false))),
                 parseExpr("f(param, 2, false)").calculate(functions, variables)
         )
     }
@@ -254,60 +253,54 @@ class ExpressionCalcTest {
             if (flag.value) {
                 param * int
             } else {
-                param * int - IntValue(1)
+                param * int - int(1)
             }
         }
-        val a = IntValue(2)
-        val b = IntValue(3)
+        val a = int(2)
+        val b = int(3)
         val c = false
         val d = true
 
-        val variables = mapOf("a" to a, "b" to b, "c" to BoolValue(c), "d" to BoolValue(d))
+        val variables = mapOf("a" to a, "b" to b, "c" to bool(c), "d" to bool(d))
         val functions = mapOf("f" to f)
         Assert.assertEquals(
-                f(listOf(a, IntValue(2) * b, BoolValue(c || d))),
+                f(listOf(a, int(2) * b, bool(c || d))),
                 parseExpr("f(a, 2 * b, c || d)").calculate(functions, variables)
         )
     }
 
     @Test
     fun tupleElementTest() {
-        val variables = mapOf("a" to TupleValue(listOf(IntValue(1), IntValue(2))))
+        val variables = mapOf("a" to tuple(int(1), int(2)))
         Assert.assertEquals(
-                IntValue(2),
+                int(2),
                 parseExpr("a.1").calculate(variables = variables)
         )
     }
 
     @Test
     fun arrayElementTest() {
-        val variables = mapOf("a" to ArrayValue(listOf(IntValue(1), IntValue(2))))
+        val variables = mapOf("a" to array(int(1), int(2)))
         Assert.assertEquals(
-                IntValue(2),
+                int(2),
                 parseExpr("a[1]").calculate(variables = variables)
         )
     }
 
     @Test
     fun elementTest1() {
-        val variables = mapOf("a" to ArrayValue(listOf(
-                TupleValue(listOf(IntValue(0), IntValue(1))),
-                TupleValue(listOf(IntValue(2), IntValue(3)))
-        )))
+        val variables = mapOf("a" to array(tuple(int(0), int(1)), tuple(int(2), int(3))))
         Assert.assertEquals(
-                IntValue(2),
+                int(2),
                 parseExpr("a[1].0").calculate(variables = variables)
         )
     }
 
     @Test
     fun elementTest2() {
-        val variables = mapOf("a" to TupleValue(listOf(
-                TupleValue(listOf(IntValue(0), IntValue(1))),
-                ArrayValue(listOf(IntValue(2), IntValue(3)))
-        )))
+        val variables = mapOf("a" to tuple(tuple(int(0), int(1)), array(int(2), int(3))))
         Assert.assertEquals(
-                IntValue(2),
+                int(2),
                 parseExpr("a.1[0]").calculate(variables = variables)
         )
     }
@@ -316,9 +309,9 @@ class ExpressionCalcTest {
     fun test1() {
         val b = 5
         val c = 7
-        val variables = mapOf("b" to IntValue(b), "c" to IntValue(c))
+        val variables = mapOf("b" to int(b), "c" to int(c))
         Assert.assertEquals(
-                BoolValue(1 + b != c),
+                bool(1 + b != c),
                 parseExpr("1 + b != c").calculate(variables = variables)
         )
     }
@@ -327,9 +320,9 @@ class ExpressionCalcTest {
     fun test2() {
         val a = 7
         val b = 48
-        val variables = mapOf("b" to IntValue(b), "a" to IntValue(a))
+        val variables = mapOf("b" to int(b), "a" to int(a))
         Assert.assertEquals(
-                BoolValue(5 * a - 1 > b / 10),
+                bool(5 * a - 1 > b / 10),
                 parseExpr("5 * a - 1 > b / 10").calculate(variables = variables)
         )
     }
@@ -338,9 +331,9 @@ class ExpressionCalcTest {
     fun test3() {
         val x = 7
         val y = 48
-        val variables = mapOf("x" to IntValue(x), "y" to IntValue(y))
+        val variables = mapOf("x" to int(x), "y" to int(y))
         Assert.assertEquals(
-                BoolValue(x <= y && x % 2 == 0),
+                bool(x <= y && x % 2 == 0),
                 parseExpr("x <= y && x % 2 == 0").calculate(variables = variables)
         )
     }
@@ -353,16 +346,16 @@ class ExpressionCalcTest {
             if (flag.value) {
                 x
             } else {
-                x + IntValue(2)
+                x + int(2)
             }
         }
-        val x = IntValue(7)
-        val y = IntValue(-1)
+        val x = int(7)
+        val y = int(-1)
 
         val variables = mapOf("x" to x, "y" to y)
         val functions = mapOf("f" to f)
         Assert.assertEquals(
-                IntValue(5) * f(listOf(x, BoolValue(y >= IntValue(0)))) as IntValue,
+                int(5) * f(listOf(x, bool(y >= int(0)))) as IntValue,
                 parseExpr("5 * f(x, y >= 0)").calculate(functions, variables)
         )
     }
@@ -375,33 +368,33 @@ class ExpressionCalcTest {
             if (flag.value) {
                 y
             } else {
-                y + IntValue(2)
+                y + int(2)
             }
         }
         val f = Fn() { args ->
             args[0] as IntValue
         }
-        val x = IntValue(7)
-        val y = IntValue(-1)
+        val x = int(7)
+        val y = int(-1)
 
         val variables = mapOf("x" to x, "y" to y)
         val functions = mapOf("f" to f, "g" to g)
         Assert.assertEquals(
-                BoolValue(x <= g(listOf(y, BoolValue(true))) as IntValue ||
-                        f(listOf(IntValue(5) * x)) as IntValue % IntValue(2) == IntValue(0)),
+                bool(x <= g(listOf(y, bool(true))) as IntValue ||
+                        f(listOf(int(5) * x)) as IntValue % int(2) == int(0)),
                 parseExpr("x <= g(y, true) || f(5 * x) % 2 == 0").calculate(functions, variables)
         )
     }
 
     @Test
     fun test6() {
-        val a = ArrayValue(listOf(IntValue(1), IntValue(2)))
-        val x = IntValue(1)
-        val b = TupleValue(listOf(BoolValue(false), IntValue(1), IntValue(7)))
+        val a = array(int(1), int(2))
+        val x = int(1)
+        val b = tuple(bool(false), int(1), int(7))
 
         val variables = mapOf("a" to a, "x" to x, "b" to b)
         Assert.assertEquals(
-                BoolValue(IntValue(5) * (a[x] as IntValue) < b[2] as IntValue + IntValue(10)),
+                bool(int(5) * (a[x] as IntValue) < b[2] as IntValue + int(10)),
                 parseExpr("5 * a[x] < b.2 + 10").calculate(variables = variables)
         )
     }

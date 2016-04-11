@@ -1,8 +1,7 @@
 package com.warrior.compiler.statement
 
-import com.warrior.compiler.parseStatement
+import com.warrior.compiler.*
 import com.warrior.compiler.validation.TypedValue
-import com.warrior.compiler.validation.TypedValue.IntValue
 import org.junit.Assert
 import org.junit.Test
 
@@ -13,7 +12,7 @@ class StatementInterpretationTest {
 
     @Test
     fun expressionTest() {
-        val a = IntValue(1)
+        val a = int(1)
         val env = mutableMapOf<String, TypedValue>("a" to a)
         Assert.assertEquals(
                 listOf<TypedValue>(),
@@ -23,8 +22,8 @@ class StatementInterpretationTest {
 
     @Test
     fun assignTest() {
-        val a = IntValue(1)
-        val b = IntValue(2)
+        val a = int(1)
+        val b = int(2)
         val env = mutableMapOf<String, TypedValue>("a" to a, "b" to b)
         Assert.assertEquals(
                 listOf<TypedValue>(),
@@ -33,8 +32,52 @@ class StatementInterpretationTest {
     }
 
     @Test
+    fun setTupleElementTest() {
+        val a = tuple(bool(true), int(0))
+        val b = int(2)
+        val env = mutableMapOf("a" to a, "b" to b)
+        Assert.assertEquals(
+                listOf<TypedValue>(),
+                parseStatement("a.1 = b;").interpret(env)
+        )
+    }
+
+    @Test
+    fun setArrayElementTest() {
+        val a = array(int(1), int(0))
+        val b = int(2)
+        val env = mutableMapOf("a" to a, "b" to b)
+        Assert.assertEquals(
+                listOf<TypedValue>(),
+                parseStatement("a[1] = b;").interpret(env)
+        )
+    }
+
+    @Test
+    fun setElementTest1() {
+        val a = array(tuple(int(1), bool(true)), tuple(int(0), bool(false)))
+        val b = int(2)
+        val env = mutableMapOf("a" to a, "b" to b)
+        Assert.assertEquals(
+                listOf<TypedValue>(),
+                parseStatement("a[1].0 = b;").interpret(env)
+        )
+    }
+
+    @Test
+    fun setElementTest2() {
+        val a = tuple(int(1), array(int(2), int(3)))
+        val b = int(2)
+        val env = mutableMapOf("a" to a, "b" to b)
+        Assert.assertEquals(
+                listOf<TypedValue>(),
+                parseStatement("a.1[0] = b;").interpret(env)
+        )
+    }
+
+    @Test
     fun assignDeclTest() {
-        val b = IntValue(2)
+        val b = int(2)
         val env = mutableMapOf<String, TypedValue>("b" to b)
         Assert.assertEquals(
                 listOf<TypedValue>(),
@@ -44,8 +87,8 @@ class StatementInterpretationTest {
 
     @Test
     fun printTest() {
-        val a = IntValue(1)
-        val b = IntValue(2)
+        val a = int(1)
+        val b = int(2)
         val env = mutableMapOf<String, TypedValue>("a" to a, "b" to b)
         Assert.assertEquals(
                 listOf(a),
@@ -55,12 +98,12 @@ class StatementInterpretationTest {
 
     @Test
     fun readTest() {
-        val a = IntValue(1)
-        val b = IntValue(2)
+        val a = int(1)
+        val b = int(2)
         val env = mutableMapOf<String, TypedValue>("a" to a, "b" to b)
         Assert.assertEquals(
                 listOf<TypedValue>(),
-                parseStatement("read(a);").interpret(env, input = mutableListOf(IntValue(4)))
+                parseStatement("read(a);").interpret(env, input = mutableListOf(int(4)))
         )
     }
 
@@ -75,9 +118,9 @@ class StatementInterpretationTest {
                 print(a + b);
             }
         """
-        val input = mutableListOf<TypedValue>(IntValue(-1), IntValue(11));
+        val input = mutableListOf<TypedValue>(int(-1), int(11));
         Assert.assertEquals(
-                listOf(IntValue(10)),
+                listOf(int(10)),
                 parseStatement(statement).interpret(input = input)
         )
     }
@@ -96,7 +139,7 @@ class StatementInterpretationTest {
             }
         """
         Assert.assertEquals(
-                listOf(IntValue(4), IntValue(10), IntValue(10)),
+                listOf(int(4), int(10), int(10)),
                 parseStatement(statement).interpret()
         )
     }
@@ -114,7 +157,7 @@ class StatementInterpretationTest {
             }
         """
         Assert.assertEquals(
-                listOf(IntValue(10), IntValue(4)),
+                listOf(int(10), int(4)),
                 parseStatement(statement).interpret()
         )
     }
@@ -128,11 +171,11 @@ class StatementInterpretationTest {
         """
         Assert.assertEquals(
                 listOf<TypedValue>(),
-                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to IntValue(0)))
+                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to int(0)))
         )
         Assert.assertEquals(
-                listOf(IntValue(12)),
-                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to IntValue(12)))
+                listOf(int(12)),
+                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to int(12)))
         )
     }
 
@@ -146,18 +189,18 @@ class StatementInterpretationTest {
             }
         """
         Assert.assertEquals(
-                listOf(IntValue(1)),
-                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to IntValue(1)))
+                listOf(int(1)),
+                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to int(1)))
         )
         Assert.assertEquals(
-                listOf(IntValue(1)),
-                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to IntValue(1)))
+                listOf(int(1)),
+                parseStatement(statement).interpret(mutableMapOf<String, TypedValue>("a" to int(1)))
         )
     }
 
     @Test
     fun whileTest() {
-        val a = IntValue(13)
+        val a = int(13)
         val env = mutableMapOf<String, TypedValue>("a" to a)
         val statement = """
             while (a > 10) {
@@ -166,7 +209,7 @@ class StatementInterpretationTest {
             }
         """
         Assert.assertEquals(
-                listOf(IntValue(13), IntValue(12), IntValue(11)),
+                listOf(int(13), int(12), int(11)),
                 parseStatement(statement).interpret(env)
         )
     }
@@ -192,9 +235,9 @@ class StatementInterpretationTest {
                 print(result);
             }
         """
-        val input = mutableListOf<TypedValue>(IntValue(2), IntValue(20))
+        val input = mutableListOf<TypedValue>(int(2), int(20))
         Assert.assertEquals(
-                listOf(IntValue(1 shl 20)),
+                listOf(int(1 shl 20)),
                 parseStatement(statement).interpret(input = input)
         )
     }

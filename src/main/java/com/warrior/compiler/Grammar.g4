@@ -46,6 +46,8 @@ statement
     :   block
     |   exprStatement
     |   assign
+    |   setTupleElement
+    |   setArrayElement
     |   assignDeclaration
     |   ifStatement
     |   ifElseStatement
@@ -65,6 +67,14 @@ exprStatement
 
 assign
     :   Identifier '=' expression ';'
+    ;
+
+setTupleElement
+    :   tuple=expression '.' index=intLiteral '=' value=expression ';'
+    ;
+
+setArrayElement
+    :   array=expression '[' index=expression ']' '=' value=expression ';'
     ;
 
 assignDeclaration

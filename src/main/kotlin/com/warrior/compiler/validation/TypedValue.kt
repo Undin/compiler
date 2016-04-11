@@ -18,13 +18,19 @@ sealed class TypedValue {
         override operator fun compareTo(other: IntValue): Int = value.compareTo(other.value)
     }
 
-    class TupleValue(val elements: List<TypedValue>) : TypedValue() {
+    class TupleValue(val elements: MutableList<TypedValue>) : TypedValue() {
         operator fun get(i: Int): TypedValue = elements[i]
+        operator fun set(i: Int, value: TypedValue) {
+            elements[i] = value
+        }
     }
 
-    class ArrayValue(val elements: List<TypedValue>) : TypedValue() {
+    class ArrayValue(val elements: MutableList<TypedValue>) : TypedValue() {
         constructor(elementsValue: TypedValue, size: Int): this(Collections.nCopies(size, elementsValue))
         operator fun get(i: IntValue): TypedValue = elements[i.value]
+        operator fun set(i: IntValue, value: TypedValue) {
+            elements[i.value] = value
+        }
     }
 
     override fun equals(other: Any?): Boolean {

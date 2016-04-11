@@ -86,7 +86,7 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
                 elements.map { it.validate(functions, variables) }.fold()
 
         override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue {
-            val values = elements.map { it.calculate(functions, variables) }
+            val values = elements.map { it.calculate(functions, variables) }.toMutableList()
             return TypedValue.TupleValue(values)
         }
 
@@ -151,7 +151,7 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
         }
 
         override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.ArrayValue {
-            val elementsValues = elements.map { it.calculate(functions, variables) }
+            val elementsValues = elements.map { it.calculate(functions, variables) }.toMutableList()
             return TypedValue.ArrayValue(elementsValues)
         }
 
