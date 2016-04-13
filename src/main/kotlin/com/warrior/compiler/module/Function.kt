@@ -28,11 +28,18 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             throw IllegalStateException("Function ${prototype.name} may not call 'return'")
         }
 
+        val lastStatement = body.statements.last()
         var returnBlock: ReturnBlock? = null
-        if (body.statements.last() !is Return || body.statements.count { it.hasReturnStatement() } > 1) {
+        if (lastStatement !is Return || body.statements.count { it.hasReturnStatement() } > 1) {
             val returnBasicBlock = LLVMAppendBasicBlock(fn, "return")
-            val returnValueRef = LLVMBuildAlloca(builder, prototype.returnType.toLLVMType(), "_return")
+            val returnValueRef = if (prototype.returnType.isPrimitive()) {
+                LLVMBuildAlloca(builder, prototype.returnType.toLLVMType(), "_return")
+            } else {
+                LLVMGetParam(fn, prototype.args.size)
+            }
             returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
+        } else if (lastStatement is Return) {
+            lastStatement.returnValuePtr = LLVMGetParam(fn, prototype.args.size)
         }
 
         val localSymbolTable = SymbolTable(symbolTable)
@@ -52,8 +59,13 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             LLVMMoveBasicBlockAfter(returnBlock.block, lastBlock)
 
             LLVMPositionBuilderAtEnd(builder, returnBlock.block)
-            val returnValue = LLVMBuildLoad(builder, returnBlock.retValueRef, "_return")
-            LLVMBuildRet(builder, returnValue)
+
+            if (prototype.returnType.isPrimitive()) {
+                val returnValue = LLVMBuildLoad(builder, returnBlock.retValueRef, "_return")
+                LLVMBuildRet(builder, returnValue)
+            } else {
+                LLVMBuildRetVoid(builder)
+            }
         }
 
         // verify function

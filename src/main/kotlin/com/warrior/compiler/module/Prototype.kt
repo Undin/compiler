@@ -8,7 +8,7 @@ import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.*
 import com.warrior.compiler.validation.fold
 import org.antlr.v4.runtime.ParserRuleContext
-import org.bytedeco.javacpp.LLVM
+import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
 import java.util.*
 
@@ -16,11 +16,17 @@ import java.util.*
  * Created by warrior on 09.03.16.
  */
 class Prototype(ctx: ParserRuleContext, val name: String, val args: List<Arg>, val returnType: Type) : ASTNode(ctx) {
-    fun generateCode(module: LLVM.LLVMModuleRef) {
-        val argsTypes = args.map { it.type.toLLVMType() }.toTypedArray()
-        val fnType = LLVM.LLVMFunctionType(returnType.toLLVMType(), PointerPointer(*argsTypes), argsTypes.size, 0)
-        val fn = LLVM.LLVMAddFunction(module, name, fnType)
-        LLVM.LLVMSetFunctionCallConv(fn, LLVM.LLVMCCallConv)
+    fun generateCode(module: LLVMModuleRef) {
+        var argsTypes = args.map { it.type.toLLVMType() }.toTypedArray()
+        val fnType = if (!returnType.isPrimitive()) {
+            val retType = LLVMPointerType(returnType.toLLVMType(), 0);
+            argsTypes += retType
+            LLVMFunctionType(LLVMVoidType(), PointerPointer(*argsTypes), argsTypes.size, 0)
+        } else {
+            LLVMFunctionType(returnType.toLLVMType(), PointerPointer(*argsTypes), argsTypes.size, 0)
+        }
+        val fn = LLVMAddFunction(module, name, fnType)
+        LLVMSetFunctionCallConv(fn, LLVMCCallConv)
     }
 
     fun validate(): Result {

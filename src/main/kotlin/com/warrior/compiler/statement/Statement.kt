@@ -489,15 +489,41 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 
     class Return(ctx: ParserRuleContext, val expr: Expr) : Statement(ctx) {
+
+        var returnValuePtr: LLVMValueRef? = null;
+
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
-            val value = expr.generateCode(module, builder, symbolTable)
+            if (expr is AggregateLiteral) {
+                expr.pointer = returnBlock?.retValueRef ?: returnValuePtr!!
+            }
+            val exprValue = expr.generateCode(module, builder, symbolTable)
             if (returnBlock != null) {
-                LLVMBuildStore(builder, value, returnBlock.retValueRef)
+                if (expr.type.isPrimitive()) {
+                    LLVMBuildStore(builder, exprValue, returnBlock.retValueRef)
+                } else {
+                    saveNonPrimitiveValue(builder, exprValue, returnBlock.retValueRef)
+                }
                 LLVMBuildBr(builder, returnBlock.block)
             } else {
-                LLVMBuildRet(builder, value)
+                if (expr.type.isPrimitive()) {
+                    LLVMBuildRet(builder, exprValue)
+                } else {
+                    if (returnValuePtr == null) {
+                        throw IllegalStateException("There is not return value ptr")
+                    } else {
+                        if (expr !is AggregateLiteral) {
+                            saveNonPrimitiveValue(builder, exprValue, returnValuePtr!!)
+                        }
+                        LLVMBuildRetVoid(builder)
+                    }
+                }
             }
+        }
+
+        private fun saveNonPrimitiveValue(builder: LLVMBuilderRef, srcPtr: LLVMValueRef, dstPtr: LLVMValueRef) {
+            val value = LLVMBuildLoad(builder, srcPtr, "")
+            LLVMBuildStore(builder, value, dstPtr)
         }
 
         override fun hasReturnStatement(): Boolean = true

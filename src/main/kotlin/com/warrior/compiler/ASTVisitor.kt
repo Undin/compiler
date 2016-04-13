@@ -28,9 +28,9 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         val name = ctx.Identifier().text
         val args = ctx.typedArguments()
                 ?.typedArgument()
-                ?.map { Prototype.Arg(it.Identifier().text, it.type().text.toType()) }
+                ?.map { Prototype.Arg(it.Identifier().text, visitType(it.type())) }
                 ?: Collections.emptyList()
-        val type = ctx.type().text.toType();
+        val type = visitType(ctx.type())
         return Prototype(ctx, name, args, type)
     }
 

@@ -19,8 +19,22 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
         val fn = LLVMGetNamedFunction(module, fnName)
-        val argsValues = args.map { it.generateCode(module, builder, symbolTable) }.toTypedArray()
-        return LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
+        var argsValues = args.map { arg ->
+            val exprValue = arg.generateCode(module, builder, symbolTable)
+            return@map if (arg.type.isPrimitive()) {
+                exprValue
+            } else {
+                LLVMBuildLoad(builder, exprValue, "")
+            }
+        }.toTypedArray()
+        return if (type.isPrimitive()) {
+            LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
+        } else {
+            val result = LLVMBuildAlloca(builder, type.toLLVMType(), "${fnName}Call")
+            argsValues += result
+            LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "")
+            result
+        }
     }
 
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {

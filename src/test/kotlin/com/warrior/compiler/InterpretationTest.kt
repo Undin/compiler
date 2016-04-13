@@ -406,6 +406,163 @@ class InterpretationTest {
         Assert.assertEquals("2\n5\n", interpret(program, "5\n"))
     }
 
+    @Test
+    fun functionWithTupleTest() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let b = readI32();
+                let tuple = (a, b);
+                let result = f(tuple);
+                println(result.0);
+                println(result.1);
+                return 0;
+            }
+
+            fn f(a: (i32, i32)) -> (i32, i32) {
+                if (a.0 + a.1 > 0) {
+                    return (a.1, a.0);
+                } else {
+                    return (0, 0);
+                }
+            }
+
+        """
+
+        fun f(a: Int, b: Int): Pair<Int, Int> = if (a + b > 0) { b to a } else { 0 to 0 }
+
+        var random = Random()
+        for (i in 1..20) {
+            val a = random.nextInt()
+            val b = random.nextInt();
+            val (res1, res2) = f(a, b)
+            val out = interpret(program, "$a\n$b\n")
+            Assert.assertEquals("$res1\n$res2\n", out)
+        }
+    }
+
+    @Test
+    fun functionWithArrayTest() {
+        val program = """
+            fn main() -> i32 {
+                let matrix = [[0; 3]; 3];
+                let i = 0;
+                while (i < 3) {
+                    let j = 0;
+                    while (j < 3) {
+                        matrix[i][j] = readI32();
+                        j = j + 1;
+                    }
+                    i = i + 1;
+                }
+                let transposeMatrix = transpose(matrix);
+                printMatrix(transposeMatrix);
+                return 0;
+            }
+
+            fn transpose(matrix: [[i32; 3]; 3]) -> [[i32; 3]; 3] {
+                let i = 0;
+                while (i < 3) {
+                    let j = 0;
+                    while (j < i) {
+                        let x = matrix[i][j];
+                        matrix[i][j] = matrix[j][i];
+                        matrix[j][i] = x;
+                        j = j + 1;
+                    }
+                    i = i + 1;
+                }
+                return matrix;
+            }
+
+            fn printMatrix(matrix: [[i32; 3]; 3]) -> i32 {
+                let i = 0;
+                while (i < 3) {
+                    let j = 0;
+                    while (j < 3) {
+                        println(matrix[i][j]);
+                        j = j + 1;
+                    }
+                    i = i + 1;
+                }
+                return 0;
+            }
+
+        """
+        fun transpose(matrix: Array<IntArray>): Array<IntArray> {
+            val transposeMatrix = Array(3) { IntArray(3) }
+            for (i in 0..matrix.lastIndex) {
+                for (j in 0..i) {
+                    transposeMatrix[i][j] = matrix[j][i]
+                    transposeMatrix[j][i] = matrix[i][j]
+                }
+            }
+            return transposeMatrix
+        }
+
+        fun toString(matrix: Array<IntArray>): String {
+            val builder = StringBuilder();
+            for (a in matrix) {
+                for (elem in a) {
+                    builder.append(elem).append("\n")
+
+                }
+            }
+            return builder.toString()
+        }
+
+        var random = Random()
+        for (i in 1..20) {
+            val matrix = Array(3) { IntArray(3) { random.nextInt() } }
+            val transposeMatrix = transpose(matrix)
+            val out = interpret(program, toString(matrix))
+            Assert.assertEquals(toString(transposeMatrix), out)
+        }
+    }
+
+    @Test
+    fun functionWithAggregateTypesTest() {
+        val program = """
+            fn main() -> i32 {
+                let i = 0;
+                let a = [(0, 0); 3];
+                while (i < 3) {
+                    a[i].0 = readI32();
+                    a[i].1 = readI32();
+                    i = i + 1;
+                }
+                let reversed = reverse(a);
+                i = 0;
+                while (i < 3) {
+                    println(reversed[i].0);
+                    println(reversed[i].1);
+                    i = i + 1;
+                }
+                return 0;
+            }
+
+            fn reverse(a: [(i32, i32); 3]) -> [(i32, i32); 3] {
+                let result = [(0, 0); 3];
+                let i = 0;
+                while (i < 3) {
+                    result[i] = a[2 - i];
+                    i = i + 1;
+                }
+                return result;
+            }
+        """
+
+        var random = Random()
+        for (i in 1..20) {
+            val array = Array(3) { random.nextInt() to random.nextInt() }
+            var reversed = array.clone()
+            reversed.reverse()
+            val out = interpret(program, array.map { "${it.first}\n${it.second}\n" }.fold("", String::plus))
+            Assert.assertEquals(reversed.map { "${it.first}\n${it.second}\n" }.fold("", String::plus), out)
+        }
+
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {
