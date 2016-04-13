@@ -295,16 +295,19 @@ class InterpretationTest {
             fn main() -> i32 {
                 let v = readI32();
                 let array = [[v + 1, v + 2], [v + 3, v + 4]];
+                let array2 = [(v + 1, v + 2); 3];
                 let tuple = ([v + 1, v + 2], v + 3);
                 println(array[0][0]);
                 println(array[1][1]);
+                println(array2[2].0);
+                println(array2[0].1);
                 println(tuple.0[0]);
                 println(tuple.0[1]);
                 println(tuple.1);
                 return 0;
             }
         """
-        Assert.assertEquals("3\n6\n3\n4\n5\n", interpret(program, "2\n"))
+        Assert.assertEquals("3\n6\n3\n4\n3\n4\n5\n", interpret(program, "2\n"))
     }
 
     @Test

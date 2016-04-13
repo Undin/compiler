@@ -120,6 +120,14 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun nestedAggregationLiteralTest5() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("[(1, 2); 3]").validate()
+        )
+    }
+
+    @Test
     fun variableTest1() {
         val variables = SymbolTable<Type>().apply {
             putLocal("variableName", I32)

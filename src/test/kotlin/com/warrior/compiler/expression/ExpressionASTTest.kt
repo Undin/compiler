@@ -71,6 +71,14 @@ class ExpressionASTTest {
     }
 
     @Test
+    fun nestedAggregationLiteralTest3() {
+        Assert.assertEquals(
+                array(tuple(i32(1), i32(2)), 3),
+                parseExpr("[(1, 2); 3]")
+        )
+    }
+
+    @Test
     fun variableTest() {
         Assert.assertEquals(
                 variable("variableName"),

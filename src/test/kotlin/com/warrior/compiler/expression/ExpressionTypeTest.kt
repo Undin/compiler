@@ -38,6 +38,11 @@ class ExpressionTypeTest {
     }
 
     @Test
+    fun nestedAggregationLiteralTest3() {
+        checkType("[(1, 2); 3]")
+    }
+
+    @Test
     fun notTest() {
         val symbolTable = SymbolTable<Type>().apply {
             putLocal("v", Bool)

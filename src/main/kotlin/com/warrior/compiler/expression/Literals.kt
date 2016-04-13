@@ -170,7 +170,12 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
             val arrayRef = pointer ?: LLVMBuildAlloca(builder, type.toLLVMType(), "repeatArray")
 
-            val value = elementValue.generateCode(module, builder, symbolTable)
+            val exprValue = elementValue.generateCode(module, builder, symbolTable)
+            val value = if (elementValue.type.isPrimitive()) {
+                exprValue
+            } else {
+                LLVMBuildLoad(builder, exprValue, "")
+            }
             if (size == 0) {
                 return arrayRef
             }
