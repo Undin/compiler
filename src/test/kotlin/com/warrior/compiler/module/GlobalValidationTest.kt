@@ -64,4 +64,40 @@ class GlobalValidationTest {
                 parseGlobalDeclaration(global).validate()
         )
     }
+
+    @Test
+    fun test6() {
+        val global = "let a: (i32, i32) = (1, 2);"
+        Assert.assertEquals(
+                Ok,
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun test7() {
+        val global = "let a = (1, 2);"
+        Assert.assertEquals(
+                Ok,
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun test8() {
+        val global = "let a = ([1, 2], (3, 4));"
+        Assert.assertEquals(
+                Ok,
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun test9() {
+        val global = "let a = [1 + 1, 2];"
+        Assert.assertEquals(
+                error(NON_CONST_EXPRESSION),
+                parseGlobalDeclaration(global).validate()
+        )
+    }
 }

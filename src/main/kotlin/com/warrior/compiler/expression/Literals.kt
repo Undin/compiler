@@ -18,14 +18,12 @@ import org.bytedeco.javacpp.PointerPointer
 class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
 
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
-        return LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
-    }
-
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef = generateConstValue()
+    override fun generateConstValue(): LLVMValueRef = LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = Bool
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.BoolValue = TypedValue.BoolValue(value)
-    override fun isLValue(): Boolean = false
+    override fun isConstant(): Boolean = true
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Bool) {
@@ -40,14 +38,12 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
 
 class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef {
-        return LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
-    }
-
+                              symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef = generateConstValue()
+    override fun generateConstValue(): LLVMValueRef = LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type = I32
     override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result = Ok
     override fun calculate(functions: Map<String, Fn>, variables: Map<String, TypedValue>): TypedValue.IntValue = TypedValue.IntValue(value)
-    override fun isLValue(): Boolean = false
+    override fun isConstant(): Boolean = true
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is I32) {
@@ -82,6 +78,11 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             return tupleRef
         }
 
+        override fun generateConstValue(): LLVMValueRef {
+            val values = elements.map { it.generateConstValue() }.toTypedArray()
+            return LLVMConstStruct(PointerPointer(*values), values.size, 0)
+        }
+
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result =
                 elements.map { it.validate(functions, variables) }.fold()
 
@@ -94,6 +95,8 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             val types = elements.map { it.determineType(functions, variables) }
             return Tuple(types)
         }
+
+        override fun isConstant(): Boolean = elements.all { it.isConstant() }
 
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is Tuple) {
@@ -126,6 +129,12 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             return arrayRef
         }
 
+        override fun generateConstValue(): LLVMValueRef {
+            val values = elements.map { it.generateConstValue() }.toTypedArray()
+            val elementType = (type as Type.Array).elementType.toLLVMType()
+            return LLVMConstArray(elementType, PointerPointer(*values), values.size)
+        }
+
         override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
             val types = elements.map { it.determineType(functions, variables) }
             val t = types.firstOrNull { it != Unknown } ?: return Unknown
@@ -154,6 +163,8 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             val elementsValues = elements.map { it.calculate(functions, variables) }.toMutableList()
             return TypedValue.ArrayValue(elementsValues)
         }
+
+        override fun isConstant(): Boolean = elements.all { it.isConstant() }
 
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is SeqArray) {
@@ -212,6 +223,12 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             return arrayRef
         }
 
+        override fun generateConstValue(): LLVMValueRef {
+            val values = Array(size) { elementValue.generateConstValue() }
+            val elementType = (type as Type.Array).elementType.toLLVMType()
+            return LLVMConstArray(elementType, PointerPointer(*values), values.size)
+        }
+
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result =
                 elementValue.validate(functions, variables)
 
@@ -224,6 +241,8 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
             val elementType = elementValue.determineType(functions, variables)
             return Type.Array(elementType, size)
         }
+
+        override fun isConstant(): Boolean = elementValue.isConstant()
 
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is RepeatArray) {
@@ -240,6 +259,4 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
 
         override fun toString(): String = "[$elementValue; $size]"
     }
-
-    override fun isLValue(): Boolean = false
 }

@@ -5,7 +5,7 @@ module
     ;
 
 globalDeclaration
-    :   'let' Identifier (':' type)? '=' (intLiteral | boolLiteral) ';'
+    :   'let' Identifier (':' type)? '=' expression ';'
     ;
 
 functionDefinition

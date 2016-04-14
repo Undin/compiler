@@ -78,7 +78,7 @@ class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Expr>) : E
         return fn(arguments)
     }
 
-    override fun isLValue(): Boolean = false
+    override fun isConstant(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Call) {

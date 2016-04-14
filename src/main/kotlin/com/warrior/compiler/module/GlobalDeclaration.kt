@@ -8,7 +8,6 @@ import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.Error
-import com.warrior.compiler.validation.Result.Ok
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 
@@ -17,26 +16,32 @@ import org.bytedeco.javacpp.LLVM.*
  */
 class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type?, val expr: Expr) : ASTNode(ctx) {
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>) {
-        val value = expr.generateCode(module, builder, symbolTable)
-        val globalVarRef = LLVMAddGlobal(module, LLVMTypeOf(value), name)
+        val value = expr.generateConstValue()
+        val globalVarRef = LLVMAddGlobal(module, expr.type.toLLVMType(), name)
         LLVMSetInitializer(globalVarRef, value)
         symbolTable.putGlobal(name, globalVarRef)
     }
 
     fun validate(variables: SymbolTable<Type> = SymbolTable()): Result {
+        var result = expr.validate(variables = variables)
+
+        if (!expr.isConstant()) {
+            val message = "'${getText()}': '${expr.getText()} must be constant"
+            result += Error(ErrorMessage(NON_CONST_EXPRESSION, message, expr.start(), expr.end()))
+        }
+
         if (name in variables.getGlobal()) {
             val message = "'${getText()}': global variable '$name' is already declared"
-            return Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
-        }
-        val exprType = expr.determineType(emptyMap(), variables)
-        val variableType = type ?: exprType
-        variables.putGlobal(name, variableType)
-
-        val result = if (!variableType.match(exprType)) {
-            val message = "'${getText()}': variable and expression types don't match"
-             Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            result += Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
         } else {
-            Ok
+            val exprType = expr.determineType(emptyMap(), variables)
+            val variableType = type ?: exprType
+            variables.putGlobal(name, variableType)
+
+            if (!variableType.match(exprType)) {
+                val message = "'${getText()}': variable and expression types don't match"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            }
         }
         return result
     }

@@ -122,7 +122,7 @@ sealed class MemoryExpr(ctx: ParserRuleContext) : Expr(ctx) {
         }
     }
 
-    override fun isLValue(): Boolean = true
+    override fun isConstant(): Boolean = false
 
     protected fun returnValue(builder: LLVMBuilderRef, exprValue: LLVMValueRef): LLVMValueRef {
         return if (type.isPrimitive()) {

@@ -21,10 +21,12 @@ abstract class Expr(ctx: ParserRuleContext) : ASTNode(ctx) {
         return type
     }
 
+    open fun generateConstValue(): LLVMValueRef = throw UnsupportedOperationException()
+
     abstract fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef
     abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()): Result
     abstract fun calculate(functions: Map<String, Fn> = emptyMap(), variables: Map<String, TypedValue> = emptyMap()): TypedValue
-    abstract fun isLValue(): Boolean
+    abstract fun isConstant(): Boolean
 
     protected abstract fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type
 }

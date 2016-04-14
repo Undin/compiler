@@ -13,6 +13,7 @@ class ModuleTypeTest {
     fun test() {
         val program = """
             let a = 5;
+            let b = [(1, 2), (3, 4)];
 
             fn main() -> i32 {
                 a + 5;

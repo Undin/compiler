@@ -44,7 +44,7 @@ class Not(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
         }
     }
 
-    override fun isLValue(): Boolean = false
+    override fun isConstant(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is Not) {
@@ -87,7 +87,7 @@ class UnaryMinus(ctx: ParserRuleContext, val expr: Expr) : Expr(ctx) {
         }
     }
 
-    override fun isLValue(): Boolean = false
+    override fun isConstant(): Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is UnaryMinus) {

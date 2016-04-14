@@ -563,6 +563,35 @@ class InterpretationTest {
 
     }
 
+    @Test
+    fun globalAggregateTypeTest() {
+        val program = """
+            let a = [0; 5];
+
+            fn main() -> i32 {
+                let v = readI32();
+                let i = 0;
+                while (i < 5) {
+                    a[i] = v + i;
+                    i = i + 1;
+                }
+                f();
+                return 0;
+            }
+
+            fn f() -> i32 {
+                let i = 0;
+                while (i < 5) {
+                    println(a[i]);
+                    i = i + 1;
+                }
+                return 0;
+            }
+        """
+        val out = interpret(program, "3\n")
+        Assert.assertEquals("3\n4\n5\n6\n7\n", out)
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {
