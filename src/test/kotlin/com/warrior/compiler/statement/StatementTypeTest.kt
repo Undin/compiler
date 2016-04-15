@@ -126,6 +126,18 @@ class StatementTypeTest {
     }
 
     @Test
+    fun destructiveDeclarationTest() {
+        val statement = "let (b, c) = a;"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(I32, Type.Array(I32, 2)))
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
     fun blockTest() {
         val statement = """
         {

@@ -197,6 +197,67 @@ class StatementValidationTest {
     }
 
     @Test
+    fun destructiveDeclarationTest1() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", Tuple(I32, Type.Array(I32, 2)))
+        }
+        Assert.assertEquals(
+                Ok,
+                parseStatement("let (a, b) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun destructiveDeclarationTest2() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", I32)
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("let (a, b) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun destructiveDeclarationTest3() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", Tuple(I32, Type.Array(I32, 2)))
+        }
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseStatement("let (a, b, d) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun destructiveDeclarationTest4() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", Tuple(I32, Type.Array(I32, 2)))
+            putLocal("a", I32)
+        }
+        Assert.assertEquals(
+                error(VARIABLE_IS_ALREADY_DECLARED),
+                parseStatement("let (a, b) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun destructiveDeclarationTest5() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", Tuple(I32, Type.Array(I32, 2)))
+        }
+        Assert.assertEquals(
+                error(VARIABLE_IS_ALREADY_DECLARED),
+                parseStatement("let (a, a) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
     fun returnTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val variables = SymbolTable<Type>()

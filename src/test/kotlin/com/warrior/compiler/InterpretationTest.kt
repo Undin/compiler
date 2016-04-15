@@ -592,6 +592,26 @@ class InterpretationTest {
         Assert.assertEquals("3\n4\n5\n6\n7\n", out)
     }
 
+    @Test
+    fun destructiveDeclarationTest() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let a = [(v, v + 1), (v + 2, v + 3)];
+                let i = 0;
+                while (i < 2) {
+                    let (f, s) = a[i];
+                    println(f);
+                    println(s);
+                    i = i + 1;
+                }
+                return 0;
+            }
+        """
+        val out = interpret(program, "1\n")
+        Assert.assertEquals("1\n2\n3\n4\n", out)
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {

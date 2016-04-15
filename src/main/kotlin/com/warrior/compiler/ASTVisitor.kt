@@ -113,6 +113,12 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return AssignDecl(ctx, name, type, expr)
     }
 
+    override fun visitDestructiveDeclaration(ctx: GrammarParser.DestructiveDeclarationContext): DestructiveDeclaration {
+        val names = ctx.Identifier().map { it.text }
+        val expr = visitExpression(ctx.expression())
+        return DestructiveDeclaration(ctx, names, expr)
+    }
+
     override fun visitPrint(ctx: GrammarParser.PrintContext): Print {
         val expr = visitExpression(ctx.expression())
         val newLine = when (ctx.name.text) {

@@ -94,6 +94,7 @@ fun Statement.checkTypes(): Unit = when (this) {
         valueExpr.checkType()
     }
     is Statement.AssignDecl -> expr.checkType()
+    is Statement.DestructiveDeclaration -> expr.checkType()
     is Statement.If -> {
         condition.checkType()
         thenBlock.checkTypes()

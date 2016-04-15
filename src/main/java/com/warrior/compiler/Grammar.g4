@@ -49,6 +49,7 @@ statement
     |   setTupleElement
     |   setArrayElement
     |   assignDeclaration
+    |   destructiveDeclaration
     |   ifStatement
     |   ifElseStatement
     |   whileStatement
@@ -79,6 +80,10 @@ setArrayElement
 
 assignDeclaration
     :   'let' Identifier (':' type)? '=' expression ';'
+    ;
+
+destructiveDeclaration
+    :   'let' '(' Identifier (',' Identifier)* ')' '=' expression ';'
     ;
 
 ifStatement

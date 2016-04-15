@@ -86,6 +86,16 @@ class StatementInterpretationTest {
     }
 
     @Test
+    fun destructiveDeclarationTest() {
+        val tuple = tuple(int(1), array(int(2), int(3)))
+        val env = mutableMapOf<String, TypedValue>("tuple" to tuple)
+        Assert.assertEquals(
+                listOf<TypedValue>(),
+                parseStatement("let (a, b) = tuple;").interpret(env)
+        )
+    }
+
+    @Test
     fun printTest() {
         val a = int(1)
         val b = int(2)

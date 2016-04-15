@@ -303,6 +303,61 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         }
     }
 
+    class DestructiveDeclaration(ctx: ParserRuleContext, val names: List<String>, val expr: Expr) : Statement(ctx) {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+            val exprType = expr.type
+            if (exprType !is Tuple) {
+                throw IllegalStateException("'${expr.getText()}' must have tuple tuple")
+            }
+            val tupleValue = expr.generateCode(module, builder, symbolTable)
+            exprType.elementsTypes.forEachIndexed { i, type ->
+                val name = names[i]
+                val variableRef = LLVMBuildAlloca(builder, type.toLLVMType(), name)
+                val valuePtr = LLVMBuildStructGEP(builder, tupleValue, i, "")
+                val value = LLVMBuildLoad(builder, valuePtr, "")
+                LLVMBuildStore(builder, value, variableRef)
+                symbolTable.putLocal(name, variableRef)
+            }
+        }
+
+        override fun interpret(env: MutableMap<String, TypedValue>, functions: Map<String, Fn>, input: MutableList<TypedValue>): List<TypedValue> {
+            val tupleValue = expr.calculate(functions, env) as TypedValue.TupleValue
+            tupleValue.elements.forEachIndexed { i, elementValue ->
+                val name = names[i]
+                if (name in env) {
+                    throw IllegalStateException("variable '$name' is already declared");
+                }
+                env[name] = elementValue
+            }
+            return emptyList()
+        }
+
+        override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>, fnName: String): Result {
+            var result = expr.validate(functions, variables)
+            var exprType = expr.determineType(functions, variables)
+            val expectedTypeString = Collections.nCopies(names.size, "_").joinToString(prefix = "(", postfix = ")")
+            if (exprType != Unknown && exprType !is Tuple || exprType is Tuple && exprType.elementsTypes.size != names.size) {
+                val message = "'${getText()}': '${expr.getText()}' must have '$expectedTypeString' type"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, expr.start(), expr.end()))
+            }
+
+            for ((index, name) in names.withIndex()) {
+                if (name in variables) {
+                    val message = "'${getText()}': variable '$name' is already declared"
+                    result += Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
+                } else {
+                    val variableType = if (exprType is Tuple && exprType.elementsTypes.size > index) {
+                        exprType.elementsTypes[index]
+                    } else {
+                        Unknown
+                    }
+                    variables.putLocal(name, variableType)
+                }
+            }
+            return result
+        }
+    }
+
     class If(ctx: ParserRuleContext, val condition: Expr, val thenBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                                   symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
