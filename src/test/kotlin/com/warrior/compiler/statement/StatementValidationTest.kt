@@ -197,6 +197,15 @@ class StatementValidationTest {
     }
 
     @Test
+    fun assignDeclOneLengthTupleTest() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        Assert.assertEquals(
+                error(ONE_LENGTH_TUPLE),
+                parseStatement("let a: (i32) = (1);").validate(functions, fnName = "f")
+        )
+    }
+
+    @Test
     fun destructiveDeclarationTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val variables = SymbolTable<Type>().apply {

@@ -3,7 +3,7 @@ package com.warrior.compiler.module
 import com.warrior.compiler.ASTNode
 import com.warrior.compiler.Type
 import com.warrior.compiler.validation.ErrorMessage
-import com.warrior.compiler.validation.ErrorType.ARGUMENT_IS_ALREADY_DECLARED
+import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.*
 import com.warrior.compiler.validation.fold
@@ -33,13 +33,23 @@ class Prototype(ctx: ParserRuleContext, val name: String, val args: List<Arg>, v
         val variables = HashSet<String>()
         return args.withIndex()
             .map {
-                if (it.value.name in variables) {
-                    val message = "'${getText()}' ${it.index} arg: argument '${it.value.name}' is already declared"
-                    Error(ErrorMessage(ARGUMENT_IS_ALREADY_DECLARED, message, start(), end()))
+                val arg = it.value
+                var result: Result = Ok
+
+                if (arg.name in variables) {
+                    val message = "'${getText()}' ${it.index} arg: argument '${arg.name}' is already declared"
+                    result += Error(ErrorMessage(ARGUMENT_IS_ALREADY_DECLARED, message, start(), end()))
                 } else {
-                    variables.add(it.value.name)
-                    Ok
+                    variables.add(arg.name)
                 }
+
+                val type = arg.type
+                if (type is Type.Tuple && type.elementsTypes.size == 1) {
+                    val message = "'${getText()}': tuples with one elements are not supported"
+                    result += Error(ErrorMessage(ONE_LENGTH_TUPLE, message, start(), end()))
+                }
+
+                result
             }
             .fold()
     }

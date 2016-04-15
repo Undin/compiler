@@ -283,23 +283,33 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>,
                               fnName: String): Result {
-            val exprResult = expr.validate(functions, variables)
+            var result = expr.validate(functions, variables)
+
             if (name in variables.getLocal()) {
                 val message = "'${getText()}': variable '$name' is already declared"
-                return exprResult + Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
+                return result + Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
             }
 
             val exprType = expr.determineType(functions, variables)
-            val variableType = type ?: exprType
-            variables.putLocal(name, variableType)
 
-            val result = if (exprType != Unknown && !variableType.match(exprType)) {
-                val message = "'${getText()}': variable and expression types don't match"
-                Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            val variableType = if (type is Tuple && type.elementsTypes.size == 1) {
+                val message = "'${getText()}': tuples with one elements are not supported"
+                result += Error(ErrorMessage(ONE_LENGTH_TUPLE, message, start(), end()))
+                Unknown
             } else {
-                Ok
+                type ?: exprType
             }
-            return exprResult + result
+
+            if (exprType != Unknown && !variableType.match(exprType)) {
+                val message = "'${getText()}': variable and expression types don't match"
+                result += Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+            }
+
+            if (name !in variables.getLocal()) {
+                variables.putLocal(name, variableType)
+            }
+
+            return result
         }
     }
 

@@ -3,6 +3,7 @@ package com.warrior.compiler.module
 import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
+import com.warrior.compiler.Type.*
 import com.warrior.compiler.statement.ReturnBlock
 import com.warrior.compiler.statement.Statement.Block
 import com.warrior.compiler.statement.Statement.Return
@@ -75,7 +76,13 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
     fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type> = SymbolTable()): Result {
         val prototypeResult = prototype.validate()
         val localVariables = SymbolTable(variables)
-        prototype.args.forEach { localVariables.putLocal(it.name, it.type) }
+        prototype.args.forEach {
+            var type = it.type
+            if (type is Tuple && type.elementsTypes.size == 1) {
+               type = Unknown
+            }
+            localVariables.putLocal(it.name, type)
+        }
         val bodyResult = body.validate(functions, localVariables, prototype.name)
         if (!body.isTerminalStatement()) {
             val message = "function '${prototype.name}' may not return result"
@@ -85,5 +92,5 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         return prototypeResult + bodyResult
     }
 
-    fun getType(): Type.Fn = Type.Fn(prototype.args.map { it.type }, prototype.returnType)
+    fun getType(): Type.Fn = Fn(prototype.args.map { it.type }, prototype.returnType)
 }

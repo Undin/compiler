@@ -51,7 +51,7 @@ class GlobalValidationTest {
             putGlobal("a", Type.I32)
         }
         Assert.assertEquals(
-                error(VARIABLE_IS_ALREADY_DECLARED),
+                error(VARIABLE_IS_ALREADY_DECLARED, TYPE_MISMATCH),
                 parseGlobalDeclaration(global).validate(variables)
         )
     }
@@ -97,6 +97,15 @@ class GlobalValidationTest {
         val global = "let a = [1 + 1, 2];"
         Assert.assertEquals(
                 error(NON_CONST_EXPRESSION),
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun test10() {
+        val global = "let a: (i32) = (1);"
+        Assert.assertEquals(
+                error(ONE_LENGTH_TUPLE),
                 parseGlobalDeclaration(global).validate()
         )
     }

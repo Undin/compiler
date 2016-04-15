@@ -48,6 +48,14 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun emptyTupleLiteralTest() {
+        Assert.assertEquals(
+                Ok,
+                parseExpr("()").validate()
+        )
+    }
+
+    @Test
     fun seqArrayLiteralTest1() {
         Assert.assertEquals(
                 Ok,
