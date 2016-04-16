@@ -206,6 +206,24 @@ class StatementValidationTest {
     }
 
     @Test
+    fun assignDeclEmptyArrayTest1() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        Assert.assertEquals(
+                Ok,
+                parseStatement("let a: [i32; 0] = [];").validate(functions, fnName = "f")
+        )
+    }
+
+    @Test
+    fun assignDeclEmptyArrayTest2() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        Assert.assertEquals(
+                error(UNKNOWN_VARIABLE_TYPE),
+                parseStatement("let a = [];").validate(functions, fnName = "f")
+        )
+    }
+
+    @Test
     fun destructiveDeclarationTest1() {
         val functions = mapOf("f" to Fn(listOf(), I32))
         val variables = SymbolTable<Type>().apply {
@@ -263,6 +281,18 @@ class StatementValidationTest {
         Assert.assertEquals(
                 error(VARIABLE_IS_ALREADY_DECLARED),
                 parseStatement("let (a, a) = c;").validate(functions, variables, "f")
+        )
+    }
+
+    @Test
+    fun destructiveDeclarationTest6() {
+        val functions = mapOf("f" to Fn(listOf(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("c", Tuple(I32, Type.Array(I32, 2)))
+        }
+        Assert.assertEquals(
+                error(UNKNOWN_VARIABLE_TYPE),
+                parseStatement("let (a, b) = ([], 1);").validate(functions, variables, "f")
         )
     }
 

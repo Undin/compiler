@@ -35,7 +35,12 @@ class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type
             result += Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
         }
 
-        val exprType = expr.determineType(emptyMap(), variables)
+        var exprType = expr.determineType(emptyMap(), variables)
+        if (exprType.containsEmptyArray() && type == null) {
+            val message = "'${getText()}': can't determine type of '${expr.getText()}'. " +
+                    "Specify type of you declaration explicitly"
+            result += Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
+        }
 
         val variableType = if (type is Type.Tuple && type.elementsTypes.size == 1) {
             val message = "'${getText()}': tuples with one elements are not supported"
@@ -45,9 +50,11 @@ class GlobalDeclaration(ctx: ParserRuleContext, val name: String, val type: Type
             type ?: exprType
         }
 
-        if (!variableType.match(exprType)) {
+        if (!exprType.match(variableType)) {
             val message = "'${getText()}': variable and expression types don't match"
             result += Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+        } else if (result == Result.Ok && type != null && !exprType.isDetermined()) {
+            expr.propagateType(type)
         }
 
         if (name !in variables.getGlobal()) {

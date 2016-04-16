@@ -58,7 +58,7 @@ sealed class Type() : ASTNode(emptyContext) {
     }
 
     fun match(expectedType: Type): Boolean {
-        if (this == expectedType || this == Unknown) {
+        if (this == Unknown || expectedType == Unknown || this == expectedType) {
             return true;
         }
         return when (this) {
@@ -81,8 +81,16 @@ sealed class Type() : ASTNode(emptyContext) {
         is Fn -> false
     }
 
+    fun containsEmptyArray(): Boolean {
+        return when (this) {
+            is Type.Tuple -> elementsTypes.any { it.containsEmptyArray() }
+            is Type.Array -> size == 0 || elementType.containsEmptyArray()
+            else -> false
+        }
+    }
+
     override fun toString(): String = when (this) {
-        Unknown -> "unknown"
+        Unknown -> "_"
         Bool -> "bool"
         I32 -> "i32"
         is Tuple -> elementsTypes.joinToString(prefix = "(", postfix = ")")

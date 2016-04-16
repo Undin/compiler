@@ -62,6 +62,18 @@ class StatementTypeTest {
     }
 
     @Test
+    fun assignEmptyArrayTest() {
+        val statement = "a = [];"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(I32, 0))
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
     fun setTupleElementTest() {
         val statement = "a.1 = b;"
         val st = parseStatement(statement)
@@ -75,6 +87,18 @@ class StatementTypeTest {
     }
 
     @Test
+    fun setTupleElementEmptyArrayTest() {
+        val statement = "a.1 = [];"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Tuple(Bool, Type.Array(I32, 0)))
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
     fun setArrayElementTest() {
         val statement = "a[1] = b;"
         val st = parseStatement(statement)
@@ -82,6 +106,18 @@ class StatementTypeTest {
         val variables = SymbolTable<Type>().apply {
             putLocal("a", Type.Array(I32, 2))
             putLocal("b", I32)
+        }
+        st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun setArrayElementEmptyArrayTest() {
+        val statement = "a[1] = [];"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        val variables = SymbolTable<Type>().apply {
+            putLocal("a", Type.Array(Type.Array(I32, 0), 2))
         }
         st.validate(functions, variables, "main")
         st.checkTypes()
@@ -122,6 +158,15 @@ class StatementTypeTest {
             putLocal("a", I32)
         }
         st.validate(functions, variables, "main")
+        st.checkTypes()
+    }
+
+    @Test
+    fun assignDeclEmptyArrayTest() {
+        val statement = "let a: [i32; 0] = [];"
+        val st = parseStatement(statement)
+        val functions = mapOf("main" to Fn(emptyList(), I32))
+        st.validate(functions, fnName = "main")
         st.checkTypes()
     }
 

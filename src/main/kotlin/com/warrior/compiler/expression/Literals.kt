@@ -11,6 +11,7 @@ import com.warrior.compiler.validation.Result.Ok
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.PointerPointer
+import java.util.*
 
 /**
  * Created by warrior on 09.03.16.
@@ -98,6 +99,17 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
 
         override fun isConstant(): Boolean = elements.all { it.isConstant() }
 
+        override fun propagateType(type: Type) {
+            val expectedType = Collections.nCopies(elements.size, "_").joinToString(prefix = "(", postfix = ")")
+            if (type !is Type.Tuple || type.elementsTypes.size != elements.size) {
+                throw IllegalArgumentException("type must be '$expectedType' but found '$type'")
+            }
+            this.type = type
+            for ((i, t) in type.elementsTypes.withIndex()) {
+                elements[i].propagateType(t)
+            }
+        }
+
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is Tuple) {
                 return false
@@ -137,11 +149,12 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
 
         override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type {
             val types = elements.map { it.determineType(functions, variables) }
-            val t = types.firstOrNull { it != Unknown } ?: return Unknown
-            if (types.any { it != t }) {
-                return Unknown
+            val determinedTypes = types.filter { it.isDetermined() }
+            return if (determinedTypes.isEmpty() || determinedTypes.size != types.size || types.any { !it.match(determinedTypes[0]) }) {
+                Type.Array(Unknown, elements.size)
+            } else {
+                Type.Array(types[0], elements.size)
             }
-            return Type.Array(t, elements.size)
         }
 
         override fun validate(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Result {
@@ -165,6 +178,17 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
         }
 
         override fun isConstant(): Boolean = elements.all { it.isConstant() }
+
+        override fun propagateType(type: Type) {
+            val expectedType = "[_; ${elements.size}]"
+            if (type !is Type.Array || type.size != elements.size) {
+                throw IllegalArgumentException("type must be '$expectedType' but found '$type'")
+            }
+            this.type = type
+            for (e in elements) {
+                e.propagateType(type.elementType)
+            }
+        }
 
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is SeqArray) {
@@ -243,6 +267,15 @@ sealed class AggregateLiteral(ctx: ParserRuleContext) : Expr(ctx) {
         }
 
         override fun isConstant(): Boolean = elementValue.isConstant()
+
+        override fun propagateType(type: Type) {
+            val expectedType = "[_; $size]"
+            if (type !is Type.Array || type.size != size) {
+                throw IllegalArgumentException("type must be '$expectedType' but found '$type'")
+            }
+            this.type = type
+            elementValue.propagateType(type.elementType)
+        }
 
         override fun equals(other: Any?): Boolean {
             if (other == null || other !is RepeatArray) {

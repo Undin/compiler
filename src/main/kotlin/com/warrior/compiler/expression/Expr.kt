@@ -22,6 +22,9 @@ abstract class Expr(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 
     open fun generateConstValue(): LLVMValueRef = throw UnsupportedOperationException()
+    open fun propagateType(type: Type): Unit {
+        this.type = type
+    }
 
     abstract fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef
     abstract fun validate(functions: Map<String, Type.Fn> = emptyMap(), variables: SymbolTable<Type> = SymbolTable()): Result

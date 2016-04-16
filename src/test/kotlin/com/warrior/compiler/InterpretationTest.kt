@@ -612,6 +612,42 @@ class InterpretationTest {
         Assert.assertEquals("1\n2\n3\n4\n", out)
     }
 
+    @Test
+    fun emptyArrayTest() {
+        val program = """
+            let a: [i32; 0] = [];
+            let b: [[i32; 0]; 10] = [[]; 10];
+            let c: (i32, [i32; 0]) = (1, []);
+
+            fn main() -> i32 {
+                let a: [i32; 0] = [];
+                let b: [[i32; 0]; 10] = [[]; 10];
+                let c: (i32, [i32; 0]) = (1, []);
+                return 0;
+            }
+        """
+        val out = interpret(program, "")
+        Assert.assertEquals("", out)
+    }
+
+    @Test
+    fun setEmptyArrayTest() {
+        val program = """
+            fn main() -> i32 {
+                let a: [i32; 0] = [];
+                let b: [[i32; 0]; 10] = [[]; 10];
+                let c: (i32, [i32; 0]) = (1, []);
+
+                a = [];
+                b[5] = [];
+                c.1 = [];
+                return 0;
+            }
+        """
+        val out = interpret(program, "")
+        Assert.assertEquals("", out)
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {

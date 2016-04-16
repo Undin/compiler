@@ -66,7 +66,7 @@ class GlobalValidationTest {
     }
 
     @Test
-    fun test6() {
+    fun tupleTest1() {
         val global = "let a: (i32, i32) = (1, 2);"
         Assert.assertEquals(
                 Ok,
@@ -75,7 +75,7 @@ class GlobalValidationTest {
     }
 
     @Test
-    fun test7() {
+    fun tupleTest2() {
         val global = "let a = (1, 2);"
         Assert.assertEquals(
                 Ok,
@@ -84,7 +84,7 @@ class GlobalValidationTest {
     }
 
     @Test
-    fun test8() {
+    fun nestedAggregationTypeTest() {
         val global = "let a = ([1, 2], (3, 4));"
         Assert.assertEquals(
                 Ok,
@@ -93,7 +93,7 @@ class GlobalValidationTest {
     }
 
     @Test
-    fun test9() {
+    fun nonConstExprTest() {
         val global = "let a = [1 + 1, 2];"
         Assert.assertEquals(
                 error(NON_CONST_EXPRESSION),
@@ -102,10 +102,28 @@ class GlobalValidationTest {
     }
 
     @Test
-    fun test10() {
+    fun oneLengthTupleTest() {
         val global = "let a: (i32) = (1);"
         Assert.assertEquals(
                 error(ONE_LENGTH_TUPLE),
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun emptyArrayTest1() {
+        val global = "let a: [i32; 0] = [];"
+        Assert.assertEquals(
+                Ok,
+                parseGlobalDeclaration(global).validate()
+        )
+    }
+
+    @Test
+    fun emptyArrayTest2() {
+        val global = "let a = [];"
+        Assert.assertEquals(
+                error(UNKNOWN_VARIABLE_TYPE),
                 parseGlobalDeclaration(global).validate()
         )
     }

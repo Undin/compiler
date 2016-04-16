@@ -111,21 +111,22 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         override fun validate(functions: Map<String, Type.Fn>,
                               variables: SymbolTable<Type>,
                               fnName: String): Result {
-            val exprResult = expr.validate(functions, variables)
+            var result = expr.validate(functions, variables)
             val varType = variables[name]
-            val result = if (varType == null) {
+            if (varType == null) {
                 val message = "'${getText()}': variable '$name' is not declared"
-                Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
+                result += Error(ErrorMessage(UNDECLARED_VARIABLE, message, start(), end()))
             } else {
                 val exprType = expr.determineType(functions, variables)
-                if (exprType != Unknown && !varType.match(exprType)) {
+                if (!exprType.match(varType)) {
                     val message = "'${getText()}': variable and expression types don't match"
-                    Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
-                } else {
-                    Ok
+                    result += Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
+                } else if (result == Ok && !exprType.isDetermined()) {
+                    expr.propagateType(varType)
                 }
             }
-            return exprResult + result
+
+            return result
         }
     }
 
@@ -167,9 +168,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     result += Error(ErrorMessage(INDEX_OUT_OF_RANGE, message, start(), end()))
                 } else {
                     val elemType = tupleType.elementsTypes[index]
-                    if (!(elemType == Unknown || valueType.match(elemType))) {
+                    if (!valueType.match(elemType)) {
                         val message = "'${getText()}': '${valueExpr.getText()}' must have '$elemType' type"
                         result += Error(ErrorMessage(TYPE_MISMATCH, message, valueExpr.start(), valueExpr.end()))
+                    } else if (result == Ok && !valueType.isDetermined()) {
+                        valueExpr.propagateType(elemType)
                     }
                 }
             }
@@ -226,9 +229,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             if (arrayType is Type.Array) {
                 val elementType = arrayType.elementType
-                if (!(elementType == Unknown || valueType.match(elementType))) {
+                if (!valueType.match(elementType)) {
                     val message = "'${getText()}': '${valueExpr.getText()}' must have '$elementType' type"
                     result += Error(ErrorMessage(TYPE_MISMATCH, message, valueExpr.start(), valueExpr.end()))
+                } else if (result == Ok && !valueType.isDetermined()) {
+                    valueExpr.propagateType(elementType)
                 }
             }
 
@@ -287,10 +292,15 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             if (name in variables.getLocal()) {
                 val message = "'${getText()}': variable '$name' is already declared"
-                return result + Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
+                result += Error(ErrorMessage(VARIABLE_IS_ALREADY_DECLARED, message, start(), end()))
             }
 
-            val exprType = expr.determineType(functions, variables)
+            var exprType = expr.determineType(functions, variables)
+            if (exprType.containsEmptyArray() && type == null) {
+                val message = "'${getText()}': can't determine type of '${expr.getText()}'. " +
+                        "Specify type of you declaration explicitly"
+                result += Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
+            }
 
             val variableType = if (type is Tuple && type.elementsTypes.size == 1) {
                 val message = "'${getText()}': tuples with one elements are not supported"
@@ -300,11 +310,14 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                 type ?: exprType
             }
 
-            if (exprType != Unknown && !variableType.match(exprType)) {
+            if (!exprType.match(variableType)) {
                 val message = "'${getText()}': variable and expression types don't match"
                 result += Error(ErrorMessage(TYPE_MISMATCH, message, start(), end()))
             }
 
+            if (result == Ok && type != null && !exprType.isDetermined()) {
+                expr.propagateType(type)
+            }
             if (name !in variables.getLocal()) {
                 variables.putLocal(name, variableType)
             }
@@ -360,6 +373,10 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                         exprType.elementsTypes[index]
                     } else {
                         Unknown
+                    }
+                    if (variableType is Type.Array && variableType.size == 0 && variableType.elementType == Unknown) {
+                        val message = "'${getText()}': can't determine variable '$name' type"
+                        result += Error(ErrorMessage(UNKNOWN_VARIABLE_TYPE, message, start(), end()))
                     }
                     variables.putLocal(name, variableType)
                 }
