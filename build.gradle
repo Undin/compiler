@@ -42,7 +42,7 @@ test {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.1"
-    compile 'org.antlr:antlr4-runtime:4.5.2-1'
+    compile 'org.antlr:antlr4-runtime:4.5.3'
     compile 'org.bytedeco:javacpp:1.1'
     compile 'org.bytedeco.javacpp-presets:llvm:3.7.0-1.1'
 
