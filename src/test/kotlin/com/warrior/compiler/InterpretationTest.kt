@@ -649,13 +649,16 @@ class InterpretationTest {
     }
 
     @Test
-    fun extensionFunctionTest() {
+    fun extensionFunctionTest1() {
         val program = """
             fn main() -> i32 {
                 let v = readI32();
                 let i = 0;
                 while (i < v) {
                     if (i.isEven()) {
+                        println(i);
+                    }
+                    if (isEven(i)) {
                         println(i);
                     }
                     i = i + 1;
@@ -668,9 +671,31 @@ class InterpretationTest {
             }
         """
         val v = 10
-        val expectedOut = (0 until 10).filter { it % 2 == 0 }.fold("", { str, i -> str + i + "\n" })
+        val expectedOut = (0 until 10).filter { it % 2 == 0 }.fold("", { str, i -> "$str$i\n$i\n" })
         val out = interpret(program, "$v\n")
         Assert.assertEquals(expectedOut, out)
+    }
+
+    @Test
+    fun extensionFunctionTest2() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let a = (1, 2).add((v, v));
+                let b = add((5, 6), (v, v));
+                println(a.0);
+                println(a.1);
+                println(b.0);
+                println(b.1);
+                return 0;
+            }
+
+            fn (i32, i32).add(self, a: (i32, i32)) -> (i32, i32) {
+                return (self.0 + a.0, self.1 + a.1);
+            }
+        """
+        val out = interpret(program, "5\n")
+        Assert.assertEquals("6\n7\n10\n11\n", out)
     }
 
     private fun interpret(program: String, input: String): String {
