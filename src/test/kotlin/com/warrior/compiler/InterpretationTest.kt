@@ -648,6 +648,31 @@ class InterpretationTest {
         Assert.assertEquals("", out)
     }
 
+    @Test
+    fun extensionFunctionTest() {
+        val program = """
+            fn main() -> i32 {
+                let v = readI32();
+                let i = 0;
+                while (i < v) {
+                    if (i.isEven()) {
+                        println(i);
+                    }
+                    i = i + 1;
+                }
+                return 0;
+            }
+
+            fn i32.isEven(self) -> bool {
+                return self % 2 == 0;
+            }
+        """
+        val v = 10
+        val expectedOut = (0 until 10).filter { it % 2 == 0 }.fold("", { str, i -> str + i + "\n" })
+        val out = interpret(program, "$v\n")
+        Assert.assertEquals(expectedOut, out)
+    }
+
     private fun interpret(program: String, input: String): String {
         Compiler(program).use {
             if (it.compile()) {

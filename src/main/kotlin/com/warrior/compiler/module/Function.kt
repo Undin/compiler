@@ -92,5 +92,5 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         return prototypeResult + bodyResult
     }
 
-    fun getType(): Type.Fn = Fn(prototype.args.map { it.type }, prototype.returnType)
+    fun getType(): Type.Fn = Fn(prototype.args.map { it.type }, prototype.returnType, prototype is Prototype.ExtensionPrototype)
 }

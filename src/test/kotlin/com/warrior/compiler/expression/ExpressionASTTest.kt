@@ -215,6 +215,22 @@ class ExpressionASTTest {
     }
 
     @Test
+    fun extensionCallTest1() {
+        Assert.assertEquals(
+                extensionCall("f", i32(1), emptyList()),
+                parseExpr("1.f()")
+        )
+    }
+
+    @Test
+    fun extensionCallTest2() {
+        Assert.assertEquals(
+                extensionCall("add", i32(1), listOf(i32(2))),
+                parseExpr("1.add(2)")
+        )
+    }
+
+    @Test
     fun tupleElementTest() {
         Assert.assertEquals(
                 tupleElem(variable("a"), 1),
@@ -302,6 +318,7 @@ class ExpressionASTTest {
     private fun array(elementsValue: Expr, size: Int): RepeatArray = RepeatArray(ctx, elementsValue, size)
     private fun variable(name: String): Variable = Variable(ctx, name)
     private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
+    private fun extensionCall(name: String, objectExpr: Expr, args: List<Expr>): ExtensionCall = ExtensionCall(ctx, objectExpr, name, args)
     private fun tupleElem(array: Expr, index: Int) = TupleElement(ctx, array, index)
     private fun arrayElem(array: Expr, index: Expr) = ArrayElement(ctx, array, index)
 

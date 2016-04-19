@@ -76,6 +76,15 @@ class ExpressionTypeTest {
     }
 
     @Test
+    fun extensionCallTest() {
+        val functions = mapOf("add" to Type.Fn(listOf(I32, I32), I32, true))
+        val symbolTable = SymbolTable<Type>().apply {
+            putLocal("a", I32)
+        }
+        checkType("a.add(2)", functions, symbolTable)
+    }
+
+    @Test
     fun tupleElementTest() {
         val symbolTable = SymbolTable<Type>().apply {
             putLocal("a", Tuple(Bool, I32))

@@ -9,11 +9,15 @@ globalDeclaration
     ;
 
 functionDefinition
-    :   'fn' prototype block
+    :   'fn' (prototype | extensionPrototype) block
     ;
 
 prototype
     :   Identifier '(' typedArguments? ')' '->' type
+    ;
+
+extensionPrototype
+    :   extendedType=type '.' fnName=Identifier '(' self=Identifier (',' typedArguments)? ')' '->' returnType=type
     ;
 
 typedArguments
@@ -112,6 +116,7 @@ read
 
 expression
     :   primary
+    |   object=expression '.' Identifier '(' arguments? ')'
     |   tuple=expression '.' tupleIndex=intLiteral
     |   array=expression '[' arrayIndex=expression ']'
     |   unaryOp=('+' | '-') left=expression

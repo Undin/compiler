@@ -278,6 +278,20 @@ class ExpressionCalcTest {
     }
 
     @Test
+    fun extensionCallTest() {
+        val add = Fn() { args ->
+            val a = args[0] as IntValue
+            val b = args[1] as IntValue
+            a + b
+        }
+        val functions = mapOf("add" to add);
+        Assert.assertEquals(
+                add(listOf(int(1), int(2))),
+                parseExpr("1.add(2)").calculate(functions)
+        )
+    }
+
+    @Test
     fun tupleElementTest() {
         val variables = mapOf("a" to tuple(int(1), int(2)))
         Assert.assertEquals(

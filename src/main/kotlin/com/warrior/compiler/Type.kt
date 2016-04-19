@@ -39,7 +39,7 @@ sealed class Type() : ASTNode(emptyContext) {
         override fun toLLVMType(): LLVM.LLVMTypeRef = LLVM.LLVMArrayType(elementType.toLLVMType(), size)
     }
 
-    class Fn(val argsTypes: List<Type>, val returnType: Type) : Type() {
+    class Fn(val argsTypes: List<Type>, val returnType: Type, val isExtension: Boolean = false) : Type() {
         override fun toLLVMType(): LLVM.LLVMTypeRef {
             val llvmArgsTypes = argsTypes.map { it.toLLVMType() }.toTypedArray()
             return LLVM.LLVMFunctionType(returnType.toLLVMType(), PointerPointer(*llvmArgsTypes), argsTypes.size, 0)
