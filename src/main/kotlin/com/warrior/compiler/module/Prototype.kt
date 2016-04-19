@@ -15,7 +15,14 @@ import java.util.*
 /**
  * Created by warrior on 09.03.16.
  */
-class Prototype(ctx: ParserRuleContext, val name: String, val args: List<Arg>, val returnType: Type) : ASTNode(ctx) {
+sealed class Prototype(ctx: ParserRuleContext, val name: String, open val args: List<Arg>, val returnType: Type) : ASTNode(ctx) {
+
+    class SimplePrototype(ctx: ParserRuleContext, name: String, args: List<Arg>, returnType: Type) : Prototype(ctx, name, args, returnType)
+    class ExtensionPrototype(ctx: ParserRuleContext, name: String, val extendedType: Type,
+                             args: List<Arg>, returnType: Type) : Prototype(ctx, name, args, returnType) {
+        override val args: List<Arg> = listOf(Arg("self", extendedType)) + args
+    }
+
     fun generateCode(module: LLVMModuleRef) {
         var argsTypes = args.map { it.type.toLLVMType() }.toTypedArray()
         val fnType = if (!returnType.isPrimitive()) {
@@ -32,26 +39,26 @@ class Prototype(ctx: ParserRuleContext, val name: String, val args: List<Arg>, v
     fun validate(): Result {
         val variables = HashSet<String>()
         return args.withIndex()
-            .map {
-                val arg = it.value
-                var result: Result = Ok
+                .map {
+                    val arg = it.value
+                    var result: Result = Ok
 
-                if (arg.name in variables) {
-                    val message = "'${getText()}' ${it.index} arg: argument '${arg.name}' is already declared"
-                    result += Error(ErrorMessage(ARGUMENT_IS_ALREADY_DECLARED, message, start(), end()))
-                } else {
-                    variables.add(arg.name)
+                    if (arg.name in variables) {
+                        val message = "'${getText()}' ${it.index} arg: argument '${arg.name}' is already declared"
+                        result += Error(ErrorMessage(ARGUMENT_IS_ALREADY_DECLARED, message, start(), end()))
+                    } else {
+                        variables.add(arg.name)
+                    }
+
+                    val type = arg.type
+                    if (type is Type.Tuple && type.elementsTypes.size == 1) {
+                        val message = "'${getText()}': tuples with one elements are not supported"
+                        result += Error(ErrorMessage(ONE_LENGTH_TUPLE, message, start(), end()))
+                    }
+
+                    result
                 }
-
-                val type = arg.type
-                if (type is Type.Tuple && type.elementsTypes.size == 1) {
-                    val message = "'${getText()}': tuples with one elements are not supported"
-                    result += Error(ErrorMessage(ONE_LENGTH_TUPLE, message, start(), end()))
-                }
-
-                result
-            }
-            .fold()
+                .fold()
     }
 
     data class Arg(val name: String, val type: Type)

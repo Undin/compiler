@@ -5,11 +5,9 @@ import com.warrior.compiler.expression.*
 import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.expression.Binary.*
 import com.warrior.compiler.expression.MemoryExpr.*
-import com.warrior.compiler.statement.*
-import com.warrior.compiler.module.Prototype
-import com.warrior.compiler.module.Module
+import com.warrior.compiler.module.*
 import com.warrior.compiler.module.Function
-import com.warrior.compiler.module.GlobalDeclaration
+import com.warrior.compiler.statement.*
 import com.warrior.compiler.statement.Statement.*
 import java.util.*
 
@@ -24,6 +22,18 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
         return Module(ctx, globals, functions)
     }
 
+    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
+        val prototype = if (ctx.prototype() != null) {
+            visitPrototype(ctx.prototype())
+        } else if (ctx.extensionPrototype() != null) {
+            visitExtensionPrototype(ctx.extensionPrototype())
+        } else {
+            throw IllegalStateException("unreachable state")
+        }
+        val body = visitBlock(ctx.block())
+        return Function(ctx, prototype, body)
+    }
+
     override fun visitPrototype(ctx: GrammarParser.PrototypeContext): Prototype {
         val name = ctx.Identifier().text
         val args = ctx.typedArguments()
@@ -31,13 +41,21 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
                 ?.map { Prototype.Arg(it.Identifier().text, visitType(it.type())) }
                 ?: Collections.emptyList()
         val type = visitType(ctx.type())
-        return Prototype(ctx, name, args, type)
+        return Prototype.SimplePrototype(ctx, name, args, type)
     }
 
-    override fun visitFunctionDefinition(ctx: GrammarParser.FunctionDefinitionContext): Function {
-        val prototype = visitPrototype(ctx.prototype())
-        val body = visitBlock(ctx.block())
-        return Function(ctx, prototype, body)
+    override fun visitExtensionPrototype(ctx: GrammarParser.ExtensionPrototypeContext): Prototype {
+        if (ctx.self.text != "self") {
+            throw InputMismatchException("first param of extension function must be 'self' but found '${ctx.self.text}'")
+        }
+        val fnName = ctx.fnName.text
+        val extendedType = visitType(ctx.extendedType)
+        val args = ctx.typedArguments()
+                ?.typedArgument()
+                ?.map { Prototype.Arg(it.Identifier().text, visitType(it.type())) }
+                ?: Collections.emptyList()
+        val returnType = visitType(ctx.returnType)
+        return Prototype.ExtensionPrototype(ctx, fnName, extendedType, args, returnType)
     }
 
     override fun visitGlobalDeclaration(ctx: GrammarParser.GlobalDeclarationContext): GlobalDeclaration {
@@ -146,6 +164,15 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
     override fun visitExpression(ctx: GrammarParser.ExpressionContext): Expr {
         if (ctx.primary() != null) {
             return visitPrimary(ctx.primary())
+        }
+        if (ctx.`object` != null) {
+            val objectExpr = visitExpression(ctx.`object`)
+            val name = ctx.Identifier().text
+            val args = ctx.arguments()
+                    ?.expression()
+                    ?.map { visitExpression(it) }
+                    ?: Collections.emptyList()
+            return ExtensionCall(ctx, objectExpr, name, args)
         }
         if (ctx.tuple != null) {
             val tuple = visitExpression(ctx.tuple)

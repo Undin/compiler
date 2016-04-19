@@ -368,6 +368,68 @@ class ExpressionValidationTest {
     }
 
     @Test
+    fun extensionCallTest1() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                Ok,
+                parseExpr("1.add(2)").validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionCallTest2() {
+        Assert.assertEquals(
+                error(UNDECLARED_FUNCTION),
+                parseExpr("1.add(2)").validate()
+        )
+    }
+
+    @Test
+    fun extensionCallTest3() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32))
+        Assert.assertEquals(
+                error(NOT_EXTENSION_FUNCTION),
+                parseExpr("1.add(2)").validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionCallTest4() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("false.add(2)").validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionCallTest5() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                error(WRONG_ARGS_NUMBER),
+                parseExpr("1.add()").validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionCallTest6() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("1.add(false)").validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionCallTest7() {
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                error(TYPE_MISMATCH),
+                parseExpr("1.add(1 + true)").validate(functions)
+        )
+    }
+
+    @Test
     fun tupleElementTest1() {
         val variables = SymbolTable<Type>().apply {
             putLocal("a", Tuple(Bool, I32))

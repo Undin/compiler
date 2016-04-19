@@ -36,6 +36,12 @@ fun parsePrototype(prototype: String): Prototype {
     return visitor.visitPrototype(tree)
 }
 
+fun parseExtensionPrototype(prototype: String): Prototype {
+    val tree = parser(prototype).extensionPrototype();
+    val visitor = ASTVisitor()
+    return visitor.visitExtensionPrototype(tree)
+}
+
 fun parseFunction(function: String): Function {
     val tree = parser(function).functionDefinition();
     val visitor = ASTVisitor()
@@ -128,5 +134,9 @@ fun Expr.checkType() {
             rhs.checkType()
         }
         is Call -> args.forEach { it.checkType() }
+        is ExtensionCall -> {
+            objectExpr.checkType()
+            args.forEach { it.checkType() }
+        }
     }
 }

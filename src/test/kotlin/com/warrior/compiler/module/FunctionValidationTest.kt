@@ -7,6 +7,7 @@ import com.warrior.compiler.validation.ErrorType.*
 import com.warrior.compiler.validation.Result.Ok
 import org.junit.Assert
 import org.junit.Test
+import java.util.*
 
 /**
  * Created by warrior on 25.03.16.
@@ -262,6 +263,34 @@ class FunctionValidationTest {
         val functions = mapOf("f" to Fn(listOf(I32, I32), I32), "g" to Fn(listOf(), I32))
         Assert.assertEquals(
                 error(WRONG_ARGS_NUMBER),
+                parseFunction(function).validate(functions)
+        )
+    }
+
+    @Test
+    fun extensionFunctionTest1() {
+        val function = """
+            fn i32.add(self, a: i32) -> i32 {
+                return self + a;
+            }
+        """
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                Ok,
+                parseFunction(function).validate(functions)
+        )
+    }
+
+    @Test(expected = InputMismatchException::class)
+    fun extensionFunctionTest2() {
+        val function = """
+            fn i32.add(this, a: i32) -> i32 {
+                return this + a;
+            }
+        """
+        val functions = mapOf("add" to Fn(listOf(I32, I32), I32, true))
+        Assert.assertEquals(
+                Ok,
                 parseFunction(function).validate(functions)
         )
     }

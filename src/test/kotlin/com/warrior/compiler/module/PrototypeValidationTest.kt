@@ -1,6 +1,7 @@
 package com.warrior.compiler.module
 
 import com.warrior.compiler.error
+import com.warrior.compiler.parseExtensionPrototype
 import com.warrior.compiler.parsePrototype
 import com.warrior.compiler.validation.ErrorType.ARGUMENT_IS_ALREADY_DECLARED
 import com.warrior.compiler.validation.ErrorType.ONE_LENGTH_TUPLE
@@ -46,6 +47,24 @@ class PrototypeValidationTest {
         Assert.assertEquals(
                 error(ONE_LENGTH_TUPLE),
                 parsePrototype(prototype).validate()
+        )
+    }
+
+    @Test
+    fun extensionPrototypeTest1() {
+        val prototype = "i32.f(self, a: i32) -> i32"
+        Assert.assertEquals(
+                Ok,
+                parseExtensionPrototype(prototype).validate()
+        )
+    }
+
+    @Test
+    fun extensionPrototypeTest2() {
+        val prototype = "i32.f(self, self: i32) -> i32"
+        Assert.assertEquals(
+                error(ARGUMENT_IS_ALREADY_DECLARED),
+                parseExtensionPrototype(prototype).validate()
         )
     }
 }

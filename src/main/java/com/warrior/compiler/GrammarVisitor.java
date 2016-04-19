@@ -35,6 +35,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrototype(GrammarParser.PrototypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#extensionPrototype}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExtensionPrototype(GrammarParser.ExtensionPrototypeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#typedArguments}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
