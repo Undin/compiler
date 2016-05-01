@@ -1,6 +1,7 @@
 package com.warrior.compiler.expression
 
 import com.warrior.compiler.expression.AggregateLiteral.*
+import com.warrior.compiler.expression.Call.*
 import com.warrior.compiler.expression.MemoryExpr.*
 import com.warrior.compiler.parseExpr
 import org.antlr.v4.runtime.ParserRuleContext
@@ -317,7 +318,7 @@ class ExpressionASTTest {
     private fun array(vararg elements: Expr): SeqArray = SeqArray(ctx, elements.asList())
     private fun array(elementsValue: Expr, size: Int): RepeatArray = RepeatArray(ctx, elementsValue, size)
     private fun variable(name: String): Variable = Variable(ctx, name)
-    private fun call(name: String, args: List<Expr>): Call = Call(ctx, name, args)
+    private fun call(name: String, args: List<Expr>): SimpleCall = SimpleCall(ctx, name, args)
     private fun extensionCall(name: String, objectExpr: Expr, args: List<Expr>): ExtensionCall = ExtensionCall(ctx, objectExpr, name, args)
     private fun tupleElem(array: Expr, index: Int) = TupleElement(ctx, array, index)
     private fun arrayElem(array: Expr, index: Expr) = ArrayElement(ctx, array, index)

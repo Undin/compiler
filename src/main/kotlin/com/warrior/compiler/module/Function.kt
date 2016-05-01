@@ -5,7 +5,6 @@ import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
 import com.warrior.compiler.expression.Call
-import com.warrior.compiler.expression.ExtensionCall
 import com.warrior.compiler.statement.ReturnBlock
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.statement.Statement.Block
@@ -110,8 +109,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         is Statement.If -> body.hasReturnCall(name)
         is Statement.IfElse -> thenBlock.hasReturnCall(name) || elseBlock.hasReturnCall(name)
         is Statement.While -> body.hasReturnCall(name)
-        is Statement.Return -> expr is Call && expr.fnName == name ||
-                expr is ExtensionCall && expr.fnName == name
+        is Statement.Return -> expr is Call && expr.fnName == name
         is Statement.Print -> false
         is Statement.Read -> false
     }

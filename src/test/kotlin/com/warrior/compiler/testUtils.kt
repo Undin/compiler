@@ -134,9 +134,5 @@ fun Expr.checkType() {
             rhs.checkType()
         }
         is Call -> args.forEach { it.checkType() }
-        is ExtensionCall -> {
-            objectExpr.checkType()
-            args.forEach { it.checkType() }
-        }
     }
 }
