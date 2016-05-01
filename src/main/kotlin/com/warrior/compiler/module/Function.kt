@@ -4,7 +4,10 @@ import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
+import com.warrior.compiler.expression.Call
+import com.warrior.compiler.expression.ExtensionCall
 import com.warrior.compiler.statement.ReturnBlock
+import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.statement.Statement.Block
 import com.warrior.compiler.statement.Statement.Return
 import com.warrior.compiler.validation.ErrorMessage
@@ -93,4 +96,23 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
     }
 
     fun getType(): Type.Fn = Fn(prototype.args.map { it.type }, prototype.returnType, prototype is Prototype.ExtensionPrototype)
+
+    fun isTailRecursive(): Boolean = body.hasReturnCall(prototype.name)
+
+    private fun Statement.hasReturnCall(name: String): Boolean = when (this) {
+        is Statement.Block -> statements.any { it.hasReturnCall(name) }
+        is Statement.ExpressionStatement -> false
+        is Statement.Assign -> false
+        is Statement.SetTupleElement -> false
+        is Statement.SetArrayElement -> false
+        is Statement.AssignDecl -> false
+        is Statement.DestructiveDeclaration -> false
+        is Statement.If -> body.hasReturnCall(name)
+        is Statement.IfElse -> thenBlock.hasReturnCall(name) || elseBlock.hasReturnCall(name)
+        is Statement.While -> body.hasReturnCall(name)
+        is Statement.Return -> expr is Call && expr.fnName == name ||
+                expr is ExtensionCall && expr.fnName == name
+        is Statement.Print -> false
+        is Statement.Read -> false
+    }
 }
