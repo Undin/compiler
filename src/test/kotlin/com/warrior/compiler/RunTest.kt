@@ -20,7 +20,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("15", run(program, "5\n"))
+        Assert.assertEquals("15", run(program, input = "5\n"))
     }
 
     @Test
@@ -40,9 +40,9 @@ class RunTest {
                 return a >= 0;
             }
         """
-        Assert.assertEquals("-1\n", run(program, "-1\n"))
-        Assert.assertEquals("1\n-1\n", run(program, "1\n"))
-        Assert.assertEquals("0\n0\n0\n", run(program, "0\n"))
+        Assert.assertEquals("-1\n", run(program, input = "-1\n"))
+        Assert.assertEquals("1\n-1\n", run(program, input = "1\n"))
+        Assert.assertEquals("0\n0\n0\n", run(program, input = "0\n"))
     }
 
     @Test
@@ -62,8 +62,8 @@ class RunTest {
                 return a >= 0;
             }
         """
-        Assert.assertEquals("-1\n1\n0\n", run(program, "-1\n"))
-        Assert.assertEquals("1\n0\n", run(program, "1\n"))
+        Assert.assertEquals("-1\n1\n0\n", run(program, input = "-1\n"))
+        Assert.assertEquals("1\n0\n", run(program, input = "1\n"))
     }
 
     @Test
@@ -84,7 +84,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n1\n1\n0\n", run(program, ""))
+        Assert.assertEquals("0\n1\n1\n1\n0\n", run(program, input = ""))
     }
 
     @Test
@@ -102,7 +102,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n0\n", run(program, ""))
+        Assert.assertEquals("0\n1\n0\n", run(program, input = ""))
     }
 
     @Test
@@ -133,7 +133,7 @@ class RunTest {
             val pow = rand.nextInt(9) + 1
             val input = "$a $pow\n"
             val result = Math.pow(a.toDouble(), pow.toDouble()).toInt()
-            Assert.assertEquals(result.toString(), run(program, input))
+            Assert.assertEquals(result.toString(), run(program, input = input))
         }
     }
 
@@ -167,7 +167,7 @@ class RunTest {
             return result
         }
         for (i in 0..20) {
-            Assert.assertEquals(fib(i).toString(), run(program, "$i\n"))
+            Assert.assertEquals(fib(i).toString(), run(program, input = "$i\n"))
         }
     }
 
@@ -188,8 +188,8 @@ class RunTest {
                 return a;
             }
         """
-        Assert.assertEquals("1", run(program, "1\n"))
-        Assert.assertEquals("1", run(program, "-1\n"))
+        Assert.assertEquals("1", run(program, input = "1\n"))
+        Assert.assertEquals("1", run(program, input = "-1\n"))
     }
 
     @Test
@@ -211,7 +211,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n2\n", run(program, ""))
+        Assert.assertEquals("0\n1\n2\n", run(program, input = ""))
     }
 
     @Test
@@ -234,7 +234,7 @@ class RunTest {
                 return a;
             }
         """
-        Assert.assertEquals("5", run(program, "2 3\n"))
+        Assert.assertEquals("5", run(program, input = "2 3\n"))
     }
 
     @Test
@@ -251,7 +251,7 @@ class RunTest {
                 return a + b;
             }
         """
-        Assert.assertEquals("5", run(program, "2 3\n"))
+        Assert.assertEquals("5", run(program, input = "2 3\n"))
     }
 
     @Test
@@ -267,7 +267,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n3\n5\n", run(program, "2 3\n"))
+        Assert.assertEquals("2\n3\n5\n", run(program, input = "2 3\n"))
     }
 
     @Test
@@ -287,7 +287,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n3\n5\n6\n", run(program, "2 3\n"))
+        Assert.assertEquals("2\n3\n5\n6\n", run(program, input = "2 3\n"))
     }
 
     @Test
@@ -308,7 +308,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("3\n6\n3\n4\n3\n4\n5\n", run(program, "2\n"))
+        Assert.assertEquals("3\n6\n3\n4\n3\n4\n5\n", run(program, input = "2\n"))
     }
 
     @Test
@@ -324,7 +324,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, input = "2\n1\n"))
     }
 
     @Test
@@ -340,7 +340,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, input = "2\n1\n"))
     }
 
     @Test
@@ -356,7 +356,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("5\n1\n", run(program, "2\n1\n"))
+        Assert.assertEquals("5\n1\n", run(program, input = "2\n1\n"))
     }
 
     @Test
@@ -372,7 +372,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, input = "2\n1\n"))
     }
 
     @Test
@@ -388,7 +388,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("3\n2\n", run(program, "3\n"))
+        Assert.assertEquals("3\n2\n", run(program, input = "3\n"))
     }
 
     @Test
@@ -404,7 +404,7 @@ class RunTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n5\n", run(program, "5\n"))
+        Assert.assertEquals("2\n5\n", run(program, input = "5\n"))
     }
 
     @Test
@@ -437,7 +437,7 @@ class RunTest {
             val a = random.nextInt()
             val b = random.nextInt();
             val (res1, res2) = f(a, b)
-            val out = run(program, "$a\n$b\n")
+            val out = run(program, input = "$a\n$b\n")
             Assert.assertEquals("$res1\n$res2\n", out)
         }
     }
@@ -516,7 +516,7 @@ class RunTest {
         for (i in 1..20) {
             val matrix = Array(3) { IntArray(3) { random.nextInt() } }
             val transposeMatrix = transpose(matrix)
-            val out = run(program, toString(matrix))
+            val out = run(program, input = toString(matrix))
             Assert.assertEquals(toString(transposeMatrix), out)
         }
     }
@@ -558,7 +558,7 @@ class RunTest {
             val array = Array(3) { random.nextInt() to random.nextInt() }
             var reversed = array.clone()
             reversed.reverse()
-            val out = run(program, array.map { "${it.first}\n${it.second}\n" }.fold("", String::plus))
+            val out = run(program, input = array.map { "${it.first}\n${it.second}\n" }.fold("", String::plus))
             Assert.assertEquals(reversed.map { "${it.first}\n${it.second}\n" }.fold("", String::plus), out)
         }
 
@@ -589,7 +589,7 @@ class RunTest {
                 return 0;
             }
         """
-        val out = run(program, "3\n")
+        val out = run(program, input = "3\n")
         Assert.assertEquals("3\n4\n5\n6\n7\n", out)
     }
 
@@ -609,7 +609,7 @@ class RunTest {
                 return 0;
             }
         """
-        val out = run(program, "1\n")
+        val out = run(program, input = "1\n")
         Assert.assertEquals("1\n2\n3\n4\n", out)
     }
 
@@ -627,7 +627,7 @@ class RunTest {
                 return 0;
             }
         """
-        val out = run(program, "")
+        val out = run(program, input = "")
         Assert.assertEquals("", out)
     }
 
@@ -645,7 +645,7 @@ class RunTest {
                 return 0;
             }
         """
-        val out = run(program, "")
+        val out = run(program, input = "")
         Assert.assertEquals("", out)
     }
 
@@ -673,7 +673,7 @@ class RunTest {
         """
         val v = 10
         val expectedOut = (0 until 10).filter { it % 2 == 0 }.fold("", { str, i -> "$str$i\n$i\n" })
-        val out = run(program, "$v\n")
+        val out = run(program, input = "$v\n")
         Assert.assertEquals(expectedOut, out)
     }
 
@@ -695,14 +695,103 @@ class RunTest {
                 return (self.0 + a.0, self.1 + a.1);
             }
         """
-        val out = run(program, "5\n")
+        val out = run(program, input = "5\n")
         Assert.assertEquals("6\n7\n10\n11\n", out)
     }
 
-    private fun run(program: String, input: String): String {
+    @Test(expected = RuntimeException::class)
+    fun tailRecFunctionWithoutOptimization() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fib(a, 0, 1);
+                println(res);
+                return 0;
+            }
+
+            fn fib(n: i32, a: i32, b: i32) -> i32 {
+                if (n == 0) {
+                    return a;
+                } else {
+                    return fib(n - 1, b, (a + b) % 10000);
+                }
+            }
+        """
+        val out = run(program, false, "1000000\n")
+        Assert.assertEquals("6875\n", out)
+    }
+
+    @Test
+    fun tailRecFunctionWithOptimization1() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fib(a, 0, 1);
+                println(res);
+                return 0;
+            }
+
+            fn fib(n: i32, a: i32, b: i32) -> i32 {
+                if (n == 0) {
+                    return a;
+                } else {
+                    return fib(n - 1, b, (a + b) % 10000);
+                }
+            }
+        """
+        val out = run(program, true, "1000000\n")
+        Assert.assertEquals("6875\n", out)
+    }
+
+    @Test
+    fun tailRecFunctionWithOptimization2() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = a.fib(0, 1);
+                println(res);
+                return 0;
+            }
+
+            fn i32.fib(self, a: i32, b: i32) -> i32 {
+                if (self == 0) {
+                    return a;
+                } else {
+                    return (self - 1).fib(b, (a + b) % 10000);
+                }
+            }
+        """
+        val out = run(program, true, "1000000\n")
+        Assert.assertEquals("6875\n", out)
+    }
+
+    @Test
+    fun tailRecFunctionWithOptimization3() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fib(a, (0, 1));
+                println(res.0);
+                println(res.1);
+                return 0;
+            }
+
+            fn fib(n: i32, a: (i32, i32)) -> (i32, i32) {
+                if (n == 0) {
+                    return a;
+                } else {
+                    return fib(n - 1, (a.1, (a.0 + a.1) % 10000));
+                }
+            }
+        """
+        val out = run(program, true, "10000\n")
+        Assert.assertEquals("6875\n7501\n", out)
+    }
+
+    private fun run(program: String, useTailRecursionOptimization: Boolean = false, input: String): String {
         val executableFilename = "out"
         val success = Compiler(program)
-                .use { it.compile(executableFilename) }
+                .use { it.compile(executableFilename, useTailRecursionOptimization) }
         if (!success) {
             throw IllegalStateException()
         }
@@ -712,7 +801,10 @@ class RunTest {
                     .start()
             process.outputStream.write(input.toByteArray())
             process.outputStream.flush()
-            process.waitFor()
+            val exitCode = process.waitFor()
+            if (exitCode != 0) {
+                throw RuntimeException()
+            }
 
             return process.inputStream.readBytes().toString(Charsets.UTF_8)
         } finally {
