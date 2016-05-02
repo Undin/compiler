@@ -1,8 +1,8 @@
 package com.warrior.compiler
 
-import com.warrior.compiler.module.Module
 import com.warrior.compiler.buildin.readBoolFunction
 import com.warrior.compiler.buildin.readI32Function
+import com.warrior.compiler.module.Module
 import com.warrior.compiler.validation.Result.Error
 import com.warrior.compiler.validation.Result.Ok
 import org.antlr.v4.runtime.*
@@ -10,8 +10,7 @@ import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.LLVM.*
 import org.bytedeco.javacpp.Pointer
 import java.io.Closeable
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import java.io.File
 
 /**
  * Created by warrior on 22.03.16.
@@ -19,6 +18,8 @@ import java.nio.file.StandardCopyOption
 class Compiler(val program: String): Closeable {
 
     companion object {
+        const val DATA_LAYOUT: String = "e-i64:64-n8:16:32:64"
+
         var str: LLVMValueRef? = null
         var strLn: LLVMValueRef? = null
 
@@ -40,14 +41,18 @@ class Compiler(val program: String): Closeable {
     private val module: LLVMModuleRef = LLVMModuleCreateWithName("module")
     private val builder: LLVMBuilderRef = LLVMCreateBuilder()
 
-    fun compile(optimize: Boolean = false): Boolean {
+    init {
+        LLVMSetDataLayout(module, DATA_LAYOUT)
+    }
+
+    fun compile(name: String, useTailRecOptimization: Boolean = false, optimize: Boolean = false): Boolean {
         val ast = buildAST(program)
         if (ast != null) {
             val result = ast.validate()
             return when (result) {
                 Ok -> {
-                    generateCode(ast, optimize)
-                    true
+                    generateCode(ast, useTailRecOptimization, optimize)
+                    return createExecutable(name)
                 }
                 is Error -> {
                     printError(result)
@@ -58,8 +63,8 @@ class Compiler(val program: String): Closeable {
         return false
     }
 
-    private fun generateCode(ast: Module, optimize: Boolean) {
-        ast.generateCode(module, builder)
+    private fun generateCode(ast: Module, useTailRecOptimization: Boolean, optimize: Boolean) {
+        ast.generateCode(module, builder, useTailRecOptimization)
 
         if (optimize) {
             val pass = LLVMCreatePassManager()
@@ -123,22 +128,30 @@ class Compiler(val program: String): Closeable {
 
     fun getAsm(): String = LLVMPrintModuleToString(module).string
 
-    fun interpret(input: String): String {
-        val llvmCodePath = Files.createTempFile("llvm", ".ll")
+    private fun createExecutable(baseName: String): Boolean {
+        val llFile = File("$baseName.ll")
         try {
-            Files.copy(getAsm().byteInputStream(), llvmCodePath, StandardCopyOption.REPLACE_EXISTING)
-            val process = ProcessBuilder()
-                    .command("lli", llvmCodePath.toString())
+            llFile.writeText(getAsm())
+            val objectFilename = "$baseName.o"
+            val llcReturnCode = ProcessBuilder()
+                    .command("llc", "-O0", "-filetype=obj", "-o", objectFilename, llFile.name)
                     .start()
-
-            process.outputStream.write(input.toByteArray())
-            process.outputStream.flush()
-            process.waitFor()
-            val out = process.inputStream.readBytes().toString(Charsets.UTF_8)
-            return out
+                    .waitFor()
+            try {
+                if (llcReturnCode == 0) {
+                    val clangReturnCode = ProcessBuilder()
+                            .command("clang", objectFilename, "-o", baseName)
+                            .start()
+                            .waitFor()
+                    return clangReturnCode == 0
+                }
+            } finally {
+                File(objectFilename).delete()
+            }
         } finally {
-            Files.deleteIfExists(llvmCodePath)
+            llFile.delete()
         }
+        return false
     }
 
     override fun close() {

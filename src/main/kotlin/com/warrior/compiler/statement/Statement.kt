@@ -6,6 +6,7 @@ import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
 import com.warrior.compiler.expression.AggregateLiteral
+import com.warrior.compiler.expression.Call
 import com.warrior.compiler.expression.Expr
 import com.warrior.compiler.validation.*
 import com.warrior.compiler.validation.ErrorType.*
@@ -24,11 +25,11 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Block(ctx: ParserRuleContext, val statements: List<Statement>) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val localSymbolTable = SymbolTable(symbolTable)
 
             for (st in statements) {
-                st.generateCode(module, builder, localSymbolTable, returnBlock)
+                st.generateCode(module, builder, localSymbolTable, info)
                 if (st.isTerminalStatement()) {
                     break;
                 }
@@ -73,7 +74,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class ExpressionStatement(ctx: ParserRuleContext, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             expr.generateCode(module, builder, symbolTable)
         }
 
@@ -92,7 +93,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Assign(ctx: ParserRuleContext, val name: String, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val ref = symbolTable[name] ?: throw IllegalStateException("variable '$name' is not declared");
             val value = loadValue(expr, module, builder, symbolTable)
             LLVMBuildStore(builder, value, ref)
@@ -132,7 +133,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class SetTupleElement(ctx: ParserRuleContext, val tupleExpr: Expr, val index: Int, val valueExpr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val tupleValue = tupleExpr.generateCode(module, builder, symbolTable)
             val value = loadValue(valueExpr, module, builder, symbolTable)
             val elementPtr = LLVMBuildStructGEP(builder, tupleValue, index, "")
@@ -182,7 +183,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class SetArrayElement(ctx: ParserRuleContext, val arrayExpr: Expr, val indexExpr: Expr, val valueExpr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val arrayValue = arrayExpr.generateCode(module, builder, symbolTable)
             val index = indexExpr.generateCode(module, builder, symbolTable)
             val value = loadValue(valueExpr, module, builder, symbolTable)
@@ -253,7 +254,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class AssignDecl(ctx: ParserRuleContext, val name: String, val type: Type?, val expr: Expr) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             if (name in symbolTable.getLocal()) {
                 throw IllegalStateException("$name is already declared")
             }
@@ -327,7 +328,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 
     class DestructiveDeclaration(ctx: ParserRuleContext, val names: List<String>, val expr: Expr) : Statement(ctx) {
-        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+        override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val exprType = expr.type
             if (exprType !is Tuple) {
                 throw IllegalStateException("'${expr.getText()}' must have tuple tuple")
@@ -387,7 +388,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class If(ctx: ParserRuleContext, val condition: Expr, val thenBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val value = condition.generateCode(module, builder, symbolTable)
             val fn = getCurrentFunction(builder)
 
@@ -399,7 +400,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             // generate code for 'then' block
             LLVMPositionBuilderAtEnd(builder, thenBasicBlock)
-            thenBlock.generateCode(module, builder, symbolTable, returnBlock)
+            thenBlock.generateCode(module, builder, symbolTable, info)
 
             // if 'then' block hasn't terminal statement
             if (!thenBlock.isTerminalStatement()) {
@@ -440,7 +441,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class IfElse(ctx: ParserRuleContext, val condition: Expr, val thenBlock: Block, val elseBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val value = condition.generateCode(module, builder, symbolTable)
             val fn = getCurrentFunction(builder)
 
@@ -453,7 +454,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             // generate code for 'then' block
             LLVMPositionBuilderAtEnd(builder, thenBasicBlock)
-            thenBlock.generateCode(module, builder, symbolTable, returnBlock)
+            thenBlock.generateCode(module, builder, symbolTable, info)
 
             var removeMergeBlock = true
             // if 'then' block isn't terminal statement
@@ -465,7 +466,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             // generate code for 'else' block
             LLVMPositionBuilderAtEnd(builder, elseBasicBlock)
-            elseBlock.generateCode(module, builder, symbolTable, returnBlock)
+            elseBlock.generateCode(module, builder, symbolTable, info)
 
             // if 'else' block isn't terminal statement
             if (!elseBlock.isTerminalStatement()) {
@@ -514,7 +515,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class While(ctx: ParserRuleContext, val condition: Expr, val bodyBlock: Block) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val fn = getCurrentFunction(builder)
 
             val condBasicBlock = LLVMAppendBasicBlock(fn, "while_cond")
@@ -532,7 +533,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
             // generate code for 'body' block
             LLVMPositionBuilderAtEnd(builder, bodyBasicBlock)
-            bodyBlock.generateCode(module, builder, symbolTable, returnBlock)
+            bodyBlock.generateCode(module, builder, symbolTable, info)
 
             // if 'body' block isn't terminal statement
             if (!bodyBlock.isTerminalStatement()) {
@@ -575,18 +576,26 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
         var returnValuePtr: LLVMValueRef? = null;
 
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
+            val returnBlockInfo = info.returnBlockInfo
             if (expr is AggregateLiteral) {
-                expr.pointer = returnBlock?.retValueRef ?: returnValuePtr!!
+                expr.pointer = returnBlockInfo?.retValueRef ?: returnValuePtr!!
+            }
+            val tailRecInfo = info.tailRecInfo
+            // check if it is tail recursion call
+            if (tailRecInfo != null && expr is Call && expr.fnName == tailRecInfo.fnName) {
+                expr.generateCodeWithTailRecElimination(module, builder, symbolTable,
+                        tailRecInfo.argsPointers, tailRecInfo.block)
+                return
             }
             val exprValue = expr.generateCode(module, builder, symbolTable)
-            if (returnBlock != null) {
+            if (returnBlockInfo != null) {
                 if (expr.type.isPrimitive()) {
-                    LLVMBuildStore(builder, exprValue, returnBlock.retValueRef)
+                    LLVMBuildStore(builder, exprValue, returnBlockInfo.retValueRef)
                 } else {
-                    saveNonPrimitiveValue(builder, exprValue, returnBlock.retValueRef)
+                    saveNonPrimitiveValue(builder, exprValue, returnBlockInfo.retValueRef)
                 }
-                LLVMBuildBr(builder, returnBlock.block)
+                LLVMBuildBr(builder, returnBlockInfo.block)
             } else {
                 if (expr.type.isPrimitive()) {
                     LLVMBuildRet(builder, exprValue)
@@ -635,7 +644,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Print(ctx: ParserRuleContext, val expr: Expr, val newLine: Boolean) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val s = if (newLine) Compiler.getStrLn(builder) else Compiler.getStr(builder)
             val value = expr.generateCode(module, builder, symbolTable)
             val printfFn = LLVMGetNamedFunction(module, "printf")
@@ -658,7 +667,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
 
     class Read(ctx: ParserRuleContext, val varName: String) : Statement(ctx) {
         override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                                  symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?) {
+                                  symbolTable: SymbolTable<LLVMValueRef>, info: Info) {
             val ref = symbolTable[varName] ?: throw IllegalStateException("variable '$varName' isn't declared")
 
             val s = Compiler.getStr(builder)
@@ -690,7 +699,7 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     open fun isTerminalStatement(): Boolean = false
 
     abstract fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                     symbolTable: SymbolTable<LLVMValueRef>, returnBlock: ReturnBlock?): Unit
+                              symbolTable: SymbolTable<LLVMValueRef>, info: Info): Unit
     abstract fun interpret(env: MutableMap<String, TypedValue> = HashMap(),
                            functions: Map<String, Fn> = HashMap(),
                            input: MutableList<TypedValue> = ArrayList()): List<TypedValue>
@@ -704,4 +713,6 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
     }
 }
 
-data class ReturnBlock(val block: LLVMBasicBlockRef, val retValueRef: LLVMValueRef)
+data class Info(val returnBlockInfo: ReturnBlockInfo? = null, val tailRecInfo: TailRecInfo? = null)
+data class ReturnBlockInfo(val block: LLVMBasicBlockRef, val retValueRef: LLVMValueRef)
+data class TailRecInfo(val fnName: String, val argsPointers: List<LLVMValueRef>, val block: LLVMBasicBlockRef)

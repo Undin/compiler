@@ -4,6 +4,7 @@ import com.warrior.compiler.GrammarLexer.*
 import com.warrior.compiler.expression.*
 import com.warrior.compiler.expression.AggregateLiteral.*
 import com.warrior.compiler.expression.Binary.*
+import com.warrior.compiler.expression.Call.*
 import com.warrior.compiler.expression.MemoryExpr.*
 import com.warrior.compiler.module.*
 import com.warrior.compiler.module.Function
@@ -259,7 +260,7 @@ class ASTVisitor : GrammarBaseVisitor<ASTNode>() {
                 ?.expression()
                 ?.map { visitExpression(it) }
                 ?: Collections.emptyList()
-        return Call(ctx, name, args)
+        return SimpleCall(ctx, name, args)
     }
 
     // Literals
