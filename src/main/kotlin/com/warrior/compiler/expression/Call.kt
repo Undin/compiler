@@ -122,11 +122,7 @@ sealed class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Exp
         val fn = LLVMGetNamedFunction(module, fnName)
         var argsValues = args.map { arg ->
             val exprValue = arg.generateCode(module, builder, symbolTable)
-            return@map if (arg.type.isPrimitive()) {
-                exprValue
-            } else {
-                LLVMBuildLoad(builder, exprValue, "")
-            }
+            if (arg.type.isPrimitive()) { exprValue } else { LLVMBuildLoad(builder, exprValue, "") }
         }.toTypedArray()
         return if (type.isPrimitive()) {
             LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "${fnName}Call")
@@ -136,6 +132,15 @@ sealed class Call(ctx: ParserRuleContext, val fnName: String, val args: List<Exp
             LLVMBuildCall(builder, fn, PointerPointer(*argsValues), argsValues.size, "")
             result
         }
+    }
+
+    fun generateCodeWithTailRecElimination(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>,
+                                           argsPointers: List<LLVMValueRef>, returnBlock: LLVMBasicBlockRef): Unit {
+        args.map { arg ->
+            val exprValue = arg.generateCode(module, builder, symbolTable)
+            if (arg.type.isPrimitive()) { exprValue } else { LLVMBuildLoad(builder, exprValue, "") }
+        }.forEachIndexed { index, value -> LLVMBuildStore(builder, value, argsPointers[index]) }
+        LLVMBuildBr(builder, returnBlock)
     }
 
     override fun determineTypeInternal(functions: Map<String, Type.Fn>, variables: SymbolTable<Type>): Type =

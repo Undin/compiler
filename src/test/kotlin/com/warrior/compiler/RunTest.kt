@@ -2,12 +2,13 @@ package com.warrior.compiler
 
 import org.junit.Assert
 import org.junit.Test
+import java.io.File
 import java.util.*
 
 /**
  * Created by warrior on 27.03.16.
  */
-class InterpretationTest {
+class RunTest {
 
     @Test
     fun simpleTest() {
@@ -19,7 +20,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("15", interpret(program, "5\n"))
+        Assert.assertEquals("15", run(program, "5\n"))
     }
 
     @Test
@@ -39,9 +40,9 @@ class InterpretationTest {
                 return a >= 0;
             }
         """
-        Assert.assertEquals("-1\n", interpret(program, "-1\n"))
-        Assert.assertEquals("1\n-1\n", interpret(program, "1\n"))
-        Assert.assertEquals("0\n0\n0\n", interpret(program, "0\n"))
+        Assert.assertEquals("-1\n", run(program, "-1\n"))
+        Assert.assertEquals("1\n-1\n", run(program, "1\n"))
+        Assert.assertEquals("0\n0\n0\n", run(program, "0\n"))
     }
 
     @Test
@@ -61,8 +62,8 @@ class InterpretationTest {
                 return a >= 0;
             }
         """
-        Assert.assertEquals("-1\n1\n0\n", interpret(program, "-1\n"))
-        Assert.assertEquals("1\n0\n", interpret(program, "1\n"))
+        Assert.assertEquals("-1\n1\n0\n", run(program, "-1\n"))
+        Assert.assertEquals("1\n0\n", run(program, "1\n"))
     }
 
     @Test
@@ -83,7 +84,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n1\n1\n0\n", interpret(program, ""))
+        Assert.assertEquals("0\n1\n1\n1\n0\n", run(program, ""))
     }
 
     @Test
@@ -101,7 +102,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n0\n", interpret(program, ""))
+        Assert.assertEquals("0\n1\n0\n", run(program, ""))
     }
 
     @Test
@@ -132,7 +133,7 @@ class InterpretationTest {
             val pow = rand.nextInt(9) + 1
             val input = "$a $pow\n"
             val result = Math.pow(a.toDouble(), pow.toDouble()).toInt()
-            Assert.assertEquals(result.toString(), interpret(program, input))
+            Assert.assertEquals(result.toString(), run(program, input))
         }
     }
 
@@ -166,7 +167,7 @@ class InterpretationTest {
             return result
         }
         for (i in 0..20) {
-            Assert.assertEquals(fib(i).toString(), interpret(program, "$i\n"))
+            Assert.assertEquals(fib(i).toString(), run(program, "$i\n"))
         }
     }
 
@@ -187,8 +188,8 @@ class InterpretationTest {
                 return a;
             }
         """
-        Assert.assertEquals("1", interpret(program, "1\n"))
-        Assert.assertEquals("1", interpret(program, "-1\n"))
+        Assert.assertEquals("1", run(program, "1\n"))
+        Assert.assertEquals("1", run(program, "-1\n"))
     }
 
     @Test
@@ -210,7 +211,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("0\n1\n2\n", interpret(program, ""))
+        Assert.assertEquals("0\n1\n2\n", run(program, ""))
     }
 
     @Test
@@ -233,7 +234,7 @@ class InterpretationTest {
                 return a;
             }
         """
-        Assert.assertEquals("5", interpret(program, "2 3\n"))
+        Assert.assertEquals("5", run(program, "2 3\n"))
     }
 
     @Test
@@ -250,7 +251,7 @@ class InterpretationTest {
                 return a + b;
             }
         """
-        Assert.assertEquals("5", interpret(program, "2 3\n"))
+        Assert.assertEquals("5", run(program, "2 3\n"))
     }
 
     @Test
@@ -266,7 +267,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n3\n5\n", interpret(program, "2 3\n"))
+        Assert.assertEquals("2\n3\n5\n", run(program, "2 3\n"))
     }
 
     @Test
@@ -286,7 +287,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n3\n5\n6\n", interpret(program, "2 3\n"))
+        Assert.assertEquals("2\n3\n5\n6\n", run(program, "2 3\n"))
     }
 
     @Test
@@ -307,7 +308,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("3\n6\n3\n4\n3\n4\n5\n", interpret(program, "2\n"))
+        Assert.assertEquals("3\n6\n3\n4\n3\n4\n5\n", run(program, "2\n"))
     }
 
     @Test
@@ -323,7 +324,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
     }
 
     @Test
@@ -339,7 +340,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
     }
 
     @Test
@@ -355,7 +356,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("5\n1\n", interpret(program, "2\n1\n"))
+        Assert.assertEquals("5\n1\n", run(program, "2\n1\n"))
     }
 
     @Test
@@ -371,7 +372,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("4\n1\n", interpret(program, "2\n1\n"))
+        Assert.assertEquals("4\n1\n", run(program, "2\n1\n"))
     }
 
     @Test
@@ -387,7 +388,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("3\n2\n", interpret(program, "3\n"))
+        Assert.assertEquals("3\n2\n", run(program, "3\n"))
     }
 
     @Test
@@ -403,7 +404,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        Assert.assertEquals("2\n5\n", interpret(program, "5\n"))
+        Assert.assertEquals("2\n5\n", run(program, "5\n"))
     }
 
     @Test
@@ -436,7 +437,7 @@ class InterpretationTest {
             val a = random.nextInt()
             val b = random.nextInt();
             val (res1, res2) = f(a, b)
-            val out = interpret(program, "$a\n$b\n")
+            val out = run(program, "$a\n$b\n")
             Assert.assertEquals("$res1\n$res2\n", out)
         }
     }
@@ -515,7 +516,7 @@ class InterpretationTest {
         for (i in 1..20) {
             val matrix = Array(3) { IntArray(3) { random.nextInt() } }
             val transposeMatrix = transpose(matrix)
-            val out = interpret(program, toString(matrix))
+            val out = run(program, toString(matrix))
             Assert.assertEquals(toString(transposeMatrix), out)
         }
     }
@@ -557,7 +558,7 @@ class InterpretationTest {
             val array = Array(3) { random.nextInt() to random.nextInt() }
             var reversed = array.clone()
             reversed.reverse()
-            val out = interpret(program, array.map { "${it.first}\n${it.second}\n" }.fold("", String::plus))
+            val out = run(program, array.map { "${it.first}\n${it.second}\n" }.fold("", String::plus))
             Assert.assertEquals(reversed.map { "${it.first}\n${it.second}\n" }.fold("", String::plus), out)
         }
 
@@ -588,7 +589,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        val out = interpret(program, "3\n")
+        val out = run(program, "3\n")
         Assert.assertEquals("3\n4\n5\n6\n7\n", out)
     }
 
@@ -608,7 +609,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        val out = interpret(program, "1\n")
+        val out = run(program, "1\n")
         Assert.assertEquals("1\n2\n3\n4\n", out)
     }
 
@@ -626,7 +627,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        val out = interpret(program, "")
+        val out = run(program, "")
         Assert.assertEquals("", out)
     }
 
@@ -644,7 +645,7 @@ class InterpretationTest {
                 return 0;
             }
         """
-        val out = interpret(program, "")
+        val out = run(program, "")
         Assert.assertEquals("", out)
     }
 
@@ -672,7 +673,7 @@ class InterpretationTest {
         """
         val v = 10
         val expectedOut = (0 until 10).filter { it % 2 == 0 }.fold("", { str, i -> "$str$i\n$i\n" })
-        val out = interpret(program, "$v\n")
+        val out = run(program, "$v\n")
         Assert.assertEquals(expectedOut, out)
     }
 
@@ -694,17 +695,28 @@ class InterpretationTest {
                 return (self.0 + a.0, self.1 + a.1);
             }
         """
-        val out = interpret(program, "5\n")
+        val out = run(program, "5\n")
         Assert.assertEquals("6\n7\n10\n11\n", out)
     }
 
-    private fun interpret(program: String, input: String): String {
-        Compiler(program).use {
-            if (it.compile()) {
-                return it.interpret(input)
-            } else {
-                throw RuntimeException()
-            }
+    private fun run(program: String, input: String): String {
+        val executableFilename = "out"
+        val success = Compiler(program)
+                .use { it.compile(executableFilename) }
+        if (!success) {
+            throw IllegalStateException()
+        }
+        try {
+            val process = ProcessBuilder()
+                    .command("./$executableFilename")
+                    .start()
+            process.outputStream.write(input.toByteArray())
+            process.outputStream.flush()
+            process.waitFor()
+
+            return process.inputStream.readBytes().toString(Charsets.UTF_8)
+        } finally {
+            File(executableFilename).delete()
         }
     }
 }

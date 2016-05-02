@@ -5,22 +5,26 @@ import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
 import com.warrior.compiler.expression.Call
-import com.warrior.compiler.statement.ReturnBlock
+import com.warrior.compiler.statement.Info
+import com.warrior.compiler.statement.ReturnBlockInfo
 import com.warrior.compiler.statement.Statement
 import com.warrior.compiler.statement.Statement.Block
 import com.warrior.compiler.statement.Statement.Return
+import com.warrior.compiler.statement.TailRecInfo
 import com.warrior.compiler.validation.ErrorMessage
 import com.warrior.compiler.validation.ErrorType.RETURN_EXPRESSION
 import com.warrior.compiler.validation.Result
 import com.warrior.compiler.validation.Result.Error
 import org.antlr.v4.runtime.ParserRuleContext
 import org.bytedeco.javacpp.LLVM.*
+import java.util.*
 
 /**
  * Created by warrior on 10.03.16.
  */
 class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block) : ASTNode(ctx) {
-    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, symbolTable: SymbolTable<LLVMValueRef>) {
+    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
+                     symbolTable: SymbolTable<LLVMValueRef>, useTailRecOptimization: Boolean = false) {
         val fn = LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
         // create basic block
@@ -32,7 +36,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         }
 
         val lastStatement = body.statements.last()
-        var returnBlock: ReturnBlock? = null
+        var returnBlockInfo: ReturnBlockInfo? = null
         if (lastStatement !is Return || body.statements.count { it.hasReturnStatement() } > 1) {
             val returnBasicBlock = LLVMAppendBasicBlock(fn, "return")
             val returnValueRef = if (prototype.returnType.isPrimitive()) {
@@ -40,31 +44,42 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             } else {
                 LLVMGetParam(fn, prototype.args.size)
             }
-            returnBlock = ReturnBlock(returnBasicBlock, returnValueRef)
+            returnBlockInfo = ReturnBlockInfo(returnBasicBlock, returnValueRef)
         } else if (lastStatement is Return) {
             lastStatement.returnValuePtr = LLVMGetParam(fn, prototype.args.size)
         }
 
         val localSymbolTable = SymbolTable(symbolTable)
+        val argsPointers = ArrayList<LLVMValueRef>(prototype.args.size)
         // allocate variables for arguments
         for ((i, arg) in prototype.args.withIndex()) {
             val value = LLVMGetParam(fn, i)
-            val ref = LLVMBuildAlloca(builder, arg.type.toLLVMType(), arg.name)
-            LLVMBuildStore(builder, value, ref)
-            localSymbolTable.putLocal(arg.name, ref)
+            val ptr = LLVMBuildAlloca(builder, arg.type.toLLVMType(), arg.name)
+            argsPointers.add(ptr)
+            LLVMBuildStore(builder, value, ptr)
+            localSymbolTable.putLocal(arg.name, ptr)
+        }
+
+        var tailRecInfo: TailRecInfo? = null
+        if (useTailRecOptimization && isTailRecursive()) {
+            // create basic block to transform tail recursion to loop
+            val tailRecBlock = LLVMAppendBasicBlock(fn, "tailRecBlock")
+            LLVMBuildBr(builder, tailRecBlock)
+            LLVMPositionBuilderAtEnd(builder, tailRecBlock)
+            tailRecInfo = TailRecInfo(prototype.name, argsPointers, tailRecBlock)
         }
 
         // generate code for 'body' block
-        body.generateCode(module, builder, localSymbolTable, returnBlock)
+        body.generateCode(module, builder, localSymbolTable, Info(returnBlockInfo, tailRecInfo))
 
-        if (returnBlock != null) {
+        if (returnBlockInfo != null) {
             val lastBlock = LLVMGetLastBasicBlock(fn)
-            LLVMMoveBasicBlockAfter(returnBlock.block, lastBlock)
+            LLVMMoveBasicBlockAfter(returnBlockInfo.block, lastBlock)
 
-            LLVMPositionBuilderAtEnd(builder, returnBlock.block)
+            LLVMPositionBuilderAtEnd(builder, returnBlockInfo.block)
 
             if (prototype.returnType.isPrimitive()) {
-                val returnValue = LLVMBuildLoad(builder, returnBlock.retValueRef, "_return")
+                val returnValue = LLVMBuildLoad(builder, returnBlockInfo.retValueRef, "_return")
                 LLVMBuildRet(builder, returnValue)
             } else {
                 LLVMBuildRetVoid(builder)

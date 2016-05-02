@@ -17,13 +17,13 @@ import java.util.*
  * Created by warrior on 19.03.16.
  */
 class Module(ctx: ParserRuleContext, val globals: List<GlobalDeclaration>, val functions: List<Function>) : ASTNode(ctx) {
-    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef) {
+    fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef, useTailRecOptimization: Boolean = false) {
         val symbolTable = SymbolTable<LLVMValueRef>()
         globals.forEach { it.generateCode(module, builder, symbolTable) }
         functions.forEach { it.prototype.generateCode(module) }
         declarePrintf(module)
         declareScanf(module)
-        functions.forEach { it.generateCode(module, builder, symbolTable) }
+        functions.forEach { it.generateCode(module, builder, symbolTable, useTailRecOptimization) }
     }
 
     private fun declarePrintf(module: LLVMModuleRef) {
