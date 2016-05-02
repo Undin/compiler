@@ -106,9 +106,9 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         is Statement.SetArrayElement -> false
         is Statement.AssignDecl -> false
         is Statement.DestructiveDeclaration -> false
-        is Statement.If -> body.hasReturnCall(name)
+        is Statement.If -> thenBlock.hasReturnCall(name)
         is Statement.IfElse -> thenBlock.hasReturnCall(name) || elseBlock.hasReturnCall(name)
-        is Statement.While -> body.hasReturnCall(name)
+        is Statement.While -> bodyBlock.hasReturnCall(name)
         is Statement.Return -> expr is Call && expr.fnName == name
         is Statement.Print -> false
         is Statement.Read -> false
