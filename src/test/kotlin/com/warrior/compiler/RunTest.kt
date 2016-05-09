@@ -10,6 +10,8 @@ import java.util.*
  */
 class RunTest {
 
+    private val random = Random()
+
     @Test
     fun simpleTest() {
         val program = """
@@ -127,10 +129,9 @@ class RunTest {
                 return 0;
             }
         """
-        val rand = Random()
         for (i in 0 until 100) {
-            val a = rand.nextInt(10) + 1
-            val pow = rand.nextInt(9) + 1
+            val a = random.nextInt(10) + 1
+            val pow = random.nextInt(9) + 1
             val input = "$a $pow\n"
             val result = Math.pow(a.toDouble(), pow.toDouble()).toInt()
             Assert.assertEquals(result.toString(), run(program, input = input))
@@ -432,7 +433,6 @@ class RunTest {
 
         fun f(a: Int, b: Int): Pair<Int, Int> = if (a + b > 0) { b to a } else { 0 to 0 }
 
-        var random = Random()
         for (i in 1..20) {
             val a = random.nextInt()
             val b = random.nextInt();
@@ -512,7 +512,6 @@ class RunTest {
             return builder.toString()
         }
 
-        var random = Random()
         for (i in 1..20) {
             val matrix = Array(3) { IntArray(3) { random.nextInt() } }
             val transposeMatrix = transpose(matrix)
@@ -553,7 +552,6 @@ class RunTest {
             }
         """
 
-        var random = Random()
         for (i in 1..20) {
             val array = Array(3) { random.nextInt() to random.nextInt() }
             var reversed = array.clone()
@@ -700,7 +698,7 @@ class RunTest {
     }
 
     @Test(expected = RuntimeException::class)
-    fun tailRecFunctionWithoutOptimization() {
+    fun withoutTailRecursionElimination1() {
         val program = """
             fn main() -> i32 {
                 let a = readI32();
@@ -721,8 +719,30 @@ class RunTest {
         Assert.assertEquals("6875\n", out)
     }
 
+    @Test(expected = RuntimeException::class)
+    fun withoutTailRecursionElimination2() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fact(a);
+                println(res);
+                return 0;
+            }
+
+            fn fact(n: i32) -> i32 {
+                if (n == 0) {
+                    return 1;
+                } else {
+                    return n * fact(n - 1);
+                }
+            }
+        """
+        val out = run(program, false, "1000000\n")
+        Assert.assertEquals("0\n", out)
+    }
+
     @Test
-    fun tailRecFunctionWithOptimization1() {
+    fun tailRecursionElimination1() {
         val program = """
             fn main() -> i32 {
                 let a = readI32();
@@ -744,7 +764,7 @@ class RunTest {
     }
 
     @Test
-    fun tailRecFunctionWithOptimization2() {
+    fun tailRecursionElimination2() {
         val program = """
             fn main() -> i32 {
                 let a = readI32();
@@ -766,7 +786,7 @@ class RunTest {
     }
 
     @Test
-    fun tailRecFunctionWithOptimization3() {
+    fun tailRecursionElimination3() {
         val program = """
             fn main() -> i32 {
                 let a = readI32();
@@ -786,6 +806,83 @@ class RunTest {
         """
         val out = run(program, true, "10000\n")
         Assert.assertEquals("6875\n7501\n", out)
+    }
+
+    @Test
+    fun tailRecursionElimination4() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fact(a);
+                println(res);
+                return 0;
+            }
+
+            fn fact(n: i32) -> i32 {
+                if (n == 0) {
+                    return 1;
+                } else {
+                    return n * fact(n - 1);
+                }
+            }
+        """
+        val out = run(program, true, "1000000\n")
+        Assert.assertEquals("0\n", out) // 1000000! == 0 because of integer overflow
+    }
+
+    @Test
+    fun tailRecursionElimination5() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = f(a);
+                println(res);
+                return 0;
+            }
+
+            fn f(n: i32) -> i32 {
+                if (n == 0) {
+                    return 0;
+                } else {
+                    return n + f(n - 1);
+                }
+            }
+        """
+        for (i in 1..100) {
+            val a = random.nextInt(1 shl 15)
+            val out = run(program, true, "$a\n")
+            Assert.assertEquals("${(1 + a) * a / 2}\n", out)
+        }
+    }
+
+    @Test
+    fun tailRecursionElimination6() {
+        val program = """
+            fn main() -> i32 {
+                let a = readI32();
+                let res = fib(a);
+                println(res);
+                return 0;
+            }
+
+            fn fib(n: i32) -> i32 {
+                if (n == 0 || n == 1) {
+                    return n;
+                } else {
+                    return fib(n - 1) + fib(n - 2);
+                }
+            }
+        """
+        val fibs = Array(41) { 0 }
+        for (i in 0..40) {
+            if (i == 0 || i == 1) {
+                fibs[i] = i
+            } else {
+                fibs[i] = fibs[i - 1] + fibs[i - 2]
+            }
+            val out = run(program, true, "$i\n")
+            Assert.assertEquals("${fibs[i]}\n", out)
+        }
     }
 
     private fun run(program: String, useTailRecursionOptimization: Boolean = false, input: String): String {
