@@ -4,7 +4,6 @@ import com.warrior.compiler.ASTNode
 import com.warrior.compiler.SymbolTable
 import com.warrior.compiler.Type
 import com.warrior.compiler.Type.*
-import com.warrior.compiler.expression.Call
 import com.warrior.compiler.statement.Info
 import com.warrior.compiler.statement.ReturnBlockInfo
 import com.warrior.compiler.statement.Statement
@@ -23,8 +22,13 @@ import java.util.*
  * Created by warrior on 10.03.16.
  */
 class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block) : ASTNode(ctx) {
+
+    private val RETURN_VAR_NAME = ".return"
+
+    var accDeclaration: Statement.AssignDecl? = null
+
     fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
-                     symbolTable: SymbolTable<LLVMValueRef>, useTailRecOptimization: Boolean = false) {
+                     symbolTable: SymbolTable<LLVMValueRef>, eliminateTailRec: Boolean = false) {
         val fn = LLVMGetNamedFunction(module, prototype.name) ?: throw IllegalStateException("Function is not declared")
 
         // create basic block
@@ -40,7 +44,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         if (lastStatement !is Return || body.statements.count { it.hasReturnStatement() } > 1) {
             val returnBasicBlock = LLVMAppendBasicBlock(fn, "return")
             val returnValueRef = if (prototype.returnType.isPrimitive()) {
-                LLVMBuildAlloca(builder, prototype.returnType.toLLVMType(), "_return")
+                LLVMBuildAlloca(builder, prototype.returnType.toLLVMType(), RETURN_VAR_NAME)
             } else {
                 LLVMGetParam(fn, prototype.args.size)
             }
@@ -61,9 +65,11 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         }
 
         var tailRecInfo: TailRecInfo? = null
-        if (useTailRecOptimization && isTailRecursive()) {
+        if (eliminateTailRec) {
+            // allocate accumulator variable if it needs to eliminate tail recursion
+            accDeclaration?.generateCode(module, builder, localSymbolTable, Info())
             // create basic block to transform tail recursion to loop
-            val tailRecBlock = LLVMAppendBasicBlock(fn, "tailRecBlock")
+            val tailRecBlock = LLVMAppendBasicBlock(fn, "tail_rec_block")
             LLVMBuildBr(builder, tailRecBlock)
             LLVMPositionBuilderAtEnd(builder, tailRecBlock)
             tailRecInfo = TailRecInfo(prototype.name, argsPointers, tailRecBlock)
@@ -79,7 +85,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
             LLVMPositionBuilderAtEnd(builder, returnBlockInfo.block)
 
             if (prototype.returnType.isPrimitive()) {
-                val returnValue = LLVMBuildLoad(builder, returnBlockInfo.retValueRef, "_return")
+                val returnValue = LLVMBuildLoad(builder, returnBlockInfo.retValueRef, RETURN_VAR_NAME)
                 LLVMBuildRet(builder, returnValue)
             } else {
                 LLVMBuildRetVoid(builder)
@@ -96,7 +102,7 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
         prototype.args.forEach {
             var type = it.type
             if (type is Tuple && type.elementsTypes.size == 1) {
-               type = Unknown
+                type = Unknown
             }
             localVariables.putLocal(it.name, type)
         }
@@ -110,22 +116,4 @@ class Function(ctx: ParserRuleContext, val prototype: Prototype, val body: Block
     }
 
     fun getType(): Type.Fn = Fn(prototype.args.map { it.type }, prototype.returnType, prototype is Prototype.ExtensionPrototype)
-
-    fun isTailRecursive(): Boolean = body.hasReturnCall(prototype.name)
-
-    private fun Statement.hasReturnCall(name: String): Boolean = when (this) {
-        is Statement.Block -> statements.any { it.hasReturnCall(name) }
-        is Statement.ExpressionStatement -> false
-        is Statement.Assign -> false
-        is Statement.SetTupleElement -> false
-        is Statement.SetArrayElement -> false
-        is Statement.AssignDecl -> false
-        is Statement.DestructiveDeclaration -> false
-        is Statement.If -> thenBlock.hasReturnCall(name)
-        is Statement.IfElse -> thenBlock.hasReturnCall(name) || elseBlock.hasReturnCall(name)
-        is Statement.While -> bodyBlock.hasReturnCall(name)
-        is Statement.Return -> expr is Call && expr.fnName == name
-        is Statement.Print -> false
-        is Statement.Read -> false
-    }
 }

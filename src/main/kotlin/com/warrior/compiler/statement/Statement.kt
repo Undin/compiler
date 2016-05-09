@@ -596,19 +596,15 @@ sealed class Statement(ctx: ParserRuleContext) : ASTNode(ctx) {
                     saveNonPrimitiveValue(builder, exprValue, returnBlockInfo.retValueRef)
                 }
                 LLVMBuildBr(builder, returnBlockInfo.block)
+            } else if (expr.type.isPrimitive()) {
+                LLVMBuildRet(builder, exprValue)
+            } else if (returnValuePtr == null) {
+                throw IllegalStateException("There is not return value ptr")
             } else {
-                if (expr.type.isPrimitive()) {
-                    LLVMBuildRet(builder, exprValue)
-                } else {
-                    if (returnValuePtr == null) {
-                        throw IllegalStateException("There is not return value ptr")
-                    } else {
-                        if (expr !is AggregateLiteral) {
-                            saveNonPrimitiveValue(builder, exprValue, returnValuePtr!!)
-                        }
-                        LLVMBuildRetVoid(builder)
-                    }
+                if (expr !is AggregateLiteral) {
+                    saveNonPrimitiveValue(builder, exprValue, returnValuePtr!!)
                 }
+                LLVMBuildRetVoid(builder)
             }
         }
 

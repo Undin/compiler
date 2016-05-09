@@ -18,6 +18,10 @@ import java.util.*
  */
 class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
 
+    init {
+        type = Bool
+    }
+
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef = generateConstValue()
     override fun generateConstValue(): LLVMValueRef = LLVMConstInt(LLVMInt1Type(), if (value) 1 else 0, 0)
@@ -38,6 +42,11 @@ class Bool(ctx: ParserRuleContext, val value: Boolean) : Expr(ctx) {
 }
 
 class I32(ctx: ParserRuleContext, val value: Int) : Expr(ctx) {
+
+    init {
+        type = I32
+    }
+
     override fun generateCode(module: LLVMModuleRef, builder: LLVMBuilderRef,
                               symbolTable: SymbolTable<LLVMValueRef>): LLVMValueRef = generateConstValue()
     override fun generateConstValue(): LLVMValueRef = LLVMConstInt(LLVMInt32Type(), value.toLong(), 1)
