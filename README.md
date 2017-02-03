@@ -5,7 +5,7 @@ See [wiki](https://github.com/Undin/compiler/wiki)
 
 ## Requirements
 * > `java 7`
-* `llvm 3.7.0` (`llc` util needs for test)
+* `llvm 3.9.0` (`llc` util needs for test)
 * `clang`
 
 ## Build
