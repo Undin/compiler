@@ -7,13 +7,13 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.7
+      - llvm-toolchain-precise-3.9
     packages:
-      - llvm-3.7
+      - llvm-3.9
       - clang
 
 before_install:
-  - export PATH=/usr/lib/llvm-3.7/bin:$PATH
+  - export PATH=/usr/lib/llvm-3.9/bin:$PATH
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
