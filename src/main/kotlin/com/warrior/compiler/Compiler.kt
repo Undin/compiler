@@ -99,15 +99,15 @@ class Compiler(val program: String): Closeable {
     }
 
     private fun buildAST(code: String): Module? {
-        val fullCode = addBuildinCode(code);
-        val stream = ANTLRInputStream(fullCode);
-        val lexer = GrammarLexer(stream);
-        val tokens = CommonTokenStream(lexer);
-        val parser = GrammarParser(tokens);
+        val fullCode = addBuildinCode(code)
+        val stream = ANTLRInputStream(fullCode)
+        val lexer = GrammarLexer(stream)
+        val tokens = CommonTokenStream(lexer)
+        val parser = GrammarParser(tokens)
         val errorListener = ErrorListener()
         parser.addErrorListener(errorListener)
         try {
-            val tree = parser.module();
+            val tree = parser.module()
             if (!errorListener.hasSyntaxError) {
                 val visitor = ASTVisitor()
                 return visitor.visitModule(tree)
