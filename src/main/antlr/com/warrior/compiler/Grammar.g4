@@ -1,5 +1,9 @@
 grammar Grammar;
 
+@header {
+    package com.warrior.compiler;
+}
+
 module
     :   (globalDeclaration | functionDefinition)+
     ;
